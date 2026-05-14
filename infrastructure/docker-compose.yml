@@ -1,0 +1,155 @@
+name: whatsup
+
+# proxy  — external; created and managed by Traefik.
+#           Services on this network are reachable via Traefik labels.
+# internal — private; no Traefik attachment.
+#           Used for container-to-container traffic (DB, auth backend).
+networks:
+  proxy:
+    external: true
+  internal:
+
+services:
+
+  # ── Frontend ────────────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ../frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL}
+        VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-WhatsUp}
+        VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-whatsup}
+    restart: unless-stopped
+    networks:
+      - proxy
+    healthcheck:
+      # nginx-unprivileged has busybox wget; listens on 8080 (non-root)
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whatsup-frontend.rule=Host(`${FRONTEND_HOST}`)"
+      - "traefik.http.routers.whatsup-frontend.entrypoints=websecure"
+      - "traefik.http.routers.whatsup-frontend.tls=true"
+      - "traefik.http.services.whatsup-frontend.loadbalancer.server.port=8080"
+
+  # ── Backend ─────────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ../backend
+    restart: unless-stopped
+    depends_on:
+      surrealdb:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    networks:
+      - proxy
+      - internal
+    environment:
+      APP__DATABASE__URL: "surrealdb:8000"
+      APP__DATABASE__NAMESPACE: whatsup
+      APP__DATABASE__NAME: whatsup
+      APP__DATABASE__USERNAME: "${SURREALDB_USER}"
+      APP__DATABASE__PASSWORD: "${SURREALDB_PASS}"
+      # Resolved via internal network — bypasses Traefik for JWKS refresh
+      APP__KEYCLOAK__JWKS_URI: "http://keycloak:8080/realms/${VITE_KEYCLOAK_REALM:-WhatsUp}/protocol/openid-connect/certs"
+      APP__CORS__FRONTEND_URL: "${FRONTEND_URL}"
+      APP__VAPID__PUBLIC_KEY: "${VAPID_PUBLIC_KEY}"
+      APP__VAPID__PRIVATE_KEY: "${VAPID_PRIVATE_KEY}"
+      APP__VAPID__SUBJECT: "${VAPID_SUBJECT}"
+      APP__RAWG__API_KEY: "${RAWG_API_KEY:-}"
+    healthcheck:
+      # wget is installed in the backend Dockerfile's runtime stage
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whatsup-backend.rule=Host(`${API_HOST}`)"
+      - "traefik.http.routers.whatsup-backend.entrypoints=websecure"
+      - "traefik.http.routers.whatsup-backend.tls=true"
+      - "traefik.http.services.whatsup-backend.loadbalancer.server.port=3000"
+
+  # ── Keycloak ────────────────────────────────────────────────────────────────
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.6.1
+    command: start
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - proxy
+      - internal
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: "${KC_ADMIN_USER}"
+      KC_BOOTSTRAP_ADMIN_PASSWORD: "${KC_ADMIN_PASS}"
+      KC_DB: postgres
+      KC_DB_URL: "jdbc:postgresql://postgres:5432/keycloak"
+      KC_DB_USERNAME: "${POSTGRES_USER:-keycloak}"
+      KC_DB_PASSWORD: "${POSTGRES_PASS}"
+      KC_HOSTNAME: "${KEYCLOAK_HOST}"
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+      KC_HEALTH_ENABLED: "true"
+    healthcheck:
+      # Keycloak image has bash but no curl/wget. Use bash's built-in TCP
+      # client to query the management port's readiness endpoint (port 9000).
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000 && printf 'GET /health/ready HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && grep -m1 '' <&3 | grep -q '200'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whatsup-keycloak.rule=Host(`${KEYCLOAK_HOST}`)"
+      - "traefik.http.routers.whatsup-keycloak.entrypoints=websecure"
+      - "traefik.http.routers.whatsup-keycloak.tls=true"
+      - "traefik.http.services.whatsup-keycloak.loadbalancer.server.port=8080"
+
+  # ── SurrealDB ───────────────────────────────────────────────────────────────
+  surrealdb:
+    image: docker.io/surrealdb/surrealdb:v2
+    command: "start --bind 0.0.0.0:8000 --user ${SURREALDB_USER} --pass ${SURREALDB_PASS} file:///data/whatsup.db"
+    restart: unless-stopped
+    networks:
+      - internal
+    volumes:
+      - surrealdb_data:/data:U
+    healthcheck:
+      # Uses the surreal binary's built-in readiness check (distroless image,
+      # no shell or network tools available).
+      test: ["CMD", "/surreal", "is-ready", "--endpoint", "http://localhost:8000"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  # ── PostgreSQL (Keycloak backend) ───────────────────────────────────────────
+  postgres:
+    image: docker.io/library/postgres:17-alpine
+    restart: unless-stopped
+    networks:
+      - internal
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: "${POSTGRES_USER:-keycloak}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASS}"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-keycloak}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  surrealdb_data:
+  postgres_data:

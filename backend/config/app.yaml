@@ -1,0 +1,37 @@
+# WhatsUp Backend — Base Configuration
+# Override locally via config/app.local.yaml (gitignored).
+# Override in Docker via environment variables: APP__SECTION__KEY=value
+# Example: APP__DATABASE__URL=surrealdb:8000
+
+server:
+  port: 3000
+
+database:
+  url: "127.0.0.1:8000"
+  namespace: "whatsup"
+  name: "whatsup"
+  username: "root"
+  password: "root"
+
+keycloak:
+  jwks_uri: "http://localhost:8080/realms/WhatsUp/protocol/openid-connect/certs"
+  admin_url: "http://localhost:8080"
+  realm: "WhatsUp"
+  admin_user: "admin"
+  admin_password: "admin"
+
+vapid:
+  # Leave empty to disable Web Push notifications.
+  # Generate keys: npx web-push generate-vapid-keys
+  public_key: ""
+  private_key: ""
+  subject: "mailto:dev@whatsup.local"
+
+cors:
+  frontend_url: "http://localhost:5173"
+
+rawg:
+  # RAWG API key for automatic game metadata lookup.
+  # Get a free key at https://rawg.io/apidocs
+  # Set in config/app.local.yaml — leave empty to disable autofill.
+  api_key: ""

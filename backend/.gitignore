@@ -1,0 +1,7 @@
+/target
+uploads/
+config/app.local.yaml
+
+# Legacy — superseded by config/app.local.yaml
+.env
+.env.example

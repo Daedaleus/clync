@@ -1,0 +1,19 @@
+# ── Infrastructure secrets ─────────────────────────────────────────────────────
+# Ignore actual secret files; .example templates are tracked intentionally.
+infrastructure/.env
+infrastructure/.env.local
+infrastructure/.env-*
+!infrastructure/.env.example
+!infrastructure/.env-paths.example
+
+# ── Backend runtime ────────────────────────────────────────────────────────────
+backend/uploads/
+
+# ── OS ─────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── IDEs ───────────────────────────────────────────────────────────────────────
+.idea/
+*.swp
+*.swo

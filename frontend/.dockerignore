@@ -1,0 +1,17 @@
+node_modules/
+dist/
+
+# Local overrides — .env (defaults) must stay for the Vite build
+.env.local
+.env.*.local
+
+# Test infrastructure — not needed for production build
+src/test/
+**/*.test.ts
+**/*.test.tsx
+
+# Docs & meta
+**/*.md
+README*
+.git/
+.gitignore
