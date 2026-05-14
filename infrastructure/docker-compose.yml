@@ -122,7 +122,7 @@ services:
     networks:
       - internal
     volumes:
-      - surrealdb_data:/data:U
+      - surrealdb_data:/data
     healthcheck:
       # Uses the surreal binary's built-in readiness check (distroless image,
       # no shell or network tools available).
