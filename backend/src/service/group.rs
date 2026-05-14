@@ -303,6 +303,9 @@ mod tests {
         async fn find_by_member(&self, _: String) -> Result<Vec<Group>, surrealdb::Error> {
             panic!()
         }
+        async fn find_public_by_member(&self, _: String) -> Result<Vec<Group>, surrealdb::Error> {
+            panic!()
+        }
         async fn join(&self, _: String, _: String) -> Result<(), surrealdb::Error> {
             panic!()
         }

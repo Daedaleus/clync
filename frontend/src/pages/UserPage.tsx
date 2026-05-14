@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import Avatar from '../components/atoms/Avatar';
+import Badge from '../components/atoms/Badge';
 import Button from '../components/atoms/Button';
 import GameCard from '../components/molecules/GameCard';
 import SectionLabel from '../components/atoms/SectionLabel';
@@ -8,7 +9,7 @@ import ErrorBanner from '../components/molecules/ErrorBanner';
 import PageLayout from '../components/templates/PageLayout';
 import keycloak from '../services/auth';
 import { api } from '../services/api';
-import type { Game } from '../types';
+import type { Game, GroupSummary } from '../types';
 
 interface UserProfile {
   username: string;
@@ -50,6 +51,7 @@ export default function UserPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [library, setLibrary] = useState<Map<string, Game>>(new Map());
   const [myGames, setMyGames] = useState<Set<string>>(new Set());
+  const [publicGroups, setPublicGroups] = useState<GroupSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -62,6 +64,9 @@ export default function UserPage() {
       .catch(() => setError('Benutzer nicht gefunden'));
     api.get<Game[]>('/api/v1/library')
       .then((gs) => setLibrary(new Map(gs.map((g) => [g.name, g]))))
+      .catch(console.error);
+    api.get<GroupSummary[]>(`/api/v1/users/${id}/groups`)
+      .then(setPublicGroups)
       .catch(console.error);
     if (!isOwnProfile) {
       api.get<{ games: string[] }>('/api/v1/me')
@@ -182,6 +187,26 @@ export default function UserPage() {
                   </div>
                 ))}
               </div>
+            </section>
+          )}
+
+          {/* Public groups */}
+          {!isOwnProfile && publicGroups.length > 0 && (
+            <section className="space-y-2">
+              <SectionLabel count={publicGroups.length}>Öffentliche Gruppen</SectionLabel>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {publicGroups.map((g) => (
+                  <li key={g.id}>
+                    <Link
+                      to={`/groups/${g.id}`}
+                      className="flex items-center justify-between gap-3 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 hover:border-zinc-700 hover:bg-zinc-800/50 transition-colors"
+                    >
+                      <span className="text-sm font-medium text-zinc-100 truncate">{g.name}</span>
+                      <Badge variant="public" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </section>
           )}
 
