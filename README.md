@@ -15,7 +15,7 @@ Group gaming coordination app. Users form groups, list games they want to play, 
 
 ## Quick start (local development)
 
-**Prerequisites:** Rust (stable), Node 22, Docker / Podman
+**Prerequisites:** Rust (stable), Node 26, Docker / Podman
 
 ```sh
 # 1 — Start backing services
