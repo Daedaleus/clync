@@ -118,6 +118,7 @@ services:
   surrealdb:
     image: docker.io/surrealdb/surrealdb:v2
     command: "start --bind 0.0.0.0:8000 --user ${SURREALDB_USER} --pass ${SURREALDB_PASS} file:///data/whatsup.db"
+    user: "0:0"
     restart: unless-stopped
     networks:
       - internal
