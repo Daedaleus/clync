@@ -15,6 +15,7 @@ services:
 
   # ── Frontend ────────────────────────────────────────────────────────────────
   frontend:
+    image: whatsup-frontend
     build:
       context: ../frontend
       args:
@@ -40,6 +41,7 @@ services:
 
   # ── Backend ─────────────────────────────────────────────────────────────────
   backend:
+    image: whatsup-backend
     build:
       context: ../backend
     restart: unless-stopped
