@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 
 use crate::model::{
+    friend_request::FriendRequest,
     game::Game,
     group::{Group, MemberWithGames},
     invitation::InvitationRecord,
@@ -183,6 +184,35 @@ pub trait InvitationRepo: Send + Sync {
         invitee_id: String,
     ) -> Result<bool, surrealdb::Error>;
     async fn delete(&self, inv_id: String, user_id: String) -> Result<(), surrealdb::Error>;
+}
+
+#[async_trait]
+pub trait FriendRequestRepo: Send + Sync {
+    async fn create(
+        &self,
+        from_id: String,
+        from_username: String,
+        to_id: String,
+    ) -> Result<(), surrealdb::Error>;
+    async fn find_incoming(&self, user_id: String) -> Result<Vec<FriendRequest>, surrealdb::Error>;
+    async fn find_by_id_for_receiver(
+        &self,
+        req_id: String,
+        receiver_id: String,
+    ) -> Result<Option<FriendRequest>, surrealdb::Error>;
+    /// Returns true if a request already exists in either direction between the two users.
+    async fn exists_between(
+        &self,
+        user_a: String,
+        user_b: String,
+    ) -> Result<bool, surrealdb::Error>;
+    async fn delete(&self, req_id: String) -> Result<(), surrealdb::Error>;
+    /// Deletes only if the user is sender or receiver — returns false if not found or unauthorized.
+    async fn delete_for_participant(
+        &self,
+        req_id: String,
+        user_id: String,
+    ) -> Result<bool, surrealdb::Error>;
 }
 
 #[async_trait]

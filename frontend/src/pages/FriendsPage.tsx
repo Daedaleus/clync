@@ -9,15 +9,25 @@ import PageLayout from '../components/templates/PageLayout';
 import type { Friend } from '../types';
 import { api } from '../services/api';
 
+interface FriendRequest {
+  id: string;
+  from_id: string;
+  from_username: string;
+}
+
 export default function FriendsPage() {
   const [friends, setFriends] = useState<Friend[]>([]);
+  const [incoming, setIncoming] = useState<FriendRequest[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Friend[]>([]);
+  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     api.get<Friend[]>('/api/v1/friends').then(setFriends)
       .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Fehler'));
+    api.get<FriendRequest[]>('/api/v1/friends/requests').then(setIncoming)
+      .catch(console.error);
   }, []);
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -35,12 +45,58 @@ export default function FriendsPage() {
     } catch (err) { setError(err instanceof Error ? err.message : 'Fehler'); }
   };
 
+  const handleSendRequest = async (id: string) => {
+    try {
+      await api.post(`/api/v1/friends/requests/${id}`);
+      setSentIds((p) => new Set([...p, id]));
+    } catch (err) { setError(err instanceof Error ? err.message : 'Fehler'); }
+  };
+
+  const handleAccept = async (req: FriendRequest) => {
+    try {
+      await api.post(`/api/v1/friends/requests/${req.id}/accept`);
+      setIncoming((p) => p.filter((r) => r.id !== req.id));
+      setFriends((p) => [...p, { keycloak_id: req.from_id, username: req.from_username }]);
+    } catch (err) { setError(err instanceof Error ? err.message : 'Fehler'); }
+  };
+
+  const handleDecline = async (reqId: string) => {
+    try {
+      await api.delete(`/api/v1/friends/requests/${reqId}`);
+      setIncoming((p) => p.filter((r) => r.id !== reqId));
+    } catch (err) { setError(err instanceof Error ? err.message : 'Fehler'); }
+  };
+
   const friendIds = new Set(friends.map((f) => f.keycloak_id));
 
   return (
     <PageLayout>
       {error && <ErrorBanner message={error} />}
 
+      {/* Incoming requests */}
+      {incoming.length > 0 && (
+        <section className="space-y-3">
+          <SectionLabel count={incoming.length}>Freundschaftsanfragen</SectionLabel>
+          <ul className="divide-y divide-zinc-800 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+            {incoming.map((req) => (
+              <li key={req.id}>
+                <UserRow
+                  keycloak_id={req.from_id}
+                  username={req.from_username}
+                  right={
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => handleAccept(req)}>Annehmen</Button>
+                      <Button size="sm" variant="secondary" onClick={() => handleDecline(req.id)}>Ablehnen</Button>
+                    </div>
+                  }
+                />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Friend list */}
       <section className="space-y-3">
         <SectionLabel count={friends.length}>Meine Freunde</SectionLabel>
         {friends.length === 0 ? (
@@ -66,27 +122,39 @@ export default function FriendsPage() {
 
       <hr className="border-zinc-800" />
 
+      {/* User search */}
       <section className="space-y-3">
         <SectionLabel>Benutzer suchen</SectionLabel>
         <SearchBar value={searchQuery} onChange={setSearchQuery} onSubmit={handleSearch} placeholder="Benutzername…" />
 
         {searchResults.length > 0 && (
           <ul className="divide-y divide-zinc-800 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-            {searchResults.map((u) => (
-              <li key={u.keycloak_id}>
-                <UserRow
-                  keycloak_id={u.keycloak_id}
-                  username={u.username}
-                  right={friendIds.has(u.keycloak_id)
-                    ? <Badge variant="friend" />
-                    : <span className="text-sm text-zinc-500 hover:text-violet-400 transition-colors">Profil →</span>
-                  }
-                />
-              </li>
-            ))}
+            {searchResults.map((u) => {
+              const isFriend = friendIds.has(u.keycloak_id);
+              const isSent = sentIds.has(u.keycloak_id);
+              return (
+                <li key={u.keycloak_id}>
+                  <UserRow
+                    keycloak_id={u.keycloak_id}
+                    username={u.username}
+                    right={
+                      isFriend
+                        ? <Badge variant="friend" />
+                        : isSent
+                          ? <span className="text-xs text-zinc-500">Anfrage gesendet</span>
+                          : <Button size="sm" onClick={() => handleSendRequest(u.keycloak_id)}>
+                              + Anfrage senden
+                            </Button>
+                    }
+                  />
+                </li>
+              );
+            })}
           </ul>
         )}
-        {searchResults.length === 0 && searchQuery && <p className="text-zinc-500 text-sm">Keine Benutzer gefunden.</p>}
+        {searchResults.length === 0 && searchQuery && (
+          <p className="text-zinc-500 text-sm">Keine Benutzer gefunden.</p>
+        )}
       </section>
     </PageLayout>
   );

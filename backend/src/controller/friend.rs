@@ -4,7 +4,7 @@ use axum::{
     Extension, Json, Router,
     extract::{Path, State},
     http::StatusCode,
-    routing::{get, post},
+    routing::get,
 };
 
 use crate::{
@@ -15,7 +15,7 @@ use crate::{
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/friends", get(list_handler))
-        .route("/friends/{id}", post(add_handler).delete(remove_handler))
+        .route("/friends/{id}", axum::routing::delete(remove_handler))
 }
 
 async fn list_handler(
@@ -26,17 +26,6 @@ async fn list_handler(
         .get_friends(&user.keycloak_id)
         .await?;
     Ok(Json(friends))
-}
-
-async fn add_handler(
-    State(state): State<AppState>,
-    Extension(user): Extension<AuthUser>,
-    Path(id): Path<String>,
-) -> Result<StatusCode, AppError> {
-    UserService::new(Arc::clone(&state.db))
-        .add_friend(&user.keycloak_id, &id)
-        .await?;
-    Ok(StatusCode::NO_CONTENT)
 }
 
 async fn remove_handler(
