@@ -12,7 +12,7 @@ tower-http = { version = "0.6", features = ["trace", "cors", "fs"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 surrealdb = "2"
-jsonwebtoken = "9"
+jsonwebtoken = "10"
 reqwest = { version = "0.12", features = ["json"] }
 thiserror = "2"
 async-trait = "0.1"
