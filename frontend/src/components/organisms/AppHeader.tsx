@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import logo from '../../assets/logo.svg';
 import { Link, NavLink } from 'react-router-dom';
 import keycloak from '../../services/auth';
 import { api } from '../../services/api';
@@ -87,8 +88,8 @@ export default function AppHeader() {
 
         {/* Left: logo + desktop nav */}
         <div className="flex items-center gap-5 min-w-0">
-          <Link to="/" className="font-bold text-violet-400 tracking-tight text-base shrink-0">
-            WhatsUp
+          <Link to="/" className="shrink-0">
+            <img src={logo} alt="WhatsUp" className="h-7 w-auto" />
           </Link>
           <nav className="hidden sm:flex items-center gap-4">
             <NavLink to="/sessions" className={navLink}>Sessions</NavLink>
