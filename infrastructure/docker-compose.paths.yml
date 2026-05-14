@@ -63,8 +63,12 @@ services:
       APP__DATABASE__NAME: whatsup
       APP__DATABASE__USERNAME: "${SURREALDB_USER}"
       APP__DATABASE__PASSWORD: "${SURREALDB_PASS}"
-      # KC_HTTP_RELATIVE_PATH=/auth shifts Keycloak's path internally too
+      # KC_HTTP_RELATIVE_PATH=/auth shifts all Keycloak paths internally
       APP__KEYCLOAK__JWKS_URI: "http://keycloak:8080/auth/realms/${VITE_KEYCLOAK_REALM:-WhatsUp}/protocol/openid-connect/certs"
+      APP__KEYCLOAK__ADMIN_URL: "http://keycloak:8080/auth"
+      APP__KEYCLOAK__REALM: "${VITE_KEYCLOAK_REALM:-WhatsUp}"
+      APP__KEYCLOAK__ADMIN_USER: "${KC_ADMIN_USER}"
+      APP__KEYCLOAK__ADMIN_PASSWORD: "${KC_ADMIN_PASS}"
       APP__CORS__FRONTEND_URL: "${FRONTEND_URL}"
       APP__VAPID__PUBLIC_KEY: "${VAPID_PUBLIC_KEY}"
       APP__VAPID__PRIVATE_KEY: "${VAPID_PRIVATE_KEY}"
