@@ -6,6 +6,8 @@ pub struct Group {
     pub name: String,
     pub is_public: bool,
     pub members: Vec<String>,
+    pub creator_id: Option<String>,
+    pub discord_invite: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

@@ -14,7 +14,7 @@ use tokio_stream::wrappers::BroadcastStream;
 
 use crate::{
     config::app_state::AppState,
-    dto::group::CreateGroupRequest,
+    dto::group::{CreateGroupRequest, SetDiscordInviteRequest},
     error::AppError,
     middleware::auth::{AuthUser, validate_query_token},
     service::{group::GroupService, session::SessionService},
@@ -36,7 +36,23 @@ pub fn routes() -> Router<AppState> {
         .route("/groups/mine", get(mine_handler))
         .route("/groups/{id}", get(detail_handler).delete(delete_handler))
         .route("/groups/{id}/join", post(join_handler))
+        .route(
+            "/groups/{id}/discord-invite",
+            axum::routing::put(set_discord_invite_handler),
+        )
         .route("/groups/{id}/sessions", get(group_sessions_handler))
+}
+
+async fn set_discord_invite_handler(
+    State(state): State<AppState>,
+    Extension(user): Extension<AuthUser>,
+    Path(id): Path<String>,
+    Json(body): Json<SetDiscordInviteRequest>,
+) -> Result<StatusCode, AppError> {
+    GroupService::new(Arc::clone(&state.db))
+        .set_discord_invite(&id, body.url, &user.keycloak_id, user.is_admin)
+        .await?;
+    Ok(StatusCode::NO_CONTENT)
 }
 
 /// SSE route — no auth middleware, token validated via query param.
