@@ -9,6 +9,7 @@ name: whatsup
 networks:
   proxy:
     external: true
+    name: traefik
   internal:
 
 services:
@@ -35,9 +36,11 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.whatsup-frontend.rule=Host(`${FRONTEND_HOST}`)"
-      - "traefik.http.routers.whatsup-frontend.entrypoints=websecure"
+      - "traefik.http.routers.whatsup-frontend.entrypoints=web-secure"
       - "traefik.http.routers.whatsup-frontend.tls=true"
+      - "traefik.http.routers.whatsup-frontend.tls.certresolver=default"
       - "traefik.http.services.whatsup-frontend.loadbalancer.server.port=8080"
+      - "traefik.docker.network=traefik"
 
   # ── Backend ─────────────────────────────────────────────────────────────────
   backend:
@@ -75,9 +78,11 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.whatsup-backend.rule=Host(`${API_HOST}`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.whatsup-backend.entrypoints=websecure"
+      - "traefik.http.routers.whatsup-backend.entrypoints=web-secure"
       - "traefik.http.routers.whatsup-backend.tls=true"
+      - "traefik.http.routers.whatsup-backend.tls.certresolver=default"
       - "traefik.http.services.whatsup-backend.loadbalancer.server.port=3000"
+      - "traefik.docker.network=traefik"
 
   # ── Keycloak ────────────────────────────────────────────────────────────────
   keycloak:
@@ -111,9 +116,11 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.whatsup-keycloak.rule=Host(`${KEYCLOAK_HOST}`) && PathPrefix(`/auth`)"
-      - "traefik.http.routers.whatsup-keycloak.entrypoints=websecure"
+      - "traefik.http.routers.whatsup-keycloak.entrypoints=web-secure"
       - "traefik.http.routers.whatsup-keycloak.tls=true"
+      - "traefik.http.routers.whatsup-keycloak.tls.certresolver=default"
       - "traefik.http.services.whatsup-keycloak.loadbalancer.server.port=8080"
+      - "traefik.docker.network=traefik"
 
   # ── SurrealDB ───────────────────────────────────────────────────────────────
   surrealdb:
