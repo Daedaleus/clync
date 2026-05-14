@@ -110,6 +110,24 @@ impl GroupRepo for GroupRepository {
         res.take(0)
     }
 
+    async fn find_public_by_member(
+        &self,
+        keycloak_id: String,
+    ) -> Result<Vec<Group>, surrealdb::Error> {
+        let mut res = self
+            .db
+            .query(
+                "SELECT meta::id(id) as id, name, is_public, members,
+                        creator_id ?? null as creator_id,
+                        discord_invite ?? null as discord_invite
+                 FROM group WHERE members CONTAINS $user_id AND is_public = true
+                 ORDER BY name",
+            )
+            .bind(("user_id", keycloak_id))
+            .await?;
+        res.take(0)
+    }
+
     /// Uses array::union to prevent duplicate members.
     async fn join(&self, group_id: String, keycloak_id: String) -> Result<(), surrealdb::Error> {
         self.db

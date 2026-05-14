@@ -73,6 +73,10 @@ pub trait GroupRepo: Send + Sync {
     async fn list_public(&self) -> Result<Vec<Group>, surrealdb::Error>;
     async fn search_public(&self, query: String) -> Result<Vec<Group>, surrealdb::Error>;
     async fn find_by_member(&self, keycloak_id: String) -> Result<Vec<Group>, surrealdb::Error>;
+    async fn find_public_by_member(
+        &self,
+        keycloak_id: String,
+    ) -> Result<Vec<Group>, surrealdb::Error>;
     async fn join(&self, group_id: String, keycloak_id: String) -> Result<(), surrealdb::Error>;
     async fn share_group(&self, user_a: String, user_b: String) -> Result<bool, surrealdb::Error>;
     async fn delete(&self, group_id: String) -> Result<(), surrealdb::Error>;
