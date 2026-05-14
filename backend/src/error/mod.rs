@@ -15,11 +15,17 @@ pub enum AppError {
     Validation(String),
     /// Database error — logged server-side, generic message to client.
     #[error("Database error: {0}")]
-    Database(#[from] surrealdb::Error),
+    Database(Box<surrealdb::Error>),
     /// Internal error — logged server-side, generic message to client.
     /// Use `Validation` for user-facing messages instead.
     #[error("Internal: {0}")]
     Internal(String),
+}
+
+impl From<surrealdb::Error> for AppError {
+    fn from(e: surrealdb::Error) -> Self {
+        Self::Database(Box::new(e))
+    }
 }
 
 impl IntoResponse for AppError {

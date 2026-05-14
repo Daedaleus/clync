@@ -134,10 +134,10 @@ async fn validate_token(state: &AppState, token: &str) -> Result<KeycloakClaims,
 async fn fetch_jwks(state: &AppState) -> Result<JwkSet, AppError> {
     {
         let cache = state.jwks_cache.read().await;
-        if let Some((ref jwks, fetched_at)) = *cache {
-            if fetched_at.elapsed() < JWKS_CACHE_TTL {
-                return Ok(jwks.clone());
-            }
+        if let Some((ref jwks, fetched_at)) = *cache
+            && fetched_at.elapsed() < JWKS_CACHE_TTL
+        {
+            return Ok(jwks.clone());
         }
     }
 
