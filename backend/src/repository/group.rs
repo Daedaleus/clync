@@ -154,7 +154,11 @@ impl GroupRepo for GroupRepository {
         res.take(0)
     }
 
-    async fn set_discord_invite(&self, group_id: String, url: Option<String>) -> Result<(), surrealdb::Error> {
+    async fn set_discord_invite(
+        &self,
+        group_id: String,
+        url: Option<String>,
+    ) -> Result<(), surrealdb::Error> {
         self.db
             .query("UPDATE type::thing('group', $id) SET discord_invite = $url")
             .bind(("id", group_id))

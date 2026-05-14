@@ -36,7 +36,10 @@ pub fn routes() -> Router<AppState> {
         .route("/groups/mine", get(mine_handler))
         .route("/groups/{id}", get(detail_handler).delete(delete_handler))
         .route("/groups/{id}/join", post(join_handler))
-        .route("/groups/{id}/discord-invite", axum::routing::put(set_discord_invite_handler))
+        .route(
+            "/groups/{id}/discord-invite",
+            axum::routing::put(set_discord_invite_handler),
+        )
         .route("/groups/{id}/sessions", get(group_sessions_handler))
 }
 
