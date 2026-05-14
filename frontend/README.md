@@ -14,7 +14,7 @@ React SPA built with Vite. Handles auth via Keycloak JS, communicates with the b
 
 ## Setup
 
-**Prerequisites:** Node 22, running Keycloak and backend (see `infrastructure/`).
+**Prerequisites:** Node 26, running Keycloak and backend (see `infrastructure/`).
 
 ```sh
 cd frontend
