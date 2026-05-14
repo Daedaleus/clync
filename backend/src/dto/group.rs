@@ -44,10 +44,18 @@ pub struct GroupDetailResponse {
     pub id: String,
     pub name: String,
     pub is_public: bool,
+    pub creator_id: Option<String>,
+    pub discord_invite: Option<String>,
     pub members: Vec<MemberResponse>,
     pub common_games: Vec<String>,
     /// All games any member has, sorted by count desc then name asc.
     pub possible_games: Vec<PossibleGame>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SetDiscordInviteRequest {
+    /// `null` or omitted clears the link.
+    pub url: Option<String>,
 }
 
 impl From<Group> for GroupResponse {
