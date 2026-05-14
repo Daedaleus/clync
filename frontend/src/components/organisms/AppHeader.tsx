@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import logo from '../../assets/logo.png';
+import logo from '../../assets/logo.svg';
 import { Link, NavLink } from 'react-router-dom';
 import keycloak from '../../services/auth';
 import { api } from '../../services/api';
