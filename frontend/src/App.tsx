@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import FriendsPage from './pages/FriendsPage';
 import SessionsPage from './pages/SessionsPage';
 import GroupDetailPage from './pages/GroupDetailPage';
+import GroupEditPage from './pages/GroupEditPage';
 import GroupsPage from './pages/GroupsPage';
 import GameDetailPage from './pages/GameDetailPage';
 import LibraryPage from './pages/LibraryPage';
@@ -19,6 +20,7 @@ export default function App() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/groups" element={<GroupsPage />} />
         <Route path="/groups/:id" element={<GroupDetailPage />} />
+        <Route path="/groups/:id/edit" element={<GroupEditPage />} />
         <Route path="/friends" element={<FriendsPage />} />
         <Route path="/users/:id" element={<UserPage />} />
         <Route path="/sessions" element={<SessionsPage />} />

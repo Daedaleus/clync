@@ -11,8 +11,12 @@
    git checkout -b fix/join-page-redirect
    ```
 2. **Make changes** and commit to that branch using the commit convention below
-3. **Tell the user** the branch name so they can open a PR
-4. **Ask whether to push** — after completing the task, always ask: "Soll ich den Branch pushen?"
+3. **Run `cargo fmt`** before every backend commit — mandatory, no exceptions:
+   ```sh
+   cd backend && cargo fmt
+   ```
+4. **Tell the user** the branch name so they can open a PR
+5. **Ask whether to push** — after completing the task, always ask: "Soll ich den Branch pushen?"
 
 - If I am already on a non-`main` branch that matches the task, I continue on it
 - Hotfixes on `main` are only allowed when explicitly instructed by the user
