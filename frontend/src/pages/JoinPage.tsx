@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import Button from '../components/atoms/Button';
 import Input from '../components/atoms/Input';
 import ErrorBanner from '../components/molecules/ErrorBanner';
@@ -7,7 +7,6 @@ import { config } from '../config';
 
 export default function JoinPage() {
   const { token } = useParams<{ token: string }>();
-  const navigate = useNavigate();
 
   const [valid, setValid] = useState<boolean | null>(null);
   const [username, setUsername] = useState('');
@@ -81,7 +80,7 @@ export default function JoinPage() {
           <p className="text-4xl">🎉</p>
           <h1 className="text-xl font-bold text-zinc-100">Konto erstellt!</h1>
           <p className="text-sm text-zinc-500">Du kannst dich jetzt mit deinen Zugangsdaten anmelden.</p>
-          <Button onClick={() => navigate('/')} className="w-full">Zur Anmeldung</Button>
+          <Button onClick={() => { window.location.href = '/'; }} className="w-full">Zur Anmeldung</Button>
         </div>
       </div>
     );
