@@ -44,14 +44,20 @@ impl MeService {
         })
     }
 
-    pub async fn update_profile(&self, keycloak_id: &str, req: UpdateProfileRequest) -> Result<(), AppError> {
-        self.user_repo.update_social_profile(
-            keycloak_id.to_owned(),
-            req.steam_handle,
-            req.steam_visibility,
-            req.discord_handle,
-            req.discord_visibility,
-        ).await?;
+    pub async fn update_profile(
+        &self,
+        keycloak_id: &str,
+        req: UpdateProfileRequest,
+    ) -> Result<(), AppError> {
+        self.user_repo
+            .update_social_profile(
+                keycloak_id.to_owned(),
+                req.steam_handle,
+                req.steam_visibility,
+                req.discord_handle,
+                req.discord_visibility,
+            )
+            .await?;
         Ok(())
     }
 }

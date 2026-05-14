@@ -49,7 +49,8 @@ struct ThumbnailRow {
 #[async_trait]
 impl GameRepo for GameRepository {
     async fn search(&self, query: String) -> Result<Vec<String>, surrealdb::Error> {
-        let mut res = self.db
+        let mut res = self
+            .db
             .query(
                 "SELECT VALUE name FROM game
                  WHERE string::contains(string::lowercase(name), string::lowercase($q))
@@ -69,15 +70,19 @@ impl GameRepo for GameRepository {
     }
 
     async fn list_all(&self) -> Result<Vec<Game>, surrealdb::Error> {
-        let mut res = self.db
-            .query("SELECT name, description, genre, thumbnail_b64 FROM game ORDER BY name LIMIT 500")
+        let mut res = self
+            .db
+            .query(
+                "SELECT name, description, genre, thumbnail_b64 FROM game ORDER BY name LIMIT 500",
+            )
             .await?;
         let rows: Vec<GameRow> = res.take(0)?;
         Ok(rows.into_iter().map(|r| r.into_game()).collect())
     }
 
     async fn find_by_name(&self, name: String) -> Result<Option<Game>, surrealdb::Error> {
-        let mut res = self.db
+        let mut res = self
+            .db
             .query(
                 "SELECT name, description, genre, thumbnail_b64
                  FROM type::thing('game', $name) LIMIT 1",
@@ -109,7 +114,12 @@ impl GameRepo for GameRepository {
         Ok(())
     }
 
-    async fn store_thumbnail(&self, name: String, data: Vec<u8>, content_type: String) -> Result<(), surrealdb::Error> {
+    async fn store_thumbnail(
+        &self,
+        name: String,
+        data: Vec<u8>,
+        content_type: String,
+    ) -> Result<(), surrealdb::Error> {
         let b64 = STANDARD.encode(&data);
         self.db
             .query(
@@ -126,7 +136,8 @@ impl GameRepo for GameRepository {
     }
 
     async fn is_in_any_wishlist(&self, name: String) -> Result<bool, surrealdb::Error> {
-        let mut res = self.db
+        let mut res = self
+            .db
             .query("SELECT id FROM user WHERE $name IN (games ?? []) LIMIT 1")
             .bind(("name", name))
             .await?;
@@ -142,8 +153,12 @@ impl GameRepo for GameRepository {
         Ok(())
     }
 
-    async fn get_thumbnail(&self, name: String) -> Result<Option<(Vec<u8>, String)>, surrealdb::Error> {
-        let mut res = self.db
+    async fn get_thumbnail(
+        &self,
+        name: String,
+    ) -> Result<Option<(Vec<u8>, String)>, surrealdb::Error> {
+        let mut res = self
+            .db
             .query(
                 "SELECT thumbnail_b64, thumbnail_content_type
                  FROM type::thing('game', $name) LIMIT 1",
@@ -152,7 +167,10 @@ impl GameRepo for GameRepository {
             .await?;
         let row: Option<ThumbnailRow> = res.take(0)?;
         match row {
-            Some(ThumbnailRow { thumbnail_b64: Some(b64), thumbnail_content_type: Some(ct) }) => {
+            Some(ThumbnailRow {
+                thumbnail_b64: Some(b64),
+                thumbnail_content_type: Some(ct),
+            }) => {
                 let bytes = STANDARD.decode(&b64).unwrap_or_default();
                 Ok(Some((bytes, ct)))
             }

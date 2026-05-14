@@ -18,7 +18,12 @@ impl InviteRepository {
 
 #[async_trait]
 impl InviteRepo for InviteRepository {
-    async fn create(&self, code: String, created_by: String, _expires_at: String) -> Result<(), surrealdb::Error> {
+    async fn create(
+        &self,
+        code: String,
+        created_by: String,
+        _expires_at: String,
+    ) -> Result<(), surrealdb::Error> {
         self.db
             .query(
                 "CREATE invite CONTENT {
@@ -36,7 +41,8 @@ impl InviteRepo for InviteRepository {
     }
 
     async fn find_valid(&self, code: String) -> Result<Option<InviteRecord>, surrealdb::Error> {
-        let mut res = self.db
+        let mut res = self
+            .db
             .query(
                 "SELECT meta::id(id) as id, code, created_by, expires_at, used
                  FROM invite

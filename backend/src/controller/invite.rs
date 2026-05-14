@@ -34,7 +34,9 @@ pub fn public_routes() -> Router<AppState> {
 }
 
 #[derive(Serialize)]
-struct CreateResponse { token: String }  // keep field name "token" for frontend compat
+struct CreateResponse {
+    token: String,
+} // keep field name "token" for frontend compat
 
 async fn create_handler(
     State(state): State<AppState>,
@@ -45,7 +47,9 @@ async fn create_handler(
 }
 
 #[derive(Serialize)]
-struct ValidateResponse { valid: bool }
+struct ValidateResponse {
+    valid: bool,
+}
 
 async fn validate_handler(
     State(state): State<AppState>,
@@ -56,13 +60,18 @@ async fn validate_handler(
 }
 
 #[derive(Deserialize)]
-struct RegisterBody { username: String, password: String }
+struct RegisterBody {
+    username: String,
+    password: String,
+}
 
 async fn register_handler(
     State(state): State<AppState>,
     Path(code): Path<String>,
     Json(body): Json<RegisterBody>,
 ) -> Result<StatusCode, AppError> {
-    svc(&state).register(&code, &body.username, &body.password).await?;
+    svc(&state)
+        .register(&code, &body.username, &body.password)
+        .await?;
     Ok(StatusCode::NO_CONTENT)
 }

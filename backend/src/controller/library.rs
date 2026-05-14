@@ -17,10 +17,20 @@ use crate::service::game::GameService;
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/library", get(list_handler).post(create_handler))
-        .route("/library/{name}", get(detail_handler).put(update_handler).delete(delete_handler))
-        .route("/library/{name}/thumbnail", post(upload_thumbnail_handler)
-            .layer(DefaultBodyLimit::disable()))
-        .route("/library/{name}/autofill", get(autofill_candidates_handler).post(autofill_confirm_handler))
+        .route(
+            "/library/{name}",
+            get(detail_handler)
+                .put(update_handler)
+                .delete(delete_handler),
+        )
+        .route(
+            "/library/{name}/thumbnail",
+            post(upload_thumbnail_handler).layer(DefaultBodyLimit::disable()),
+        )
+        .route(
+            "/library/{name}/autofill",
+            get(autofill_candidates_handler).post(autofill_confirm_handler),
+        )
 }
 
 /// Public route — no auth required so <img> tags can load thumbnails directly.
@@ -32,7 +42,9 @@ async fn list_handler(
     State(state): State<AppState>,
     Extension(_user): Extension<AuthUser>,
 ) -> Result<Json<impl serde::Serialize>, AppError> {
-    Ok(Json(GameService::new(Arc::clone(&state.db)).list_all().await?))
+    Ok(Json(
+        GameService::new(Arc::clone(&state.db)).list_all().await?,
+    ))
 }
 
 async fn detail_handler(
@@ -41,7 +53,8 @@ async fn detail_handler(
     Path(name): Path<String>,
 ) -> Result<Json<impl serde::Serialize>, AppError> {
     GameService::new(Arc::clone(&state.db))
-        .get_by_name(&name).await?
+        .get_by_name(&name)
+        .await?
         .map(Json)
         .ok_or_else(|| AppError::Internal("Spiel nicht gefunden".into()))
 }
@@ -51,7 +64,9 @@ async fn create_handler(
     Extension(user): Extension<AuthUser>,
     Json(body): Json<UpsertGameRequest>,
 ) -> Result<StatusCode, AppError> {
-    GameService::new(Arc::clone(&state.db)).create(body, &user.keycloak_id).await?;
+    GameService::new(Arc::clone(&state.db))
+        .create(body, &user.keycloak_id)
+        .await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -61,7 +76,9 @@ async fn update_handler(
     Path(name): Path<String>,
     Json(body): Json<UpdateGameRequest>,
 ) -> Result<StatusCode, AppError> {
-    GameService::new(Arc::clone(&state.db)).update(&name, body).await?;
+    GameService::new(Arc::clone(&state.db))
+        .update(&name, body)
+        .await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -71,18 +88,20 @@ async fn upload_thumbnail_handler(
     Path(name): Path<String>,
     mut multipart: Multipart,
 ) -> Result<Json<serde_json::Value>, AppError> {
-    while let Some(field) = multipart.next_field().await
+    while let Some(field) = multipart
+        .next_field()
+        .await
         .map_err(|e| AppError::Internal(e.to_string()))?
     {
         if field.name() != Some("file") {
             continue;
         }
 
-        let content_type = field.content_type()
-            .unwrap_or("image/jpeg")
-            .to_owned();
+        let content_type = field.content_type().unwrap_or("image/jpeg").to_owned();
 
-        let bytes = field.bytes().await
+        let bytes = field
+            .bytes()
+            .await
             .map_err(|e| AppError::Internal(e.to_string()))?
             .to_vec();
 
@@ -92,7 +111,8 @@ async fn upload_thumbnail_handler(
         }
 
         GameService::new(Arc::clone(&state.db))
-            .store_thumbnail(&name, bytes, content_type).await?;
+            .store_thumbnail(&name, bytes, content_type)
+            .await?;
 
         let url = format!("/api/v1/library/{}/thumbnail", name);
         return Ok(Json(serde_json::json!({ "url": url })));
@@ -106,7 +126,9 @@ async fn delete_handler(
     Extension(user): Extension<AuthUser>,
     Path(name): Path<String>,
 ) -> Result<StatusCode, AppError> {
-    GameService::new(Arc::clone(&state.db)).delete_game(&name, user.is_admin).await?;
+    GameService::new(Arc::clone(&state.db))
+        .delete_game(&name, user.is_admin)
+        .await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -116,7 +138,8 @@ async fn autofill_candidates_handler(
     Path(name): Path<String>,
 ) -> Result<Json<impl serde::Serialize>, AppError> {
     let candidates = GameService::new(Arc::clone(&state.db))
-        .get_autofill_candidates(&name, &state.rawg_api_key).await?;
+        .get_autofill_candidates(&name, &state.rawg_api_key)
+        .await?;
     Ok(Json(candidates))
 }
 
@@ -133,7 +156,14 @@ async fn autofill_confirm_handler(
     Json(body): Json<AutofillConfirmBody>,
 ) -> Result<Json<impl serde::Serialize>, AppError> {
     let game = GameService::new(Arc::clone(&state.db))
-        .confirm_autofill(&name, body.rawg_id, &state.rawg_api_key, body.genre, &user.keycloak_id).await?;
+        .confirm_autofill(
+            &name,
+            body.rawg_id,
+            &state.rawg_api_key,
+            body.genre,
+            &user.keycloak_id,
+        )
+        .await?;
     Ok(Json(game))
 }
 
@@ -141,7 +171,10 @@ async fn serve_thumbnail_handler(
     State(state): State<AppState>,
     Path(name): Path<String>,
 ) -> impl IntoResponse {
-    match GameService::new(Arc::clone(&state.db)).get_thumbnail(&name).await {
+    match GameService::new(Arc::clone(&state.db))
+        .get_thumbnail(&name)
+        .await
+    {
         Ok(Some((bytes, content_type))) => (
             StatusCode::OK,
             [
@@ -149,7 +182,8 @@ async fn serve_thumbnail_handler(
                 (header::CACHE_CONTROL, "public, max-age=86400".to_owned()),
             ],
             bytes,
-        ).into_response(),
+        )
+            .into_response(),
         _ => StatusCode::NOT_FOUND.into_response(),
     }
 }

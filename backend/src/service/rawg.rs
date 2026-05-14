@@ -50,39 +50,56 @@ pub struct RawgClient {
 
 impl RawgClient {
     pub fn new(api_key: String) -> Self {
-        Self { api_key, client: reqwest::Client::new() }
+        Self {
+            api_key,
+            client: reqwest::Client::new(),
+        }
     }
 
     /// Returns up to `count` search candidates for display in a picker.
-    pub async fn search_candidates(&self, name: &str, count: usize) -> Result<Vec<AutofillCandidate>, AppError> {
-        let search: SearchResponse = self.client
+    pub async fn search_candidates(
+        &self,
+        name: &str,
+        count: usize,
+    ) -> Result<Vec<AutofillCandidate>, AppError> {
+        let search: SearchResponse = self
+            .client
             .get("https://api.rawg.io/api/games")
             .query(&[
                 ("key", self.api_key.as_str()),
                 ("search", name),
                 ("page_size", &count.to_string()),
             ])
-            .send().await
+            .send()
+            .await
             .map_err(|e| AppError::Internal(format!("RAWG search failed: {e}")))?
-            .json().await
+            .json()
+            .await
             .map_err(|e| AppError::Internal(format!("RAWG parse error: {e}")))?;
 
-        Ok(search.results.into_iter().map(|r| AutofillCandidate {
-            rawg_id: r.id,
-            rawg_name: r.name,
-            thumbnail_url: r.background_image,
-            genre: r.genres.into_iter().next().map(|g| g.name),
-        }).collect())
+        Ok(search
+            .results
+            .into_iter()
+            .map(|r| AutofillCandidate {
+                rawg_id: r.id,
+                rawg_name: r.name,
+                thumbnail_url: r.background_image,
+                genre: r.genres.into_iter().next().map(|g| g.name),
+            })
+            .collect())
     }
 
     /// Fetches full game detail for a specific RAWG ID.
     pub async fn fetch_detail(&self, rawg_id: u64) -> Result<RawgGameData, AppError> {
-        let detail: DetailResponse = self.client
+        let detail: DetailResponse = self
+            .client
             .get(format!("https://api.rawg.io/api/games/{rawg_id}"))
             .query(&[("key", self.api_key.as_str())])
-            .send().await
+            .send()
+            .await
             .map_err(|e| AppError::Internal(format!("RAWG detail failed: {e}")))?
-            .json().await
+            .json()
+            .await
             .map_err(|e| AppError::Internal(format!("RAWG detail parse error: {e}")))?;
 
         let description = detail.description_raw.and_then(|d| {
@@ -98,13 +115,20 @@ impl RawgClient {
             None
         };
 
-        Ok(RawgGameData { description, thumbnail_bytes })
+        Ok(RawgGameData {
+            description,
+            thumbnail_bytes,
+        })
     }
 }
 
-async fn download_image(client: &reqwest::Client, url: &str) -> Result<Option<(Vec<u8>, String)>, reqwest::Error> {
+async fn download_image(
+    client: &reqwest::Client,
+    url: &str,
+) -> Result<Option<(Vec<u8>, String)>, reqwest::Error> {
     let resp = client.get(url).send().await?;
-    let ct = resp.headers()
+    let ct = resp
+        .headers()
         .get(reqwest::header::CONTENT_TYPE)
         .and_then(|v| v.to_str().ok())
         .unwrap_or("image/jpeg")

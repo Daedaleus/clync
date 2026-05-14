@@ -8,9 +8,7 @@ use axum::{
 use serde::Deserialize;
 
 use crate::{
-    config::app_state::AppState,
-    error::AppError,
-    middleware::auth::AuthUser,
+    config::app_state::AppState, error::AppError, middleware::auth::AuthUser,
     service::user::UserService,
 };
 

@@ -30,76 +30,127 @@ impl InvitationService {
 
     /// Invite a mutual friend to a group.
     /// Validates: inviter is member, invitee is mutual friend, invitee not already member, no duplicate.
-    pub async fn invite(&self, group_id: &str, inviter: &AuthUser, invitee_id: &str) -> Result<(), AppError> {
-        let group = self.group_repo.find_by_id(group_id.to_owned()).await?
+    pub async fn invite(
+        &self,
+        group_id: &str,
+        inviter: &AuthUser,
+        invitee_id: &str,
+    ) -> Result<(), AppError> {
+        let group = self
+            .group_repo
+            .find_by_id(group_id.to_owned())
+            .await?
             .ok_or_else(|| AppError::Validation("Gruppe nicht gefunden".into()))?;
 
         if !group.members.contains(&inviter.keycloak_id) {
-            return Err(AppError::Validation("Nur Gruppenmitglieder können einladen".into()));
+            return Err(AppError::Validation(
+                "Nur Gruppenmitglieder können einladen".into(),
+            ));
         }
         if group.members.contains(&invitee_id.to_owned()) {
             return Err(AppError::Validation("Benutzer ist bereits Mitglied".into()));
         }
 
         // Mutual friendship check: inviter has added invitee AND invitee has added inviter
-        let inviter_friends = self.user_repo.get_friend_ids(inviter.keycloak_id.clone()).await?;
+        let inviter_friends = self
+            .user_repo
+            .get_friend_ids(inviter.keycloak_id.clone())
+            .await?;
         if !inviter_friends.contains(&invitee_id.to_owned()) {
-            return Err(AppError::Validation("Nur gegenseitige Freunde können eingeladen werden".into()));
+            return Err(AppError::Validation(
+                "Nur gegenseitige Freunde können eingeladen werden".into(),
+            ));
         }
-        let mutual = self.user_repo.find_who_added(inviter.keycloak_id.clone(), vec![invitee_id.to_owned()]).await?;
+        let mutual = self
+            .user_repo
+            .find_who_added(inviter.keycloak_id.clone(), vec![invitee_id.to_owned()])
+            .await?;
         if mutual.is_empty() {
-            return Err(AppError::Validation("Nur gegenseitige Freunde können eingeladen werden".into()));
+            return Err(AppError::Validation(
+                "Nur gegenseitige Freunde können eingeladen werden".into(),
+            ));
         }
 
-        if self.inv_repo.exists_for_group_and_invitee(group_id.to_owned(), invitee_id.to_owned()).await? {
+        if self
+            .inv_repo
+            .exists_for_group_and_invitee(group_id.to_owned(), invitee_id.to_owned())
+            .await?
+        {
             return Err(AppError::Validation("Einladung bereits versandt".into()));
         }
 
-        self.inv_repo.create(
-            group_id.to_owned(),
-            group.name,
-            inviter.keycloak_id.clone(),
-            inviter.username.clone(),
-            invitee_id.to_owned(),
-        ).await?;
+        self.inv_repo
+            .create(
+                group_id.to_owned(),
+                group.name,
+                inviter.keycloak_id.clone(),
+                inviter.username.clone(),
+                invitee_id.to_owned(),
+            )
+            .await?;
         Ok(())
     }
 
     pub async fn get_pending(&self, user_id: &str) -> Result<Vec<InvitationRecord>, AppError> {
-        Ok(self.inv_repo.find_pending_for_user(user_id.to_owned()).await?)
+        Ok(self
+            .inv_repo
+            .find_pending_for_user(user_id.to_owned())
+            .await?)
     }
 
     pub async fn accept(&self, inv_id: &str, user: &AuthUser) -> Result<(), AppError> {
-        let inv = self.inv_repo.find_by_id_for_invitee(inv_id.to_owned(), user.keycloak_id.clone()).await?
+        let inv = self
+            .inv_repo
+            .find_by_id_for_invitee(inv_id.to_owned(), user.keycloak_id.clone())
+            .await?
             .ok_or_else(|| AppError::Validation("Einladung nicht gefunden".into()))?;
 
-        self.group_repo.join(inv.group_id, user.keycloak_id.clone()).await?;
-        self.inv_repo.delete(inv_id.to_owned(), user.keycloak_id.clone()).await?;
+        self.group_repo
+            .join(inv.group_id, user.keycloak_id.clone())
+            .await?;
+        self.inv_repo
+            .delete(inv_id.to_owned(), user.keycloak_id.clone())
+            .await?;
         Ok(())
     }
 
     pub async fn decline(&self, inv_id: &str, user_id: &str) -> Result<(), AppError> {
-        self.inv_repo.delete(inv_id.to_owned(), user_id.to_owned()).await?;
+        self.inv_repo
+            .delete(inv_id.to_owned(), user_id.to_owned())
+            .await?;
         Ok(())
     }
 
     /// Returns mutual friends of the requester who are not yet members and have no pending invite.
-    pub async fn get_invitable(&self, group_id: &str, requester: &AuthUser) -> Result<Vec<UserSummary>, AppError> {
-        let group = self.group_repo.find_by_id(group_id.to_owned()).await?
+    pub async fn get_invitable(
+        &self,
+        group_id: &str,
+        requester: &AuthUser,
+    ) -> Result<Vec<UserSummary>, AppError> {
+        let group = self
+            .group_repo
+            .find_by_id(group_id.to_owned())
+            .await?
             .ok_or_else(|| AppError::Validation("Gruppe nicht gefunden".into()))?;
 
         if !group.members.contains(&requester.keycloak_id) {
-            return Err(AppError::Validation("Nur Gruppenmitglieder sehen die Einladeliste".into()));
+            return Err(AppError::Validation(
+                "Nur Gruppenmitglieder sehen die Einladeliste".into(),
+            ));
         }
 
         // Friends the requester has added
-        let friend_ids = self.user_repo.get_friend_ids(requester.keycloak_id.clone()).await?;
+        let friend_ids = self
+            .user_repo
+            .get_friend_ids(requester.keycloak_id.clone())
+            .await?;
         if friend_ids.is_empty() {
             return Ok(vec![]);
         }
 
         // Filter: not already a member
-        let non_members: Vec<String> = friend_ids.into_iter()
+        let non_members: Vec<String> = friend_ids
+            .into_iter()
             .filter(|id| !group.members.contains(id))
             .collect();
         if non_members.is_empty() {
@@ -107,7 +158,10 @@ impl InvitationService {
         }
 
         // Keep only mutual friends (they have added the requester back)
-        let mutual = self.user_repo.find_who_added(requester.keycloak_id.clone(), non_members).await?;
+        let mutual = self
+            .user_repo
+            .find_who_added(requester.keycloak_id.clone(), non_members)
+            .await?;
         if mutual.is_empty() {
             return Ok(vec![]);
         }
@@ -115,7 +169,8 @@ impl InvitationService {
         // Filter out those with a pending invitation already
         let mut result = Vec::new();
         for user in mutual {
-            let already_invited = self.inv_repo
+            let already_invited = self
+                .inv_repo
                 .exists_for_group_and_invitee(group_id.to_owned(), user.keycloak_id.clone())
                 .await?;
             if !already_invited {

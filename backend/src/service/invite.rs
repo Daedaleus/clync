@@ -38,7 +38,9 @@ impl InviteService {
     pub async fn create_invite(&self, creator_id: &str) -> Result<String, AppError> {
         let code = Uuid::new_v4().to_string().replace('-', "");
         let expires_at = (chrono::Utc::now() + chrono::Duration::days(7)).to_rfc3339();
-        self.repo.create(code.clone(), creator_id.to_owned(), expires_at).await?;
+        self.repo
+            .create(code.clone(), creator_id.to_owned(), expires_at)
+            .await?;
         Ok(code)
     }
 
@@ -46,52 +48,93 @@ impl InviteService {
         Ok(self.repo.find_valid(code.to_owned()).await?.is_some())
     }
 
-    pub async fn register(&self, code: &str, username: &str, password: &str) -> Result<(), AppError> {
+    pub async fn register(
+        &self,
+        code: &str,
+        username: &str,
+        password: &str,
+    ) -> Result<(), AppError> {
         if username.trim().is_empty() || password.len() < 6 {
-            return Err(AppError::Validation("Nutzername und Passwort (min. 6 Zeichen) erforderlich".into()));
+            return Err(AppError::Validation(
+                "Nutzername und Passwort (min. 6 Zeichen) erforderlich".into(),
+            ));
         }
 
-        let invite = self.repo.find_valid(code.to_owned()).await?
-            .ok_or_else(|| AppError::Validation("Einladungslink ungültig oder abgelaufen".into()))?;
+        let invite = self
+            .repo
+            .find_valid(code.to_owned())
+            .await?
+            .ok_or_else(|| {
+                AppError::Validation("Einladungslink ungültig oder abgelaufen".into())
+            })?;
 
         let admin_token = self.get_admin_token().await?;
-        self.create_keycloak_user(&admin_token, username, password).await?;
+        self.create_keycloak_user(&admin_token, username, password)
+            .await?;
         self.repo.mark_used(invite.code).await?;
         Ok(())
     }
 
     async fn get_admin_token(&self) -> Result<String, AppError> {
         #[derive(Deserialize)]
-        struct TokenResponse { access_token: String }
+        struct TokenResponse {
+            access_token: String,
+        }
 
-        let resp = self.client
-            .post(format!("{}/realms/master/protocol/openid-connect/token", self.admin_url))
+        let resp = self
+            .client
+            .post(format!(
+                "{}/realms/master/protocol/openid-connect/token",
+                self.admin_url
+            ))
             .form(&[
-                ("grant_type",    "password"),
-                ("client_id",     "admin-cli"),
-                ("username",      &self.admin_user),
-                ("password",      &self.admin_password),
+                ("grant_type", "password"),
+                ("client_id", "admin-cli"),
+                ("username", &self.admin_user),
+                ("password", &self.admin_password),
             ])
-            .send().await
+            .send()
+            .await
             .map_err(|e| AppError::Internal(format!("Keycloak admin auth failed: {e}")))?;
 
         if !resp.status().is_success() {
-            return Err(AppError::Internal("Keycloak admin authentication failed".into()));
+            return Err(AppError::Internal(
+                "Keycloak admin authentication failed".into(),
+            ));
         }
 
-        let body: TokenResponse = resp.json().await
+        let body: TokenResponse = resp
+            .json()
+            .await
             .map_err(|e| AppError::Internal(format!("Keycloak token parse error: {e}")))?;
         Ok(body.access_token)
     }
 
-    async fn create_keycloak_user(&self, admin_token: &str, username: &str, password: &str) -> Result<(), AppError> {
+    async fn create_keycloak_user(
+        &self,
+        admin_token: &str,
+        username: &str,
+        password: &str,
+    ) -> Result<(), AppError> {
         #[derive(Serialize)]
-        struct Credential { r#type: &'static str, value: String, temporary: bool }
+        struct Credential {
+            r#type: &'static str,
+            value: String,
+            temporary: bool,
+        }
         #[derive(Serialize)]
-        struct NewUser { username: String, enabled: bool, credentials: Vec<Credential> }
+        struct NewUser {
+            username: String,
+            enabled: bool,
+            credentials: Vec<Credential>,
+        }
 
-        let resp = self.client
-            .post(format!("{}/admin/realms/{}/users", self.admin_url, self.realm))
+        let resp = self
+            .client
+            .post(format!(
+                "{}/admin/realms/{}/users",
+                self.admin_url, self.realm
+            ))
             .bearer_auth(admin_token)
             .json(&NewUser {
                 username: username.to_owned(),
@@ -102,12 +145,15 @@ impl InviteService {
                     temporary: false,
                 }],
             })
-            .send().await
+            .send()
+            .await
             .map_err(|e| AppError::Internal(format!("Keycloak create user failed: {e}")))?;
 
         match resp.status().as_u16() {
             201 => Ok(()),
-            409 => Err(AppError::Validation("Dieser Nutzername ist bereits vergeben".into())),
+            409 => Err(AppError::Validation(
+                "Dieser Nutzername ist bereits vergeben".into(),
+            )),
             status => Err(AppError::Internal(format!("Keycloak error: HTTP {status}"))),
         }
     }

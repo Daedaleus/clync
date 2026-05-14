@@ -34,7 +34,8 @@ async fn list_handler(
     Extension(user): Extension<AuthUser>,
 ) -> Result<Json<impl serde::Serialize>, AppError> {
     let invitations = InvitationService::new(Arc::clone(&state.db))
-        .get_pending(&user.keycloak_id).await?;
+        .get_pending(&user.keycloak_id)
+        .await?;
     Ok(Json(invitations))
 }
 
@@ -43,7 +44,9 @@ async fn accept_handler(
     Extension(user): Extension<AuthUser>,
     Path(id): Path<String>,
 ) -> Result<StatusCode, AppError> {
-    InvitationService::new(Arc::clone(&state.db)).accept(&id, &user).await?;
+    InvitationService::new(Arc::clone(&state.db))
+        .accept(&id, &user)
+        .await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -52,7 +55,9 @@ async fn decline_handler(
     Extension(user): Extension<AuthUser>,
     Path(id): Path<String>,
 ) -> Result<StatusCode, AppError> {
-    InvitationService::new(Arc::clone(&state.db)).decline(&id, &user.keycloak_id).await?;
+    InvitationService::new(Arc::clone(&state.db))
+        .decline(&id, &user.keycloak_id)
+        .await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -63,7 +68,8 @@ async fn invite_handler(
     Json(body): Json<InviteBody>,
 ) -> Result<StatusCode, AppError> {
     InvitationService::new(Arc::clone(&state.db))
-        .invite(&group_id, &user, &body.user_id).await?;
+        .invite(&group_id, &user, &body.user_id)
+        .await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -73,6 +79,7 @@ async fn invitable_handler(
     Path(group_id): Path<String>,
 ) -> Result<Json<impl serde::Serialize>, AppError> {
     let users = InvitationService::new(Arc::clone(&state.db))
-        .get_invitable(&group_id, &user).await?;
+        .get_invitable(&group_id, &user)
+        .await?;
     Ok(Json(users))
 }

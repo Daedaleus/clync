@@ -7,8 +7,7 @@ use axum::{
     response::Response,
 };
 use jsonwebtoken::{
-    Algorithm, DecodingKey, Validation,
-    decode, decode_header,
+    Algorithm, DecodingKey, Validation, decode, decode_header,
     jwk::{AlgorithmParameters, JwkSet},
 };
 use serde::Deserialize;
@@ -62,7 +61,9 @@ pub async fn auth_middleware(
         .upsert(user)
         .await?;
 
-    let is_admin = claims.realm_access.as_ref()
+    let is_admin = claims
+        .realm_access
+        .as_ref()
         .map(|ra| ra.roles.iter().any(|r| r == "admin"))
         .unwrap_or(false);
 
@@ -90,9 +91,14 @@ fn extract_bearer_token(request: &Request) -> Result<&str, AppError> {
 
 /// Validates a raw JWT string and returns the authenticated user.
 /// Used by SSE endpoints that receive the token via query param.
-pub(crate) async fn validate_query_token(state: &AppState, token: &str) -> Result<AuthUser, AppError> {
+pub(crate) async fn validate_query_token(
+    state: &AppState,
+    token: &str,
+) -> Result<AuthUser, AppError> {
     let claims = validate_token(state, token).await?;
-    let is_admin = claims.realm_access.as_ref()
+    let is_admin = claims
+        .realm_access
+        .as_ref()
         .map(|ra| ra.roles.iter().any(|r| r == "admin"))
         .unwrap_or(false);
     Ok(AuthUser {

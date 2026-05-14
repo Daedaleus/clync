@@ -21,6 +21,9 @@ pub struct UserProfileResponse {
 
 impl From<UserSummary> for FriendResponse {
     fn from(u: UserSummary) -> Self {
-        FriendResponse { keycloak_id: u.keycloak_id, username: u.username }
+        FriendResponse {
+            keycloak_id: u.keycloak_id,
+            username: u.username,
+        }
     }
 }

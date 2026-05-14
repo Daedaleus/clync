@@ -16,8 +16,10 @@ use crate::{
 use std::sync::Arc;
 
 pub fn routes() -> Router<AppState> {
-    Router::new()
-        .route("/push/subscribe", post(subscribe_handler).delete(unsubscribe_handler))
+    Router::new().route(
+        "/push/subscribe",
+        post(subscribe_handler).delete(unsubscribe_handler),
+    )
 }
 
 /// Public endpoint — frontend needs the public key before subscribing.
@@ -26,7 +28,9 @@ pub fn public_routes() -> Router<AppState> {
 }
 
 async fn public_key_handler(State(state): State<AppState>) -> Json<VapidPublicKeyResponse> {
-    Json(VapidPublicKeyResponse { public_key: state.vapid_public_key.clone() })
+    Json(VapidPublicKeyResponse {
+        public_key: state.vapid_public_key.clone(),
+    })
 }
 
 async fn subscribe_handler(
