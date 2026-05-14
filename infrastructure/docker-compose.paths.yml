@@ -123,7 +123,7 @@ services:
     networks:
       - internal
     volumes:
-      - surrealdb_data:/data:U
+      - surrealdb_data:/data
     healthcheck:
       test: ["CMD", "/surreal", "is-ready", "--endpoint", "http://localhost:8000"]
       interval: 30s
