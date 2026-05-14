@@ -1,294 +1,256 @@
-# Allgemein
+# General
 
-- Hinterfrage mich kritisch wenn nötig bevor du etwas tust
-- Benutze in der jeweiligen Sprache best practices und aktuelle Versionen
-
----
-
-# Projektüberblick
-
-Dieses Repository enthält eine Fullstack-Anwendung bestehende aus:
-
-- **Backend**: Rust (API, Business-Logik, DB)
-- **Frontend**: React (UI, API-Integration)
-- **Infrastructure**: Docker-basierte Entwicklungs- und Deployment-Umgebung
-
-Ziel ist eine klar getrennte, skalierbare Architektur mit reproduzierbaren Builds und konsistenter Dev-Experience.
-
-## Inhalt des Projekts
-
-- Name Whatsup
-- Funktion: Eine Anwendung mit der Benutzer eine Gruppe bilden können
-    - Benutzer haben Spiele die sie spielen wollen
-    - Gruppen sehen alle Spiele und wie viele Leute das gleiche Spiel spielen wollen
-    - Man sieht den Status "Lust zu spielen"
-    - Man kann auch sagen "An dem Tag"
+- Challenge me critically when needed before doing anything
+- Use best practices and current versions for each language/ecosystem
+- No `Co-Authored-By` lines in commit messages
 
 ---
 
-# 2. Architekturprinzipien
+# Project Overview
 
-- Strikte Trennung von Frontend und Backend
-- API-first Design
-- Stateless Backend Services
-- Containerisiertes Deployment und Containergestützte Entwicklung
-- Keine Business-Logik im Frontend
+**WhatsUp** is a fullstack group gaming coordination app.
 
----
+- **Backend**: Rust — REST API, business logic, real-time events
+- **Frontend**: React SPA — UI, API integration, PWA
+- **Infrastructure**: Docker-based dev and production environment
 
-# 3. Backend (Rust)
-
-### Technologie
-
-- Rust (Stable)
-- Webframework
-- ...
-
-### Prinzipien
-
-- Domänen modular strukturieren
-- Kein unwrap()
-- DTOs getrennt von Domain Models
-- Konsistente API Responses
+Users form groups, maintain game wishlists, and schedule play sessions with live updates and push notifications.
 
 ---
 
-# 4. Frontend (React)
+# Architecture Principles
 
-## Technologie
-
-- React + TypeScript
-- React Query oder Zustand
-- Vite
-
-## Prinzipien
-
-- UI / Logik Trennung
-- API Calls nur in services
-- Wiederverwendbarkeit
-- Keine Business Logik
-- Atomic Design
+- Strict frontend/backend separation
+- API-first design — no business logic in the frontend
+- Stateless backend services
+- Containerised deployment and container-assisted development
+- All API calls go through `frontend/src/services/api.ts` — never fetch directly in components
 
 ---
 
-# 5. API Kommunikation
+# Backend (Rust)
 
-- Primär REST (JSON)
-- Sekundär später angedacht: Websockets oder vergleichbares
-- Versionierung der API über /api/v1/
-- Zentrale API Client Schicht
-- Einheitliche Error Responses
+## Technology
+
+- **Rust** (stable)
+- **Axum 0.8** — HTTP framework
+- **SurrealDB 2** — database via WebSocket client
+- **Keycloak 26** — OIDC/JWT authentication (JWKS validation, 1 h cache)
+- **SSE** — real-time events via `tokio::sync::broadcast`
+- **Web Push (VAPID)** — push notifications
+- **RAWG API** — optional game metadata autofill
+
+## Principles
+
+- Structure domains modularly (controller → service → repository)
+- No `unwrap()` — use proper error propagation with `?`
+- DTOs separate from domain models
+- `AppError` enum: `Unauthorized` / `Validation` (user-facing) / `Database` / `Internal` (logged, generic response)
+- Consistent API error shape: `{ "error": "message" }`
+
+## Code Quality
+
+- `cargo fmt` mandatory before commit
+- `cargo clippy -- -D warnings` must pass with zero warnings
+- `cargo test` must pass
 
 ---
 
-# 6. Infrastructure
+# Frontend (React)
 
-## Ziele
+## Technology
 
-- Reproduzierbarkeit
-- Einfache lokale Entwicklung
-- Klare Services-Trennung
+- **React 19** + **TypeScript**
+- **Vite 8** — build tool and dev server
+- **Tailwind CSS 4** — utility-first styling
+- **React Router 7** — client-side routing
+- **Keycloak JS 26** — OIDC auth with automatic token refresh
+- **Vitest** + **React Testing Library** — unit tests
+- **Atomic Design** — atoms → molecules → organisms → templates → pages
+
+## Principles
+
+- UI / logic separation — no side effects in pure UI components
+- API calls only in `src/services/` — never inline `fetch` in components
+- Reusability — components receive data via props, not by fetching it themselves
+- No business logic in the frontend — validate only at system boundaries
+
+## Code Quality
+
+- `npm run lint` must pass with zero errors
+- `npm run test:run` must pass
+- `npm run build` (TypeScript check + Vite build) must succeed
 
 ---
 
-# 7. Sicherheit
+# API
 
-- Input Validation im Backend
-- CORS explizit setzen
+- REST/JSON, versioned under `/api/v1/`
+- Centralised API client layer (`api.ts`) — authenticated fetch wrapper
+- Uniform error responses: `{ "error": "message" }`
+- SSE for real-time events: `/api/v1/groups/{id}/events?token=<jwt>`
 
 ---
 
-# 8. Coding-Standards
+# Infrastructure
+
+## Goals
+
+- Reproducibility
+- Simple local development
+- Clear service separation
+
+## Local dev stack
+
+| Service | URL | Credentials |
+|---|---|---|
+| Keycloak | http://localhost:8080 | admin / admin |
+| SurrealDB | ws://localhost:8000 | root / root |
+
+Backend runs on `http://localhost:3000`, frontend dev server on `http://localhost:5173`.
+
+---
+
+# Security
+
+- **No secrets in code or git** — use `.env.local` / `config/app.local.yaml` (both gitignored)
+- **No `.env` files with real secrets committed** — only example files with placeholder values
+- **Input validation in the backend** — never trust frontend data
+- **CORS explicitly configured** — allow only the known frontend origin
+- **Security headers** on all responses (backend middleware + nginx): `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`
+- **Body size limits** — 2 MB global JSON limit, manual 5 MB check for thumbnail uploads
+- **Least privilege** — Docker containers run as non-root users where possible
+- **No secrets in logs** — never log tokens, passwords, or private keys
+
+---
+
+# Code Standards
 
 ## Rust
 
-- rustfmt verpflichtend
-- clippy ohne Warnungen
-- sauberes Error-Handling
+- `rustfmt` enforced
+- `clippy -- -D warnings` — zero warnings policy
+- Clean error handling — no `unwrap()`, no `expect()` in production paths
 
-## React
+## React / TypeScript
 
-- ESLint + Prettier
-- TypeScript bevorzugt
-- Keine Side Effects in UI Komponenten
-
----
-
-# 9. Erweiterbarkeit
-
-- Modular erweiterbares Backend / Frontend
-- Ggf. teilweise Umstellung auf WebSockets oder ähnliche Technologie wo es Sinn ergeben würde
+- ESLint — zero errors policy
+- TypeScript strict — no `any` unless genuinely unavoidable
+- No side effects in render functions
 
 ---
 
-# 10. Datenbank
+# Branching Strategy
 
-## Technologie
+Branch names follow the same type vocabulary as commits:
 
-- SurrealDB und REST
+| Type | Branch pattern | Example |
+|---|---|---|
+| New feature | `feat/<topic>` | `feat/group-invitations` |
+| Bug fix | `fix/<topic>` | `fix/keycloak-redirect` |
+| Refactor | `refactor/<topic>` | `refactor/session-service` |
+| Documentation | `docs/<topic>` | `docs/api-endpoints` |
+| Build / infra | `build/<topic>` | `build/nginx-hardening` |
+| CI/CD | `ci/<topic>` | `ci/add-clippy-check` |
+| Chore | `chore/<topic>` | `chore/update-deps` |
 
----
-
-# 📌 Commit Convention (Backend + Frontend + Infrastructure)
-
-Dieses Projekt folgt einer klaren Commit-Struktur, um Änderungen nachvollziehbar, automatisierbar und KI-lesbar zu halten.
-
----
-
-## 🧱 Grundformat
-
-<type>(<scope>): <kurze Beschreibung>
-
-Optional:
-
-<type>(<scope>): <kurze Beschreibung>
-
-- Detail 1
-- Detail 2
+- Use lowercase and hyphens — no underscores, no camelCase
+- Keep topics short and descriptive (2–4 words max)
+- One logical change per branch
 
 ---
 
-## 🏷️ Types (Commit-Arten)
+# Commit Convention
 
-### ✨ feat
-Neue Funktionalität
+This project follows [Conventional Commits](https://www.conventionalcommits.org/).
 
-feat(auth): add JWT login flow 🔐
-feat(api): add user profile endpoint 👤
+## Format
 
----
+```
+<type>(<scope>): <emoji> <short description>
 
-### 🐛 fix
-Bugfixes
+[optional body — bullet points for details]
+```
 
-fix(frontend): resolve login redirect issue 🧭
-fix(backend): handle null pointer in user service 🧯
+- **type** — see table below
+- **scope** — affected area (see scope examples)
+- **emoji** — one emoji directly after the colon, before the description
+- **description** — imperative mood, lowercase, no period, English
 
----
+## Types
 
-### ♻️ refactor
-Code-Verbesserung ohne funktionale Änderung
+| Type | Emoji | When to use |
+|---|---|---|
+| `feat` | ✨ | New user-facing feature |
+| `fix` | 🐛 | Bug fix |
+| `refactor` | ♻️ | Code improvement without behaviour change |
+| `style` | 🎨 | Formatting, UI-only styling |
+| `perf` | ⚡ | Performance improvement |
+| `test` | 🧪 | Adding or updating tests |
+| `docs` | 📚 | Documentation only |
+| `build` | 🔧 | Build system, Docker, dependencies, infra |
+| `ci` | ⚙️ | CI/CD pipeline changes |
+| `chore` | 🔨 | Tooling, config, maintenance (no production code) |
+| `revert` | ⏪ | Reverts a previous commit |
 
-refactor(backend): simplify auth middleware ♻️
-refactor(frontend): restructure API client layer 🧹
+> **Security fixes** use `fix` with a security-relevant description and 🔐 emoji.
+> **Infrastructure changes** use `build` — this maps to the standard Conventional Commits `build` type.
 
----
+## Scope Examples
 
-### 🎨 style
-Nur UI / Formatierung / Styling
+`backend` · `frontend` · `api` · `auth` · `db` · `ui` · `docker` · `ci` · `infra` · `deps`
 
-style(frontend): improve button spacing 🎨
-style(ui): adjust dark mode colors 🌙
+## Examples
 
----
+```
+feat(backend): ✨ add group invitation endpoint
+fix(frontend): 🐛 resolve token refresh loop on inactivity
+refactor(backend): ♻️ extract session validation into service layer
+build(docker): 🔧 switch nginx to unprivileged image on port 8080
+fix(auth): 🔐 box surrealdb::Error to reduce AppError enum size
+docs(readme): 📚 update deployment instructions for path-based routing
+ci(github): ⚙️ add clippy -D warnings check to backend job
+test(frontend): 🧪 wrap SessionList tests in MemoryRouter
+```
 
-### ⚡ perf
-Performance-Optimierungen
+## Rules
 
-perf(api): reduce DB query count ⚡
-perf(frontend): memoize heavy components 🚀
-
----
-
-### 🧪 test
-Tests hinzufügen oder ändern
-
-test(auth): add login unit tests 🧪
-test(api): improve integration coverage ✅
-
----
-
-### 📚 docs
-Dokumentation
-
-docs(readme): update setup instructions 📚
-docs(api): add endpoint documentation 📝
-
----
-
-### 🔧 chore
-Build, tooling, dependencies, infra
-
-chore(deps): update Rust dependencies 🔧
-chore(docker): improve compose setup 🐳
-chore(ci): add GitHub Actions pipeline ⚙️
+- One logical change per commit
+- Clear technical description — no vague messages ("fix bug", "update code", "stuff")
+- Imperative mood ("add", "fix", "remove" — not "added", "fixed", "removed")
+- English as standard
+- Body optional but encouraged for non-obvious changes
 
 ---
 
-### 🚀 infra
-Infrastructure / Docker / Deployment
+# Pull Request Guidelines
 
-infra(docker): add multi-stage backend build 🐳
-infra(k8s): add staging deployment config ☸️
+## Title
 
----
+Follows the same format as a commit message:
+```
+feat(backend): ✨ add RAWG autofill for game library
+```
 
-### 🔐 security
-Security fixes
+## Body
 
-security(auth): fix JWT expiration handling 🔐
-security(api): sanitize user input 🛡️
+```markdown
+## Summary
+- What changed and why (2–5 bullet points)
 
----
+## Test plan
+- [ ] Unit tests pass (`cargo test` / `npm run test:run`)
+- [ ] Linting passes (`cargo clippy -- -D warnings` / `npm run lint`)
+- [ ] Manually tested: <what you clicked/tested>
+- [ ] No regressions in adjacent features
 
-## 📦 Scope Beispiele
+## Related
+Closes #<issue> (if applicable)
+```
 
-backend
-frontend
-api
-auth
-db
-ui
-docker
-ci
-infra
+## Rules
 
----
-
-## 📌 Beispiele für gute Commits
-
-### Backend
-feat(backend): add user registration endpoint 👤
-fix(backend): prevent SQL injection in search query 🛡️
-refactor(backend): split service layer into modules ♻️
-
----
-
-### Frontend
-feat(frontend): add dashboard overview page 📊
-fix(frontend): resolve state sync issue in profile page 🔄
-style(frontend): improve form validation UI 🎨
-
----
-
-### Infrastructure
-infra(docker): optimize frontend build stage 🐳
-chore(ci): add lint and test pipeline ⚙️
-
----
-
-## 🚫 Nicht erlaubt
-
-- "fix bug"
-- "update code"
-- "stuff"
-- unklare oder nicht beschreibende Messages
-
----
-
-## 📏 Regeln
-
-- maximal 1 funktionale Änderung pro Commit
-- klare technische Beschreibung
-- keine subjektiven Aussagen
-- Englisch als Standard
-- Emojis optional, aber konsistent
-
----
-
-## 🧠 Ziel
-
-- nachvollziehbare Historie
-- CI/CD-freundlich
-- gut lesbar für Menschen & Tools
-- skalierbar für Teams und KI-Agenten
+- PRs target `main` via a feature/fix branch — no direct pushes to `main`
+- One logical feature or fix per PR — keep scope small
+- Self-review before requesting review — read your own diff
+- CI must be green before merge
