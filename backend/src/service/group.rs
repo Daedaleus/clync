@@ -90,6 +90,8 @@ impl GroupService {
             id: group.id,
             name: group.name,
             is_public: group.is_public,
+            creator_id: group.creator_id,
+            discord_invite: group.discord_invite,
             members,
             common_games,
             possible_games: possible,
@@ -130,6 +132,46 @@ impl GroupService {
 
     pub async fn delete(&self, group_id: &str) -> Result<(), AppError> {
         self.repo.delete(group_id.to_owned()).await?;
+        Ok(())
+    }
+
+    pub async fn set_discord_invite(
+        &self,
+        group_id: &str,
+        url: Option<String>,
+        requester_id: &str,
+        is_admin: bool,
+    ) -> Result<(), AppError> {
+        // Validate URL format when provided
+        if let Some(ref u) = url {
+            let valid = u.starts_with("https://discord.gg/")
+                || u.starts_with("https://discord.com/invite/");
+            if !valid {
+                return Err(AppError::Validation(
+                    "Ungültiger Discord-Einladungslink. Erlaubt: discord.gg/... oder discord.com/invite/...".into(),
+                ));
+            }
+            if u.len() > 200 {
+                return Err(AppError::Validation("Link zu lang (max. 200 Zeichen)".into()));
+            }
+        }
+
+        let group = self
+            .repo
+            .find_by_id(group_id.to_owned())
+            .await?
+            .ok_or_else(|| AppError::Validation("Gruppe nicht gefunden".into()))?;
+
+        let is_creator = group.creator_id.as_deref() == Some(requester_id);
+        if !is_creator && !is_admin {
+            return Err(AppError::Unauthorized(
+                "Nur der Ersteller oder Admins können den Discord-Link bearbeiten".into(),
+            ));
+        }
+
+        self.repo
+            .set_discord_invite(group_id.to_owned(), url)
+            .await?;
         Ok(())
     }
 }
@@ -269,6 +311,9 @@ mod tests {
             panic!()
         }
         async fn find_all(&self) -> Result<Vec<Group>, surrealdb::Error> {
+            panic!()
+        }
+        async fn set_discord_invite(&self, _: String, _: Option<String>) -> Result<(), surrealdb::Error> {
             panic!()
         }
     }

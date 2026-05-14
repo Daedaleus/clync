@@ -76,6 +76,7 @@ pub trait GroupRepo: Send + Sync {
     async fn share_group(&self, user_a: String, user_b: String) -> Result<bool, surrealdb::Error>;
     async fn delete(&self, group_id: String) -> Result<(), surrealdb::Error>;
     async fn find_all(&self) -> Result<Vec<Group>, surrealdb::Error>;
+    async fn set_discord_invite(&self, group_id: String, url: Option<String>) -> Result<(), surrealdb::Error>;
 }
 
 #[async_trait]

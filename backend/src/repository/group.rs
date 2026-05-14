@@ -26,8 +26,9 @@ impl GroupRepo for GroupRepository {
     ) -> Result<Option<Group>, surrealdb::Error> {
         let mut res = self.db
             .query(
-                "CREATE group CONTENT { name: $name, is_public: $is_public, members: [$creator_id] }
-                 RETURN meta::id(id) as id, name, is_public, members",
+                "CREATE group CONTENT { name: $name, is_public: $is_public, members: [$creator_id], creator_id: $creator_id }
+                 RETURN meta::id(id) as id, name, is_public, members,
+                        creator_id, discord_invite ?? null as discord_invite",
             )
             .bind(("name", name))
             .bind(("is_public", is_public))
@@ -40,7 +41,9 @@ impl GroupRepo for GroupRepository {
         let mut res = self
             .db
             .query(
-                "SELECT meta::id(id) as id, name, is_public, members
+                "SELECT meta::id(id) as id, name, is_public, members,
+                        creator_id ?? null as creator_id,
+                        discord_invite ?? null as discord_invite
                  FROM type::thing('group', $id)",
             )
             .bind(("id", group_id))
@@ -67,7 +70,9 @@ impl GroupRepo for GroupRepository {
         let mut res = self
             .db
             .query(
-                "SELECT meta::id(id) as id, name, is_public, members
+                "SELECT meta::id(id) as id, name, is_public, members,
+                        creator_id ?? null as creator_id,
+                        discord_invite ?? null as discord_invite
                  FROM group WHERE is_public = true LIMIT 50",
             )
             .await?;
@@ -78,7 +83,9 @@ impl GroupRepo for GroupRepository {
         let mut res = self
             .db
             .query(
-                "SELECT meta::id(id) as id, name, is_public, members
+                "SELECT meta::id(id) as id, name, is_public, members,
+                        creator_id ?? null as creator_id,
+                        discord_invite ?? null as discord_invite
                  FROM group
                  WHERE is_public = true
                    AND string::contains(string::lowercase(name), string::lowercase($q))
@@ -93,7 +100,9 @@ impl GroupRepo for GroupRepository {
         let mut res = self
             .db
             .query(
-                "SELECT meta::id(id) as id, name, is_public, members
+                "SELECT meta::id(id) as id, name, is_public, members,
+                        creator_id ?? null as creator_id,
+                        discord_invite ?? null as discord_invite
                  FROM group WHERE members CONTAINS $user_id",
             )
             .bind(("user_id", keycloak_id))
@@ -135,8 +144,22 @@ impl GroupRepo for GroupRepository {
     async fn find_all(&self) -> Result<Vec<Group>, surrealdb::Error> {
         let mut res = self
             .db
-            .query("SELECT meta::id(id) as id, name, is_public, members FROM group ORDER BY name")
+            .query(
+                "SELECT meta::id(id) as id, name, is_public, members,
+                        creator_id ?? null as creator_id,
+                        discord_invite ?? null as discord_invite
+                 FROM group ORDER BY name",
+            )
             .await?;
         res.take(0)
+    }
+
+    async fn set_discord_invite(&self, group_id: String, url: Option<String>) -> Result<(), surrealdb::Error> {
+        self.db
+            .query("UPDATE type::thing('group', $id) SET discord_invite = $url")
+            .bind(("id", group_id))
+            .bind(("url", url))
+            .await?;
+        Ok(())
     }
 }

@@ -246,6 +246,9 @@ mod tests {
         async fn find_all(&self) -> Result<Vec<Group>, surrealdb::Error> {
             panic!()
         }
+        async fn set_discord_invite(&self, _: String, _: Option<String>) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
     }
 
     fn svc() -> UserService {
