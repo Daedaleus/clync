@@ -8,7 +8,11 @@ use axum::{
 use serde::Deserialize;
 
 use crate::{
-    config::app_state::AppState, error::AppError, middleware::auth::AuthUser,
+    config::app_state::AppState,
+    dto::group::GroupSummary,
+    error::AppError,
+    middleware::auth::AuthUser,
+    repository::{group::GroupRepository, traits::GroupRepo},
     service::user::UserService,
 };
 
@@ -21,6 +25,7 @@ pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/users/search", get(search_handler))
         .route("/users/{id}", get(profile_handler))
+        .route("/users/{id}/groups", get(public_groups_handler))
 }
 
 async fn search_handler(
@@ -33,6 +38,20 @@ async fn search_handler(
         .search(q, &user.keycloak_id)
         .await?;
     Ok(Json(users))
+}
+
+async fn public_groups_handler(
+    State(state): State<AppState>,
+    Extension(_user): Extension<AuthUser>,
+    Path(id): Path<String>,
+) -> Result<Json<Vec<GroupSummary>>, AppError> {
+    let groups = GroupRepository::new(Arc::clone(&state.db))
+        .find_public_by_member(id)
+        .await?
+        .into_iter()
+        .map(GroupSummary::from)
+        .collect();
+    Ok(Json(groups))
 }
 
 async fn profile_handler(
