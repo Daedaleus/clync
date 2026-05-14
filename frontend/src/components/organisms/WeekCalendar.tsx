@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import SessionRow from '../molecules/SessionRow';
 import type { Session } from '../../types';
-import { isPast, fmtTime } from '../../utils/date';
+import { isPast, isLateJoinable, fmtTime } from '../../utils/date';
 import { config } from '../../config';
 
 const DAY_LIMIT = 2;
@@ -24,7 +24,7 @@ export default function WeekCalendar({ sessions, onJoin }: Props) {
     const d = new Date(today); d.setDate(d.getDate() + i); return d;
   });
 
-  const futureSessions = sessions.filter((s) => !isPast(s.scheduled_at));
+  const futureSessions = sessions.filter((s) => !isPast(s.scheduled_at) || isLateJoinable(s.scheduled_at));
   const byDay = new Map<string, Session[]>();
   const later: Session[] = [];
 

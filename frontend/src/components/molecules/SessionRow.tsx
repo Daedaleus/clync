@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import Badge from '../atoms/Badge';
 import Button from '../atoms/Button';
 import type { Session } from '../../types';
-import { isPast, fmtDateTime } from '../../utils/date';
+import { isPast, isLateJoinable, fmtDateTime } from '../../utils/date';
 import { config } from '../../config';
 
 interface Props {
@@ -17,7 +17,8 @@ function thumbnailSrc(session: { thumbnail_url?: string | null; game: string }) 
 }
 
 export default function SessionRow({ session: s, onJoin, onDelete }: Props) {
-  const past = isPast(s.scheduled_at);
+  const lateJoinable = isLateJoinable(s.scheduled_at);
+  const past = isPast(s.scheduled_at) && !lateJoinable;
   const src = thumbnailSrc(s);
 
   return (
@@ -43,6 +44,11 @@ export default function SessionRow({ session: s, onJoin, onDelete }: Props) {
             {s.game}
           </span>
           <Badge variant={s.scope === 'global' ? 'global' : 'groups'} />
+          {lateJoinable && (
+            <span className="text-xs font-medium text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded-full">
+              läuft gerade
+            </span>
+          )}
           {past && <span className="text-xs text-zinc-600">vergangen</span>}
         </div>
         <p className="text-xs text-zinc-500">
