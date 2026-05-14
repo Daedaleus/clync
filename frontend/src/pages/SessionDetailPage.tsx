@@ -8,7 +8,7 @@ import PageLayout from '../components/templates/PageLayout';
 import { api } from '../services/api';
 import { isAdmin } from '../utils/auth';
 import { config } from '../config';
-import { fmtDateTime, isPast } from '../utils/date';
+import { fmtDateTime, isPast, isLateJoinable } from '../utils/date';
 
 interface Participant {
   keycloak_id: string;
@@ -77,7 +77,8 @@ export default function SessionDetailPage() {
     <PageLayout>{error && <ErrorBanner message={error} />}</PageLayout>
   );
 
-  const past = isPast(session.scheduled_at);
+  const lateJoinable = isLateJoinable(session.scheduled_at);
+  const past = isPast(session.scheduled_at) && !lateJoinable;
   const thumbSrc = session.thumbnail_url
     ? `${config.apiUrl}/api/v1/library/${encodeURIComponent(session.game)}/thumbnail`
     : undefined;

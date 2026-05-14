@@ -7,7 +7,7 @@ import SessionList from '../components/organisms/SessionList';
 import PageLayout from '../components/templates/PageLayout';
 import type { GroupSummary, Session } from '../types';
 import { api } from '../services/api';
-import { isPast } from '../utils/date';
+import { isPast, isLateJoinable } from '../utils/date';
 
 export default function SessionsPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -20,7 +20,10 @@ export default function SessionsPage() {
     api.get<GroupSummary[]>('/api/v1/groups/mine').then(setMyGroups).catch(console.error);
   }, []);
 
-  const upcoming = useMemo(() => sessions.filter((s) => !isPast(s.scheduled_at)), [sessions]);
+  const upcoming = useMemo(
+    () => sessions.filter((s) => !isPast(s.scheduled_at) || isLateJoinable(s.scheduled_at)),
+    [sessions],
+  );
   const groupSessions = useMemo(() => upcoming.filter((s) => s.scope === 'groups'), [upcoming]);
   const globalSessions = useMemo(() => upcoming.filter((s) => s.scope === 'global'), [upcoming]);
 

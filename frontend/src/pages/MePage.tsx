@@ -9,7 +9,7 @@ import SessionList from '../components/organisms/SessionList';
 import PageLayout from '../components/templates/PageLayout';
 import type { Game, GroupSummary, Invitation, Session } from '../types';
 import { api } from '../services/api';
-import { isPast } from '../utils/date';
+import { isPast, isLateJoinable } from '../utils/date';
 
 interface MeData {
   username: string;
@@ -38,7 +38,7 @@ export default function MePage() {
   }, []);
 
   const upcomingSessions = useMemo(
-    () => sessions.filter((s) => !isPast(s.scheduled_at)).slice(0, 3),
+    () => sessions.filter((s) => !isPast(s.scheduled_at) || isLateJoinable(s.scheduled_at)).slice(0, 3),
     [sessions],
   );
 
