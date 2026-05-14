@@ -1,0 +1,29 @@
+# Local configuration overrides — copy to app.local.yaml and fill in values:
+#   cp config/app.local.yaml.example config/app.local.yaml
+#
+# This file is GITIGNORED. Never commit app.local.yaml.
+# Only list values that differ from app.yaml defaults.
+
+vapid:
+  # Generate: npx web-push generate-vapid-keys
+  public_key: "REPLACE_ME"
+  private_key: "REPLACE_ME"
+  subject: "mailto:your@email.com"
+
+# Uncomment to override other defaults:
+# server:
+#   port: 8080
+#
+# database:
+#   url: "ws://production-host:8000"
+#   username: "admin"
+#   password: "secure-password"
+#
+# keycloak:
+#   jwks_uri: "https://auth.example.com/realms/WhatsUp/protocol/openid-connect/certs"
+#
+# cors:
+#   frontend_url: "https://app.example.com"
+#
+# rawg:
+#   api_key: "your-rawg-api-key-here"

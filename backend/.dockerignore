@@ -1,0 +1,15 @@
+target/
+uploads/
+
+# Local secrets — never in the image
+config/app.local.yaml
+.env
+.env.*
+
+# Not needed for compilation
+**/*.md
+README*
+.git/
+.gitignore
+.github/
+tests/
