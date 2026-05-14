@@ -4,7 +4,7 @@ use axum::{
     Extension, Json, Router,
     extract::{Path, State},
     http::StatusCode,
-    routing::{get},
+    routing::get,
 };
 use serde_json::json;
 
@@ -21,7 +21,10 @@ pub fn routes() -> Router<AppState> {
         .route("/sessions", get(feed_handler).post(create_handler))
         .route("/sessions/mine", get(mine_handler))
         .route("/sessions/{id}", get(detail_handler).delete(delete_handler))
-        .route("/sessions/{id}/join", axum::routing::post(join_handler).delete(leave_handler))
+        .route(
+            "/sessions/{id}/join",
+            axum::routing::post(join_handler).delete(leave_handler),
+        )
 }
 
 async fn detail_handler(
@@ -40,7 +43,9 @@ async fn mine_handler(
     State(state): State<AppState>,
     Extension(user): Extension<AuthUser>,
 ) -> Result<Json<impl serde::Serialize>, AppError> {
-    let sessions = SessionService::new(Arc::clone(&state.db)).get_mine(&user).await?;
+    let sessions = SessionService::new(Arc::clone(&state.db))
+        .get_mine(&user)
+        .await?;
     Ok(Json(sessions))
 }
 
@@ -48,7 +53,9 @@ async fn feed_handler(
     State(state): State<AppState>,
     Extension(user): Extension<AuthUser>,
 ) -> Result<Json<impl serde::Serialize>, AppError> {
-    let sessions = SessionService::new(Arc::clone(&state.db)).get_feed(&user).await?;
+    let sessions = SessionService::new(Arc::clone(&state.db))
+        .get_feed(&user)
+        .await?;
     Ok(Json(sessions))
 }
 
@@ -58,7 +65,9 @@ async fn create_handler(
     Json(body): Json<CreateSessionRequest>,
 ) -> Result<Json<impl serde::Serialize>, AppError> {
     let group_ids = body.group_ids.clone();
-    let session = SessionService::new(Arc::clone(&state.db)).create(&user, body).await?;
+    let session = SessionService::new(Arc::clone(&state.db))
+        .create(&user, body)
+        .await?;
 
     for group_id in &group_ids {
         let _ = state.events.send(GroupEvent {
@@ -91,7 +100,10 @@ async fn join_handler(
     Extension(user): Extension<AuthUser>,
     Path(id): Path<String>,
 ) -> Result<StatusCode, AppError> {
-    if let Some(session) = SessionService::new(Arc::clone(&state.db)).join(&id, &user).await? {
+    if let Some(session) = SessionService::new(Arc::clone(&state.db))
+        .join(&id, &user)
+        .await?
+    {
         for group_id in &session.group_ids {
             let _ = state.events.send(GroupEvent {
                 group_id: group_id.clone(),
@@ -108,7 +120,9 @@ async fn leave_handler(
     Extension(user): Extension<AuthUser>,
     Path(id): Path<String>,
 ) -> Result<StatusCode, AppError> {
-    SessionService::new(Arc::clone(&state.db)).leave(&id, &user.keycloak_id).await?;
+    SessionService::new(Arc::clone(&state.db))
+        .leave(&id, &user.keycloak_id)
+        .await?;
     Ok(StatusCode::NO_CONTENT)
 }
 

@@ -4,8 +4,8 @@ use std::sync::Arc;
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use surrealdb::{Surreal, engine::remote::ws::Client};
 use web_push::{
-    ContentEncoding, IsahcWebPushClient, SubscriptionInfo, SubscriptionKeys,
-    VapidSignatureBuilder, WebPushClient, WebPushMessageBuilder,
+    ContentEncoding, IsahcWebPushClient, SubscriptionInfo, SubscriptionKeys, VapidSignatureBuilder,
+    WebPushClient, WebPushMessageBuilder,
 };
 
 use crate::dto::session::SessionResponse;
@@ -56,13 +56,13 @@ impl PushService {
         //     [0] EXPLICIT           (optional: curve OID P-256)
         //       OID 1.2.840.10045.3.1.7
         let mut der = vec![
-            0x30, 0x31,                                                 // SEQUENCE (49 bytes)
-            0x02, 0x01, 0x01,                                           // version = 1
-            0x04, 0x20,                                                 // OCTET STRING (32 bytes)
+            0x30, 0x31, // SEQUENCE (49 bytes)
+            0x02, 0x01, 0x01, // version = 1
+            0x04, 0x20, // OCTET STRING (32 bytes)
         ];
         der.extend_from_slice(&raw);
         der.extend_from_slice(&[
-            0xA0, 0x0A,                                                 // [0] EXPLICIT (10 bytes)
+            0xA0, 0x0A, // [0] EXPLICIT (10 bytes)
             0x06, 0x08, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x03, 0x01, 0x07, // OID P-256
         ]);
         Some(der)
@@ -85,7 +85,9 @@ impl PushService {
         let sec1_der = match Self::key_to_sec1_der(&self.vapid_private_key) {
             Some(d) => d,
             None => {
-                tracing::warn!("Invalid VAPID_PRIVATE_KEY — expected 32-byte P-256 scalar in base64url");
+                tracing::warn!(
+                    "Invalid VAPID_PRIVATE_KEY — expected 32-byte P-256 scalar in base64url"
+                );
                 return Ok(());
             }
         };
@@ -117,7 +119,9 @@ impl PushService {
             return Ok(());
         }
 
-        let url = session.group_ids.first()
+        let url = session
+            .group_ids
+            .first()
             .map(|gid| format!("/groups/{gid}"))
             .unwrap_or_else(|| "/".into());
 
@@ -131,17 +135,26 @@ impl PushService {
         for sub in subscriptions {
             let info = SubscriptionInfo {
                 endpoint: sub.endpoint.clone(),
-                keys: SubscriptionKeys { p256dh: sub.p256dh.clone(), auth: sub.auth.clone() },
+                keys: SubscriptionKeys {
+                    p256dh: sub.p256dh.clone(),
+                    auth: sub.auth.clone(),
+                },
             };
 
             let vapid = match VapidSignatureBuilder::from_der(Cursor::new(&sec1_der), &info) {
                 Ok(v) => v,
-                Err(e) => { tracing::error!("VAPID builder error: {e}"); continue; }
+                Err(e) => {
+                    tracing::error!("VAPID builder error: {e}");
+                    continue;
+                }
             };
 
             let sig = match vapid.build() {
                 Ok(s) => s,
-                Err(e) => { tracing::error!("VAPID sign error: {e}"); continue; }
+                Err(e) => {
+                    tracing::error!("VAPID sign error: {e}");
+                    continue;
+                }
             };
 
             let mut builder = WebPushMessageBuilder::new(&info);
@@ -150,10 +163,16 @@ impl PushService {
 
             let msg = match builder.build() {
                 Ok(m) => m,
-                Err(e) => { tracing::error!("Push message build error: {e}"); continue; }
+                Err(e) => {
+                    tracing::error!("Push message build error: {e}");
+                    continue;
+                }
             };
 
-            tracing::info!("Push: sending to {}…", &sub.endpoint[..40.min(sub.endpoint.len())]);
+            tracing::info!(
+                "Push: sending to {}…",
+                &sub.endpoint[..40.min(sub.endpoint.len())]
+            );
             if let Err(e) = self.client.send(msg).await {
                 tracing::error!("Push send failed: {e}");
             } else {

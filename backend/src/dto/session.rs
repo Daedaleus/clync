@@ -55,7 +55,10 @@ pub struct SessionDetailResponse {
 
 impl SessionDetail {
     pub fn into_detail_response(self, requester_id: &str) -> SessionDetailResponse {
-        let is_participant = self.participants.iter().any(|p| p.keycloak_id == requester_id);
+        let is_participant = self
+            .participants
+            .iter()
+            .any(|p| p.keycloak_id == requester_id);
         let participant_count = 1 + self.participants.len();
         let thumbnail_url = if self.game_has_thumbnail {
             Some(format!("/api/v1/library/{}/thumbnail", self.game))
@@ -75,8 +78,13 @@ impl SessionDetail {
             scheduled_at: self.scheduled_at,
             scope: self.scope,
             group_ids: self.group_ids,
-            participants: self.participants.into_iter()
-                .map(|p| ParticipantInfo { keycloak_id: p.keycloak_id, username: p.username })
+            participants: self
+                .participants
+                .into_iter()
+                .map(|p| ParticipantInfo {
+                    keycloak_id: p.keycloak_id,
+                    username: p.username,
+                })
                 .collect(),
         }
     }

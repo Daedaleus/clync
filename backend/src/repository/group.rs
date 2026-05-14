@@ -18,7 +18,12 @@ impl GroupRepository {
 
 #[async_trait]
 impl GroupRepo for GroupRepository {
-    async fn create(&self, name: String, is_public: bool, creator_id: String) -> Result<Option<Group>, surrealdb::Error> {
+    async fn create(
+        &self,
+        name: String,
+        is_public: bool,
+        creator_id: String,
+    ) -> Result<Option<Group>, surrealdb::Error> {
         let mut res = self.db
             .query(
                 "CREATE group CONTENT { name: $name, is_public: $is_public, members: [$creator_id] }
@@ -32,7 +37,8 @@ impl GroupRepo for GroupRepository {
     }
 
     async fn find_by_id(&self, group_id: String) -> Result<Option<Group>, surrealdb::Error> {
-        let mut res = self.db
+        let mut res = self
+            .db
             .query(
                 "SELECT meta::id(id) as id, name, is_public, members
                  FROM type::thing('group', $id)",
@@ -42,8 +48,12 @@ impl GroupRepo for GroupRepository {
         res.take(0)
     }
 
-    async fn find_member_games(&self, member_ids: Vec<String>) -> Result<Vec<MemberWithGames>, surrealdb::Error> {
-        let mut res = self.db
+    async fn find_member_games(
+        &self,
+        member_ids: Vec<String>,
+    ) -> Result<Vec<MemberWithGames>, surrealdb::Error> {
+        let mut res = self
+            .db
             .query(
                 "SELECT keycloak_id, username, games ?? [] as games
                  FROM user WHERE keycloak_id IN $members",
@@ -54,7 +64,8 @@ impl GroupRepo for GroupRepository {
     }
 
     async fn list_public(&self) -> Result<Vec<Group>, surrealdb::Error> {
-        let mut res = self.db
+        let mut res = self
+            .db
             .query(
                 "SELECT meta::id(id) as id, name, is_public, members
                  FROM group WHERE is_public = true LIMIT 50",
@@ -64,7 +75,8 @@ impl GroupRepo for GroupRepository {
     }
 
     async fn search_public(&self, query: String) -> Result<Vec<Group>, surrealdb::Error> {
-        let mut res = self.db
+        let mut res = self
+            .db
             .query(
                 "SELECT meta::id(id) as id, name, is_public, members
                  FROM group
@@ -78,7 +90,8 @@ impl GroupRepo for GroupRepository {
     }
 
     async fn find_by_member(&self, keycloak_id: String) -> Result<Vec<Group>, surrealdb::Error> {
-        let mut res = self.db
+        let mut res = self
+            .db
             .query(
                 "SELECT meta::id(id) as id, name, is_public, members
                  FROM group WHERE members CONTAINS $user_id",
@@ -120,7 +133,8 @@ impl GroupRepo for GroupRepository {
     }
 
     async fn find_all(&self) -> Result<Vec<Group>, surrealdb::Error> {
-        let mut res = self.db
+        let mut res = self
+            .db
             .query("SELECT meta::id(id) as id, name, is_public, members FROM group ORDER BY name")
             .await?;
         res.take(0)

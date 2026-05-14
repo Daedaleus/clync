@@ -63,7 +63,10 @@ impl From<Group> for GroupResponse {
 
 impl From<Group> for GroupSummary {
     fn from(g: Group) -> Self {
-        GroupSummary { id: g.id, name: g.name, is_public: g.is_public }
+        GroupSummary {
+            id: g.id,
+            name: g.name,
+            is_public: g.is_public,
+        }
     }
 }
-

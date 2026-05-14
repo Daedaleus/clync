@@ -26,10 +26,15 @@ impl SessionRepository {
 impl SessionRepo for SessionRepository {
     async fn create(
         &self,
-        user_id: String, username: String, game: String,
-        scheduled_at: String, scope: String, group_ids: Vec<String>,
+        user_id: String,
+        username: String,
+        game: String,
+        scheduled_at: String,
+        scope: String,
+        group_ids: Vec<String>,
     ) -> Result<Option<Session>, surrealdb::Error> {
-        let mut res = self.db
+        let mut res = self
+            .db
             .query(format!(
                 "CREATE session CONTENT {{
                     user_id: $user_id, username: $username, game: $game,
@@ -47,7 +52,10 @@ impl SessionRepo for SessionRepository {
         res.take(0)
     }
 
-    async fn find_by_id(&self, session_id: String) -> Result<Option<SessionDetail>, surrealdb::Error> {
+    async fn find_by_id(
+        &self,
+        session_id: String,
+    ) -> Result<Option<SessionDetail>, surrealdb::Error> {
         let mut res = self.db
             .query(
                 "SELECT meta::id(id) as id, user_id, username, game, scheduled_at, scope, group_ids,
@@ -63,7 +71,8 @@ impl SessionRepo for SessionRepository {
     }
 
     async fn find_feed(&self, my_group_ids: Vec<String>) -> Result<Vec<Session>, surrealdb::Error> {
-        let mut res = self.db
+        let mut res = self
+            .db
             .query(format!(
                 "SELECT {SELECT_FIELDS} FROM session
                  WHERE scope = 'global'
@@ -76,7 +85,8 @@ impl SessionRepo for SessionRepository {
     }
 
     async fn find_mine(&self, user_id: String) -> Result<Vec<Session>, surrealdb::Error> {
-        let mut res = self.db
+        let mut res = self
+            .db
             .query(format!(
                 "SELECT {SELECT_FIELDS} FROM session
                  WHERE user_id = $user_id OR participants CONTAINS $user_id
@@ -88,7 +98,8 @@ impl SessionRepo for SessionRepository {
     }
 
     async fn find_for_group(&self, group_id: String) -> Result<Vec<Session>, surrealdb::Error> {
-        let mut res = self.db
+        let mut res = self
+            .db
             .query(format!(
                 "SELECT {SELECT_FIELDS} FROM session
                  WHERE scope = 'groups' AND group_ids CONTAINS $group_id
@@ -99,8 +110,13 @@ impl SessionRepo for SessionRepository {
         res.take(0)
     }
 
-    async fn join(&self, session_id: String, user_id: String) -> Result<Option<Session>, surrealdb::Error> {
-        let mut res = self.db
+    async fn join(
+        &self,
+        session_id: String,
+        user_id: String,
+    ) -> Result<Option<Session>, surrealdb::Error> {
+        let mut res = self
+            .db
             .query(format!(
                 "UPDATE type::thing('session', $id)
                  SET participants = array::union(participants ?? [], [$user_id])
@@ -124,8 +140,12 @@ impl SessionRepo for SessionRepository {
 
     async fn delete_as_admin(&self, session_id: String) -> Result<Vec<String>, surrealdb::Error> {
         #[derive(serde::Deserialize)]
-        struct SessionBefore { #[serde(default)] group_ids: Vec<String> }
-        let mut res = self.db
+        struct SessionBefore {
+            #[serde(default)]
+            group_ids: Vec<String>,
+        }
+        let mut res = self
+            .db
             .query("DELETE type::thing('session', $id) RETURN BEFORE")
             .bind(("id", session_id))
             .await?;
@@ -133,17 +153,20 @@ impl SessionRepo for SessionRepository {
         Ok(row.map(|r| r.group_ids).unwrap_or_default())
     }
 
-    async fn delete(&self, session_id: String, user_id: String) -> Result<Vec<String>, surrealdb::Error> {
+    async fn delete(
+        &self,
+        session_id: String,
+        user_id: String,
+    ) -> Result<Vec<String>, surrealdb::Error> {
         #[derive(serde::Deserialize)]
         struct SessionBefore {
             #[serde(default)]
             group_ids: Vec<String>,
         }
 
-        let mut res = self.db
-            .query(
-                "DELETE type::thing('session', $id) WHERE user_id = $user_id RETURN BEFORE",
-            )
+        let mut res = self
+            .db
+            .query("DELETE type::thing('session', $id) WHERE user_id = $user_id RETURN BEFORE")
             .bind(("id", session_id))
             .bind(("user_id", user_id))
             .await?;

@@ -28,12 +28,20 @@ impl UserRepo for UserRepository {
     /// Syncs auth fields only — never overwrites user-owned data like games.
     async fn upsert(&self, user: User) -> Result<(), surrealdb::Error> {
         let id = user.keycloak_id.clone();
-        self.db.upsert::<Option<User>>(("user", id)).merge(user).await?;
+        self.db
+            .upsert::<Option<User>>(("user", id))
+            .merge(user)
+            .await?;
         Ok(())
     }
 
-    async fn search(&self, query: String, exclude_id: String) -> Result<Vec<UserSummary>, surrealdb::Error> {
-        let mut res = self.db
+    async fn search(
+        &self,
+        query: String,
+        exclude_id: String,
+    ) -> Result<Vec<UserSummary>, surrealdb::Error> {
+        let mut res = self
+            .db
             .query(
                 "SELECT keycloak_id, username FROM user
                  WHERE keycloak_id != $exclude
@@ -50,14 +58,19 @@ impl UserRepo for UserRepository {
         if ids.is_empty() {
             return Ok(vec![]);
         }
-        let mut res = self.db
+        let mut res = self
+            .db
             .query("SELECT keycloak_id, username FROM user WHERE keycloak_id IN $ids")
             .bind(("ids", ids))
             .await?;
         res.take(0)
     }
 
-    async fn add_game(&self, keycloak_id: String, game_name: String) -> Result<(), surrealdb::Error> {
+    async fn add_game(
+        &self,
+        keycloak_id: String,
+        game_name: String,
+    ) -> Result<(), surrealdb::Error> {
         self.db
             .query("UPDATE type::thing('user', $id) SET games = array::union(games ?? [], [$game])")
             .bind(("id", keycloak_id))
@@ -66,7 +79,11 @@ impl UserRepo for UserRepository {
         Ok(())
     }
 
-    async fn remove_game(&self, keycloak_id: String, game_name: String) -> Result<(), surrealdb::Error> {
+    async fn remove_game(
+        &self,
+        keycloak_id: String,
+        game_name: String,
+    ) -> Result<(), surrealdb::Error> {
         self.db
             .query("UPDATE type::thing('user', $id) SET games -= $game")
             .bind(("id", keycloak_id))
@@ -76,7 +93,8 @@ impl UserRepo for UserRepository {
     }
 
     async fn get_friend_ids(&self, keycloak_id: String) -> Result<Vec<String>, surrealdb::Error> {
-        let mut res = self.db
+        let mut res = self
+            .db
             .query("SELECT friends ?? [] as friends FROM type::thing('user', $id) LIMIT 1")
             .bind(("id", keycloak_id))
             .await?;
@@ -96,7 +114,11 @@ impl UserRepo for UserRepository {
         Ok(())
     }
 
-    async fn remove_friend(&self, user_id: String, friend_id: String) -> Result<(), surrealdb::Error> {
+    async fn remove_friend(
+        &self,
+        user_id: String,
+        friend_id: String,
+    ) -> Result<(), surrealdb::Error> {
         self.db
             .query("UPDATE type::thing('user', $id) SET friends -= $friend_id")
             .bind(("id", user_id))
@@ -105,8 +127,12 @@ impl UserRepo for UserRepository {
         Ok(())
     }
 
-    async fn get_full_profile(&self, keycloak_id: String) -> Result<Option<UserFullProfile>, surrealdb::Error> {
-        let mut res = self.db
+    async fn get_full_profile(
+        &self,
+        keycloak_id: String,
+    ) -> Result<Option<UserFullProfile>, surrealdb::Error> {
+        let mut res = self
+            .db
             .query(
                 "SELECT keycloak_id, username,
                         games ?? [] as games,
@@ -121,11 +147,16 @@ impl UserRepo for UserRepository {
         res.take(0)
     }
 
-    async fn find_who_added(&self, user_id: String, candidate_ids: Vec<String>) -> Result<Vec<UserSummary>, surrealdb::Error> {
+    async fn find_who_added(
+        &self,
+        user_id: String,
+        candidate_ids: Vec<String>,
+    ) -> Result<Vec<UserSummary>, surrealdb::Error> {
         if candidate_ids.is_empty() {
             return Ok(vec![]);
         }
-        let mut res = self.db
+        let mut res = self
+            .db
             .query(
                 "SELECT keycloak_id, username FROM user
                  WHERE keycloak_id IN $candidates AND $user_id IN (friends ?? [])",

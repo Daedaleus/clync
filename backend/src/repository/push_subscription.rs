@@ -34,11 +34,15 @@ impl PushSubscriptionRepo for PushSubscriptionRepository {
         Ok(())
     }
 
-    async fn find_by_user_ids(&self, user_ids: Vec<String>) -> Result<Vec<PushSubscription>, surrealdb::Error> {
+    async fn find_by_user_ids(
+        &self,
+        user_ids: Vec<String>,
+    ) -> Result<Vec<PushSubscription>, surrealdb::Error> {
         if user_ids.is_empty() {
             return Ok(vec![]);
         }
-        let mut res = self.db
+        let mut res = self
+            .db
             .query("SELECT * FROM push_subscription WHERE user_id IN $ids")
             .bind(("ids", user_ids))
             .await?;

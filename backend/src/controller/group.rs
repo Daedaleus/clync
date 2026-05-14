@@ -51,7 +51,8 @@ async fn search_handler(
 ) -> Result<Json<impl serde::Serialize>, AppError> {
     let query = params.q.as_deref().unwrap_or("");
     let groups = GroupService::new(Arc::clone(&state.db))
-        .search_public(query, user.is_admin).await?;
+        .search_public(query, user.is_admin)
+        .await?;
     Ok(Json(groups))
 }
 
@@ -61,7 +62,9 @@ async fn delete_handler(
     Path(id): Path<String>,
 ) -> Result<StatusCode, AppError> {
     if !user.is_admin {
-        return Err(AppError::Unauthorized("Nur Admins können Gruppen löschen".into()));
+        return Err(AppError::Unauthorized(
+            "Nur Admins können Gruppen löschen".into(),
+        ));
     }
     GroupService::new(Arc::clone(&state.db)).delete(&id).await?;
     Ok(StatusCode::NO_CONTENT)
@@ -71,7 +74,9 @@ async fn mine_handler(
     State(state): State<AppState>,
     Extension(user): Extension<AuthUser>,
 ) -> Result<Json<impl serde::Serialize>, AppError> {
-    let groups = GroupService::new(Arc::clone(&state.db)).my_groups(&user.keycloak_id).await?;
+    let groups = GroupService::new(Arc::clone(&state.db))
+        .my_groups(&user.keycloak_id)
+        .await?;
     Ok(Json(groups))
 }
 
@@ -103,7 +108,9 @@ async fn create_handler(
     Extension(user): Extension<AuthUser>,
     Json(body): Json<CreateGroupRequest>,
 ) -> Result<Json<impl serde::Serialize>, AppError> {
-    let group = GroupService::new(Arc::clone(&state.db)).create(body, &user.keycloak_id).await?;
+    let group = GroupService::new(Arc::clone(&state.db))
+        .create(body, &user.keycloak_id)
+        .await?;
     Ok(Json(group))
 }
 
@@ -112,7 +119,9 @@ async fn join_handler(
     Extension(user): Extension<AuthUser>,
     Path(id): Path<String>,
 ) -> Result<StatusCode, AppError> {
-    GroupService::new(Arc::clone(&state.db)).join(&id, &user.keycloak_id).await?;
+    GroupService::new(Arc::clone(&state.db))
+        .join(&id, &user.keycloak_id)
+        .await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -134,7 +143,9 @@ async fn sse_handler(
                 _ => return None,
             };
             let data = serde_json::to_string(&event.payload).unwrap_or_default();
-            Some(Ok::<_, Infallible>(Event::default().event(&event.kind).data(data)))
+            Some(Ok::<_, Infallible>(
+                Event::default().event(&event.kind).data(data),
+            ))
         }
     });
 

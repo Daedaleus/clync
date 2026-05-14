@@ -20,8 +20,10 @@ impl InvitationRepository {
 impl InvitationRepo for InvitationRepository {
     async fn create(
         &self,
-        group_id: String, group_name: String,
-        inviter_id: String, inviter_username: String,
+        group_id: String,
+        group_name: String,
+        inviter_id: String,
+        inviter_username: String,
         invitee_id: String,
     ) -> Result<(), surrealdb::Error> {
         self.db
@@ -41,8 +43,12 @@ impl InvitationRepo for InvitationRepository {
         Ok(())
     }
 
-    async fn find_pending_for_user(&self, user_id: String) -> Result<Vec<InvitationRecord>, surrealdb::Error> {
-        let mut res = self.db
+    async fn find_pending_for_user(
+        &self,
+        user_id: String,
+    ) -> Result<Vec<InvitationRecord>, surrealdb::Error> {
+        let mut res = self
+            .db
             .query(
                 "SELECT meta::id(id) as id, group_id, group_name,
                         inviter_id, inviter_username, invitee_id, created_at
@@ -54,7 +60,11 @@ impl InvitationRepo for InvitationRepository {
         res.take(0)
     }
 
-    async fn find_by_id_for_invitee(&self, inv_id: String, user_id: String) -> Result<Option<InvitationRecord>, surrealdb::Error> {
+    async fn find_by_id_for_invitee(
+        &self,
+        inv_id: String,
+        user_id: String,
+    ) -> Result<Option<InvitationRecord>, surrealdb::Error> {
         let mut res = self.db
             .query(
                 "SELECT meta::id(id) as id, group_id, group_name, inviter_id, inviter_username, invitee_id
@@ -66,7 +76,11 @@ impl InvitationRepo for InvitationRepository {
         res.take(0)
     }
 
-    async fn exists_for_group_and_invitee(&self, group_id: String, invitee_id: String) -> Result<bool, surrealdb::Error> {
+    async fn exists_for_group_and_invitee(
+        &self,
+        group_id: String,
+        invitee_id: String,
+    ) -> Result<bool, surrealdb::Error> {
         let mut res = self.db
             .query("SELECT meta::id(id) as id FROM invitation WHERE group_id = $group_id AND invitee_id = $invitee_id LIMIT 1")
             .bind(("group_id", group_id))

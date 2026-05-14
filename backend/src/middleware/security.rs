@@ -1,5 +1,5 @@
-use axum::{extract::Request, middleware::Next, response::Response};
 use axum::http::header::{HeaderName, HeaderValue};
+use axum::{extract::Request, middleware::Next, response::Response};
 
 /// Adds standard security headers to every response.
 pub async fn security_headers(request: Request, next: Next) -> Response {

@@ -9,8 +9,15 @@ mod service;
 
 use std::sync::Arc;
 
-use axum::{Router, extract::DefaultBodyLimit, http::{HeaderValue, Method, header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE}}};
 use axum::middleware::from_fn;
+use axum::{
+    Router,
+    extract::DefaultBodyLimit,
+    http::{
+        HeaderValue, Method,
+        header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
+    },
+};
 use tokio::sync::{RwLock, broadcast};
 use tower_http::cors::CorsLayer;
 
@@ -54,7 +61,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let cors = CorsLayer::new()
         .allow_origin(settings.cors.frontend_url.parse::<HeaderValue>()?)
-        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE, Method::OPTIONS])
+        .allow_methods([
+            Method::GET,
+            Method::POST,
+            Method::PUT,
+            Method::DELETE,
+            Method::OPTIONS,
+        ])
         .allow_headers([AUTHORIZATION, CONTENT_TYPE, ACCEPT]);
     // expose_headers intentionally omitted — no custom headers need to be
     // readable by JS.

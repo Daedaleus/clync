@@ -1,10 +1,10 @@
 pub mod game;
-pub mod rawg;
-pub mod invitation;
-pub mod invite;
 pub mod group;
 pub mod health;
+pub mod invitation;
+pub mod invite;
 pub mod me;
 pub mod push;
+pub mod rawg;
 pub mod session;
 pub mod user;
