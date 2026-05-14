@@ -152,7 +152,9 @@ impl GroupService {
                 ));
             }
             if u.len() > 200 {
-                return Err(AppError::Validation("Link zu lang (max. 200 Zeichen)".into()));
+                return Err(AppError::Validation(
+                    "Link zu lang (max. 200 Zeichen)".into(),
+                ));
             }
         }
 
@@ -313,7 +315,11 @@ mod tests {
         async fn find_all(&self) -> Result<Vec<Group>, surrealdb::Error> {
             panic!()
         }
-        async fn set_discord_invite(&self, _: String, _: Option<String>) -> Result<(), surrealdb::Error> {
+        async fn set_discord_invite(
+            &self,
+            _: String,
+            _: Option<String>,
+        ) -> Result<(), surrealdb::Error> {
             panic!()
         }
     }
