@@ -75,8 +75,9 @@ impl SessionRepo for SessionRepository {
             .db
             .query(format!(
                 "SELECT {SELECT_FIELDS} FROM session
-                 WHERE scope = 'global'
-                    OR (scope = 'groups' AND group_ids CONTAINSANY $group_ids)
+                 WHERE scheduled_at >= time::now() - 2h
+                   AND (scope = 'global'
+                    OR (scope = 'groups' AND group_ids CONTAINSANY $group_ids))
                  ORDER BY scheduled_at ASC LIMIT 100"
             ))
             .bind(("group_ids", my_group_ids))
@@ -89,7 +90,8 @@ impl SessionRepo for SessionRepository {
             .db
             .query(format!(
                 "SELECT {SELECT_FIELDS} FROM session
-                 WHERE user_id = $user_id OR participants CONTAINS $user_id
+                 WHERE scheduled_at >= time::now() - 2h
+                   AND (user_id = $user_id OR participants CONTAINS $user_id)
                  ORDER BY scheduled_at ASC"
             ))
             .bind(("user_id", user_id))
@@ -102,7 +104,8 @@ impl SessionRepo for SessionRepository {
             .db
             .query(format!(
                 "SELECT {SELECT_FIELDS} FROM session
-                 WHERE scope = 'groups' AND group_ids CONTAINS $group_id
+                 WHERE scheduled_at >= time::now() - 2h
+                   AND scope = 'groups' AND group_ids CONTAINS $group_id
                  ORDER BY scheduled_at ASC"
             ))
             .bind(("group_id", group_id))
