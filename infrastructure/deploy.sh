@@ -47,11 +47,18 @@ podman build \
 
 echo "==> Streaming backend to ${SERVER} …"
 podman save whatsup-backend | ssh "$SERVER" docker load
+# Ensure the image is reachable under the short name used in docker-compose.paths.yml
+ssh "$SERVER" "docker tag localhost/whatsup-backend:latest whatsup-backend:latest 2>/dev/null || true"
 
 echo "==> Streaming frontend to ${SERVER} …"
 podman save whatsup-frontend | ssh "$SERVER" docker load
+ssh "$SERVER" "docker tag localhost/whatsup-frontend:latest whatsup-frontend:latest 2>/dev/null || true"
 
 echo ""
 echo "Done. On the server run:"
-echo "  cd whatsup/infrastructure"
+echo ""
+echo "  # Pull latest compose/config changes first if infrastructure/ changed:"
+echo "  git -C ~/whatsup pull"
+echo ""
+echo "  cd ~/whatsup/infrastructure"
 echo "  docker compose -f docker-compose.paths.yml --env-file .env-paths up -d --no-build"
