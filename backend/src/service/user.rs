@@ -123,18 +123,6 @@ impl UserService {
             .collect())
     }
 
-    pub async fn add_friend(&self, user_id: &str, friend_id: &str) -> Result<(), AppError> {
-        if user_id == friend_id {
-            return Err(AppError::Validation(
-                "Du kannst dich nicht selbst als Freund hinzufügen".into(),
-            ));
-        }
-        self.user_repo
-            .add_friend(user_id.to_owned(), friend_id.to_owned())
-            .await?;
-        Ok(())
-    }
-
     pub async fn remove_friend(&self, user_id: &str, friend_id: &str) -> Result<(), AppError> {
         self.user_repo
             .remove_friend(user_id.to_owned(), friend_id.to_owned())
@@ -257,12 +245,6 @@ mod tests {
 
     fn svc() -> UserService {
         UserService::with_repos(Box::new(PanicUserRepo), Box::new(PanicGroupRepo))
-    }
-
-    #[tokio::test]
-    async fn add_friend_self_returns_error() {
-        let err = svc().add_friend("user1", "user1").await;
-        assert!(err.is_err());
     }
 
     #[tokio::test]

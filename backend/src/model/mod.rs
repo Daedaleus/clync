@@ -1,3 +1,4 @@
+pub mod friend_request;
 pub mod game;
 pub mod group;
 pub mod invitation;

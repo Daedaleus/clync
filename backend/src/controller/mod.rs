@@ -1,4 +1,5 @@
 pub mod friend;
+pub mod friend_request;
 pub mod game;
 pub mod group;
 pub mod health;
@@ -29,6 +30,7 @@ pub fn protected_routes() -> Router<AppState> {
         .merge(game::routes())
         .merge(user::routes())
         .merge(friend::routes())
+        .merge(friend_request::routes())
         .merge(session::routes())
         .merge(push::routes())
         .merge(invitation::routes())
