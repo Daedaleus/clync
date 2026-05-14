@@ -4,6 +4,18 @@
 - Use best practices and current versions for each language/ecosystem
 - No `Co-Authored-By` lines in commit messages
 
+## Workflow — what I do for every task
+
+1. **Create a branch** before touching any code — never commit directly to `main`:
+   ```sh
+   git checkout -b fix/join-page-redirect
+   ```
+2. **Make changes** and commit to that branch using the commit convention below
+3. **Tell the user** the branch name so they can open a PR
+
+- If I am already on a non-`main` branch that matches the task, I continue on it
+- Hotfixes on `main` are only allowed when explicitly instructed by the user
+
 ---
 
 # Project Overview
