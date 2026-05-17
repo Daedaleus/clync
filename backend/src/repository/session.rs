@@ -38,7 +38,7 @@ impl SessionRepo for SessionRepository {
             .query(format!(
                 "CREATE session CONTENT {{
                     user_id: $user_id, username: $username, game: $game,
-                    scheduled_at: $scheduled_at, scope: $scope,
+                    scheduled_at: <datetime>$scheduled_at, scope: $scope,
                     group_ids: $group_ids, participants: []
                  }} RETURN {SELECT_FIELDS}"
             ))
