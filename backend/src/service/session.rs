@@ -167,7 +167,208 @@ pub(crate) fn validate_create_request(req: &CreateSessionRequest) -> Result<(), 
 
 #[cfg(test)]
 mod tests {
+    use async_trait::async_trait;
+
     use super::*;
+    use crate::{
+        middleware::auth::AuthUser,
+        model::{
+            group::Group,
+            session::{Session, SessionDetail},
+        },
+        repository::traits::{GroupRepo, SessionRepo},
+    };
+
+    // ── Mock helpers ──────────────────────────────────────────────────────────
+
+    struct FakeSessionRepo {
+        feed: Vec<Session>,
+        mine: Vec<Session>,
+        for_group: Vec<Session>,
+    }
+
+    #[async_trait]
+    impl SessionRepo for FakeSessionRepo {
+        async fn create(
+            &self,
+            _: String,
+            _: String,
+            _: String,
+            _: String,
+            _: String,
+            _: Vec<String>,
+        ) -> Result<Option<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_feed(&self, _: Vec<String>) -> Result<Vec<Session>, surrealdb::Error> {
+            Ok(self.feed.clone())
+        }
+        async fn find_mine(&self, _: String) -> Result<Vec<Session>, surrealdb::Error> {
+            Ok(self.mine.clone())
+        }
+        async fn find_for_group(&self, _: String) -> Result<Vec<Session>, surrealdb::Error> {
+            Ok(self.for_group.clone())
+        }
+        async fn find_by_id(&self, _: String) -> Result<Option<SessionDetail>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn join(&self, _: String, _: String) -> Result<Option<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn leave(&self, _: String, _: String) -> Result<(), surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn delete(&self, _: String, _: String) -> Result<Vec<String>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn delete_as_admin(&self, _: String) -> Result<Vec<String>, surrealdb::Error> {
+            unimplemented!()
+        }
+    }
+
+    struct FakeGroupRepo;
+
+    #[async_trait]
+    impl GroupRepo for FakeGroupRepo {
+        async fn find_by_member(&self, _: String) -> Result<Vec<Group>, surrealdb::Error> {
+            Ok(vec![])
+        }
+        async fn create(
+            &self,
+            _: String,
+            _: bool,
+            _: String,
+        ) -> Result<Option<Group>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_by_id(&self, _: String) -> Result<Option<Group>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_member_games(
+            &self,
+            _: Vec<String>,
+        ) -> Result<Vec<crate::model::group::MemberWithGames>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn list_public(&self) -> Result<Vec<Group>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn search_public(&self, _: String) -> Result<Vec<Group>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_public_by_member(&self, _: String) -> Result<Vec<Group>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn join(&self, _: String, _: String) -> Result<(), surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn share_group(&self, _: String, _: String) -> Result<bool, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn delete(&self, _: String) -> Result<(), surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_all(&self) -> Result<Vec<Group>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn set_discord_invite(
+            &self,
+            _: String,
+            _: Option<String>,
+        ) -> Result<(), surrealdb::Error> {
+            unimplemented!()
+        }
+    }
+
+    fn session_at(scheduled_at: &str, scope: &str) -> Session {
+        Session {
+            id: "s1".into(),
+            user_id: "u1".into(),
+            username: "Alice".into(),
+            game: "CS2".into(),
+            scheduled_at: scheduled_at.into(),
+            scope: scope.into(),
+            group_ids: if scope == "groups" {
+                vec!["g1".into()]
+            } else {
+                vec![]
+            },
+            participants: vec![],
+            group_names: vec![],
+            game_has_thumbnail: false,
+        }
+    }
+
+    fn alice() -> AuthUser {
+        AuthUser {
+            keycloak_id: "u1".into(),
+            username: "Alice".into(),
+            is_admin: false,
+        }
+    }
+
+    // ── Regression: sessions with future scheduled_at must not be filtered out ─
+    //
+    // Before the fix, scheduled_at was stored as a SurrealDB string. Comparing
+    // it to time::now() (a datetime) always yielded false, so every query
+    // returned an empty list regardless of when the session was scheduled.
+
+    #[tokio::test]
+    async fn feed_contains_global_session_scheduled_later_same_day() {
+        let svc = SessionService::with_repos(
+            Box::new(FakeSessionRepo {
+                feed: vec![session_at("2099-05-17T20:00:00Z", "global")],
+                mine: vec![],
+                for_group: vec![],
+            }),
+            Box::new(FakeGroupRepo),
+        );
+        let result = svc.get_feed(&alice()).await.unwrap();
+        assert_eq!(
+            result.len(),
+            1,
+            "global session scheduled in the future must appear in feed"
+        );
+        assert_eq!(result[0].scheduled_at, "2099-05-17T20:00:00Z");
+    }
+
+    #[tokio::test]
+    async fn mine_contains_session_scheduled_later_same_day() {
+        let svc = SessionService::with_repos(
+            Box::new(FakeSessionRepo {
+                feed: vec![],
+                mine: vec![session_at("2099-05-17T20:00:00Z", "global")],
+                for_group: vec![],
+            }),
+            Box::new(FakeGroupRepo),
+        );
+        let result = svc.get_mine(&alice()).await.unwrap();
+        assert_eq!(
+            result.len(),
+            1,
+            "own session scheduled in the future must appear in my sessions"
+        );
+        assert_eq!(result[0].scheduled_at, "2099-05-17T20:00:00Z");
+    }
+
+    #[tokio::test]
+    async fn group_feed_contains_session_scheduled_later_same_day() {
+        let svc = SessionService::with_repos(
+            Box::new(FakeSessionRepo {
+                feed: vec![],
+                mine: vec![],
+                for_group: vec![session_at("2099-05-17T20:00:00Z", "groups")],
+            }),
+            Box::new(FakeGroupRepo),
+        );
+        let result = svc.get_for_group("g1", "u1").await.unwrap();
+        assert_eq!(
+            result.len(),
+            1,
+            "group session scheduled in the future must appear in group feed"
+        );
+        assert_eq!(result[0].scheduled_at, "2099-05-17T20:00:00Z");
+    }
 
     fn req(
         game: &str,
