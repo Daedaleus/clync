@@ -224,6 +224,14 @@ mod tests {
         async fn delete_as_admin(&self, _: String) -> Result<Vec<String>, surrealdb::Error> {
             unimplemented!()
         }
+        async fn find_sessions_to_notify(
+            &self,
+        ) -> Result<Vec<crate::model::session::SessionStartReminder>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn mark_start_notified(&self, _: String) -> Result<(), surrealdb::Error> {
+            unimplemented!()
+        }
     }
 
     struct FakeGroupRepo;

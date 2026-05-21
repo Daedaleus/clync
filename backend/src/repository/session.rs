@@ -3,7 +3,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use surrealdb::{Surreal, engine::remote::ws::Client};
 
-use crate::model::session::{Session, SessionDetail};
+use crate::model::session::{Session, SessionDetail, SessionStartReminder};
 use crate::repository::traits::SessionRepo;
 
 pub struct SessionRepository {
@@ -154,6 +154,28 @@ impl SessionRepo for SessionRepository {
             .await?;
         let row: Option<SessionBefore> = res.take(0)?;
         Ok(row.map(|r| r.group_ids).unwrap_or_default())
+    }
+
+    async fn find_sessions_to_notify(&self) -> Result<Vec<SessionStartReminder>, surrealdb::Error> {
+        let mut res = self
+            .db
+            .query(
+                "SELECT meta::id(id) as id, user_id, participants ?? [] as participants, game
+                 FROM session
+                 WHERE scheduled_at >= time::now()
+                   AND scheduled_at < time::now() + 5m
+                   AND start_notified != true",
+            )
+            .await?;
+        res.take(0)
+    }
+
+    async fn mark_start_notified(&self, session_id: String) -> Result<(), surrealdb::Error> {
+        self.db
+            .query("UPDATE type::thing('session', $id) SET start_notified = true")
+            .bind(("id", session_id))
+            .await?;
+        Ok(())
     }
 
     async fn delete(

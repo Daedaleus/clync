@@ -19,6 +19,7 @@ use axum::{
     },
 };
 use tokio::sync::{RwLock, broadcast};
+use tokio::time::Duration;
 use tower_http::cors::CorsLayer;
 
 use config::app_state::AppState;
@@ -76,6 +77,50 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         state.clone(),
         middleware::auth::auth_middleware,
     ));
+
+    // Background task: send push notifications for sessions starting within 5 minutes.
+    let notify_state = state.clone();
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(Duration::from_secs(60));
+        interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+        loop {
+            interval.tick().await;
+            let db = Arc::clone(&notify_state.db);
+            let repo = repository::session::SessionRepository::new(Arc::clone(&db));
+            use repository::traits::SessionRepo;
+            match repo.find_sessions_to_notify().await {
+                Ok(sessions) if !sessions.is_empty() => {
+                    let push = match service::push::PushService::new(
+                        db,
+                        notify_state.vapid_private_key.clone(),
+                        notify_state.vapid_subject.clone(),
+                    ) {
+                        Ok(p) => p,
+                        Err(e) => {
+                            tracing::error!("Push init error: {e}");
+                            continue;
+                        }
+                    };
+                    for session in sessions {
+                        let mut user_ids = vec![session.user_id.clone()];
+                        user_ids.extend(session.participants.iter().cloned());
+                        user_ids.dedup();
+                        if let Err(e) = push
+                            .notify_session_start(user_ids, &session.game, &session.id)
+                            .await
+                        {
+                            tracing::error!("Session start push error: {e}");
+                        }
+                        if let Err(e) = repo.mark_start_notified(session.id).await {
+                            tracing::error!("mark_start_notified error: {e}");
+                        }
+                    }
+                }
+                Err(e) => tracing::error!("find_sessions_to_notify error: {e}"),
+                _ => {}
+            }
+        }
+    });
 
     let app = Router::new()
         .nest(
