@@ -12,6 +12,7 @@ use crate::config::app_state::AppState;
 use crate::error::AppError;
 use crate::middleware::auth::AuthUser;
 use crate::service::invitation::InvitationService;
+use crate::service::push::PushService;
 
 #[derive(Deserialize)]
 struct InviteBody {
@@ -67,9 +68,31 @@ async fn invite_handler(
     Path(group_id): Path<String>,
     Json(body): Json<InviteBody>,
 ) -> Result<StatusCode, AppError> {
-    InvitationService::new(Arc::clone(&state.db))
-        .invite(&group_id, &user, &body.user_id)
-        .await?;
+    let svc = InvitationService::new(Arc::clone(&state.db));
+    // Fetch group name before invite so we can include it in the notification
+    let group_name = svc.group_name_for_notify(&group_id).await?;
+    svc.invite(&group_id, &user, &body.user_id).await?;
+
+    let invitee_id = body.user_id.clone();
+    let inviter_username = user.username.clone();
+    let state_clone = state.clone();
+    tokio::spawn(async move {
+        if let Ok(push) = PushService::new(
+            Arc::clone(&state_clone.db),
+            state_clone.vapid_private_key.clone(),
+            state_clone.vapid_subject.clone(),
+        ) {
+            let _ = push
+                .notify_user(
+                    &invitee_id,
+                    "WhatsUp – Gruppeneinladung",
+                    &format!("{inviter_username} hat dich zu \"{group_name}\" eingeladen"),
+                    "/me",
+                )
+                .await;
+        }
+    });
+
     Ok(StatusCode::NO_CONTENT)
 }
 

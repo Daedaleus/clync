@@ -18,6 +18,7 @@ use crate::{
         traits::{FriendRequestRepo, UserRepo},
         user::UserRepository,
     },
+    service::push::PushService,
 };
 
 pub fn routes() -> Router<AppState> {
@@ -92,9 +93,29 @@ async fn send_handler(
         ));
     }
 
+    let from_username = user.username.clone();
     req_repo
-        .create(user.keycloak_id, user.username, to_id)
+        .create(user.keycloak_id, user.username, to_id.clone())
         .await?;
+
+    let state_clone = state.clone();
+    tokio::spawn(async move {
+        if let Ok(svc) = PushService::new(
+            Arc::clone(&state_clone.db),
+            state_clone.vapid_private_key.clone(),
+            state_clone.vapid_subject.clone(),
+        ) {
+            let _ = svc
+                .notify_user(
+                    &to_id,
+                    "WhatsUp – Freundschaftsanfrage",
+                    &format!("{from_username} möchte dein Freund sein"),
+                    "/me",
+                )
+                .await;
+        }
+    });
+
     Ok(StatusCode::NO_CONTENT)
 }
 
