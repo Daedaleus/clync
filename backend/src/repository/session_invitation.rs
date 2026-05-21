@@ -53,7 +53,7 @@ impl SessionInvitationRepo for SessionInvitationRepository {
             .db
             .query(
                 "SELECT meta::id(id) as id, session_id, game, scheduled_at,
-                        inviter_id, inviter_username, invitee_id
+                        inviter_id, inviter_username, invitee_id, created_at
                  FROM session_invitation WHERE invitee_id = $user_id
                  ORDER BY created_at DESC",
             )
