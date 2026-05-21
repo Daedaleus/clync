@@ -45,6 +45,19 @@ export default function GroupDetailPage() {
   const { notify } = useNotifications();
   const myId = keycloak.tokenParsed?.sub as string | undefined;
 
+  // Track token changes so the EventSource reconnects with a fresh token after refresh.
+  // Keycloak renews the access token transparently; without this the EventSource would
+  // keep sending the expired token and get 401s (reported by Firefox as CORS: null status).
+  const [tokenVersion, setTokenVersion] = useState(0);
+  useEffect(() => {
+    const prev = keycloak.onAuthRefreshSuccess;
+    keycloak.onAuthRefreshSuccess = () => {
+      if (typeof prev === 'function') prev.call(keycloak);
+      setTokenVersion((v) => v + 1);
+    };
+    return () => { keycloak.onAuthRefreshSuccess = prev; };
+  }, []);
+
   useEffect(() => {
     if (!id) return;
     api.get<GroupDetail>(`/api/v1/groups/${id}`).then(setGroup).catch(() => setError('Gruppe nicht gefunden'));
@@ -52,7 +65,8 @@ export default function GroupDetailPage() {
     api.get<Game[]>('/api/v1/library').then((gs) => setLibrary(new Map(gs.map((g) => [g.name, g])))).catch(console.error);
   }, [id]);
 
-  // SSE subscription for real-time session updates
+  // SSE subscription for real-time session updates.
+  // Reconnects automatically when the Keycloak token is refreshed (tokenVersion).
   useEffect(() => {
     if (!id || !keycloak.token) return;
 
@@ -88,7 +102,7 @@ export default function GroupDetailPage() {
     });
 
     return () => es.close();
-  }, [id, notify]);
+  }, [id, notify, tokenVersion]);
 
   const handleShowInvite = async () => {
     if (!id) return;
