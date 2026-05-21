@@ -122,6 +122,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     });
 
+    // Background task: purge stale data hourly.
+    // - Sessions more than 24 h past their scheduled_at
+    // - Session invitations whose session has already started (2 h grace)
+    let cleanup_db = Arc::clone(&state.db);
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(Duration::from_secs(3600));
+        interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+        loop {
+            interval.tick().await;
+            let queries = [
+                "DELETE session WHERE scheduled_at < time::now() - 24h",
+                "DELETE session_invitation WHERE scheduled_at < time::now() - 2h",
+            ];
+            for q in &queries {
+                if let Err(e) = cleanup_db.query(*q).await {
+                    tracing::error!("Cleanup error ({q}): {e}");
+                }
+            }
+            tracing::info!("Cleanup: stale sessions and session invitations purged");
+        }
+    });
+
     let app = Router::new()
         .nest(
             "/api/v1",
