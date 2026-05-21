@@ -121,6 +121,16 @@ impl InvitationService {
         Ok(())
     }
 
+    /// Returns the group name — used by the controller to build push notification text.
+    pub async fn group_name_for_notify(&self, group_id: &str) -> Result<String, AppError> {
+        Ok(self
+            .group_repo
+            .find_by_id(group_id.to_owned())
+            .await?
+            .map(|g| g.name)
+            .unwrap_or_default())
+    }
+
     /// Returns mutual friends of the requester who are not yet members and have no pending invite.
     pub async fn get_invitable(
         &self,
