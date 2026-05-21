@@ -34,23 +34,34 @@ export function useNotifications() {
   // Separate from OS permission: tracks whether a push subscription is active
   const [subscribed, setSubscribed] = useState(false);
 
-  // On mount: restore subscription state and re-register with backend if needed
+  // On mount: ensure subscription is active and backend has the current endpoint.
+  // iOS regularly revokes push subscriptions (inactivity, OS updates, memory pressure).
+  // When that happens we re-subscribe silently so the user never has to tap the bell again.
   useEffect(() => {
     if (permission !== 'granted' || !('serviceWorker' in navigator)) return;
 
     navigator.serviceWorker.ready.then(async (registration) => {
-      const existing = await registration.pushManager.getSubscription();
-      if (!existing) { setSubscribed(false); return; }
+      let sub = await registration.pushManager.getSubscription();
 
-      setSubscribed(true);
-      // Idempotent re-registration ensures backend always has current subscription
-      // (e.g. after backend restart or first load on a new browser session)
-      try {
-        await storeSubscription(existing);
-      } catch {
-        // Silently ignore — the subscription still works, backend will get it on next enable()
+      if (!sub) {
+        // Subscription was revoked by the browser/OS — re-create it without prompting.
+        const { public_key: vapidKey } = await api.get<{ public_key: string }>(
+          '/api/v1/push/vapid-public-key',
+        );
+        sub = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidKey).buffer as ArrayBuffer,
+        });
       }
-    }).catch(() => setSubscribed(false));
+
+      // Always sync the current endpoint to the backend (covers key rotation too).
+      await storeSubscription(sub);
+      setSubscribed(true);
+    }).catch(() => {
+      // Re-subscription failed (e.g. network offline on first load) — mark as off
+      // so the UI reflects reality; the next app open will retry automatically.
+      setSubscribed(false);
+    });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const enable = async (): Promise<void> => {
