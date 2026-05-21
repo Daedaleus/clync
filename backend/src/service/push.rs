@@ -82,17 +82,6 @@ impl PushService {
             return Ok(());
         }
 
-        let sec1_der = match Self::key_to_sec1_der(&self.vapid_private_key) {
-            Some(d) => d,
-            None => {
-                tracing::warn!(
-                    "Invalid VAPID_PRIVATE_KEY — expected 32-byte P-256 scalar in base64url"
-                );
-                return Ok(());
-            }
-        };
-
-        // Collect unique member IDs across all groups, excluding the session creator
         let mut user_ids: Vec<String> = Vec::new();
         for group_id in group_ids {
             if let Some(group) = self.group_repo.find_by_id(group_id.clone()).await? {
@@ -104,18 +93,7 @@ impl PushService {
             }
         }
 
-        tracing::info!("Push: notifying {} potential recipients", user_ids.len());
-
         if user_ids.is_empty() {
-            tracing::info!("Push: no other members in group(s)");
-            return Ok(());
-        }
-
-        let subscriptions = self.push_repo.find_by_user_ids(user_ids).await?;
-        tracing::info!("Push: found {} subscription(s)", subscriptions.len());
-
-        if subscriptions.is_empty() {
-            tracing::info!("Push: no push subscriptions found for group members");
             return Ok(());
         }
 
@@ -130,6 +108,46 @@ impl PushService {
             "body": format!("{} möchte {} spielen", session.username, session.game),
             "url": url,
         });
+
+        self.send_to_users(user_ids, payload).await
+    }
+
+    /// Sends a push notification to a single user. Silently skips if not subscribed
+    /// or VAPID key is not configured.
+    pub async fn notify_user(
+        &self,
+        user_id: &str,
+        title: &str,
+        body: &str,
+        url: &str,
+    ) -> Result<(), AppError> {
+        if self.vapid_private_key.is_empty() {
+            return Ok(());
+        }
+        let payload = serde_json::json!({ "title": title, "body": body, "url": url });
+        self.send_to_users(vec![user_id.to_owned()], payload).await
+    }
+
+    async fn send_to_users(
+        &self,
+        user_ids: Vec<String>,
+        payload: serde_json::Value,
+    ) -> Result<(), AppError> {
+        let sec1_der = match Self::key_to_sec1_der(&self.vapid_private_key) {
+            Some(d) => d,
+            None => {
+                tracing::warn!(
+                    "Invalid VAPID_PRIVATE_KEY — expected 32-byte P-256 scalar in base64url"
+                );
+                return Ok(());
+            }
+        };
+
+        let subscriptions = self.push_repo.find_by_user_ids(user_ids).await?;
+        if subscriptions.is_empty() {
+            return Ok(());
+        }
+
         let payload_bytes = serde_json::to_vec(&payload).unwrap_or_default();
 
         for sub in subscriptions {
@@ -169,14 +187,8 @@ impl PushService {
                 }
             };
 
-            tracing::info!(
-                "Push: sending to {}…",
-                &sub.endpoint[..40.min(sub.endpoint.len())]
-            );
             if let Err(e) = self.client.send(msg).await {
                 tracing::error!("Push send failed: {e}");
-            } else {
-                tracing::info!("Push: ✅ sent successfully");
             }
         }
 

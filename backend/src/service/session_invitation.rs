@@ -28,6 +28,16 @@ impl SessionInvitationService {
         }
     }
 
+    /// Returns the session's game name — used by the controller to build push notification text.
+    pub async fn game_name_for_notify(&self, session_id: &str) -> Result<String, AppError> {
+        Ok(self
+            .session_repo
+            .find_by_id(session_id.to_owned())
+            .await?
+            .map(|s| s.game)
+            .unwrap_or_default())
+    }
+
     /// Invite a mutual friend to a session.
     /// Any current participant (creator or joined) may invite.
     pub async fn invite(
