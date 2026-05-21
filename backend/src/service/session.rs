@@ -36,6 +36,10 @@ impl SessionService {
     ) -> Result<SessionResponse, AppError> {
         validate_create_request(&req)?;
         let game = req.game.trim().to_owned();
+        let notes = req
+            .notes
+            .map(|n| n.trim().to_owned())
+            .filter(|n| !n.is_empty());
         let session = self
             .repo
             .create(
@@ -45,6 +49,7 @@ impl SessionService {
                 req.scheduled_at,
                 req.scope,
                 req.group_ids,
+                notes,
             )
             .await?
             .ok_or_else(|| AppError::Internal("Session creation returned no result".into()))?;
@@ -162,6 +167,13 @@ pub(crate) fn validate_create_request(req: &CreateSessionRequest) -> Result<(), 
             "Mindestens eine Gruppe auswählen".into(),
         ));
     }
+    if let Some(notes) = &req.notes
+        && notes.trim().len() > 500
+    {
+        return Err(AppError::Validation(
+            "Notizen dürfen maximal 500 Zeichen lang sein".into(),
+        ));
+    }
     Ok(())
 }
 
@@ -197,6 +209,7 @@ mod tests {
             _: String,
             _: String,
             _: Vec<String>,
+            _: Option<String>,
         ) -> Result<Option<Session>, surrealdb::Error> {
             unimplemented!()
         }
@@ -304,6 +317,7 @@ mod tests {
             participants: vec![],
             group_names: vec![],
             game_has_thumbnail: false,
+            notes: None,
         }
     }
 
@@ -389,6 +403,7 @@ mod tests {
             scheduled_at: scheduled_at.into(),
             scope: scope.into(),
             group_ids: group_ids.into_iter().map(String::from).collect(),
+            notes: None,
         }
     }
 

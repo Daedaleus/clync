@@ -11,7 +11,7 @@ pub struct SessionRepository {
 }
 
 const SELECT_FIELDS: &str =
-    "meta::id(id) as id, user_id, username, game, scheduled_at, scope, group_ids,
+    "meta::id(id) as id, user_id, username, game, scheduled_at, scope, group_ids, notes,
      participants ?? [] as participants,
      (SELECT VALUE name FROM group WHERE meta::id(id) IN $parent.group_ids) as group_names,
      (SELECT VALUE (thumbnail_b64 IS NOT NONE) FROM type::thing('game', $parent.game) LIMIT 1)[0] ?? false as game_has_thumbnail";
@@ -32,6 +32,7 @@ impl SessionRepo for SessionRepository {
         scheduled_at: String,
         scope: String,
         group_ids: Vec<String>,
+        notes: Option<String>,
     ) -> Result<Option<Session>, surrealdb::Error> {
         let mut res = self
             .db
@@ -39,7 +40,8 @@ impl SessionRepo for SessionRepository {
                 "CREATE session CONTENT {{
                     user_id: $user_id, username: $username, game: $game,
                     scheduled_at: <datetime>$scheduled_at, scope: $scope,
-                    group_ids: $group_ids, participants: []
+                    group_ids: $group_ids, participants: [],
+                    notes: $notes
                  }} RETURN {SELECT_FIELDS}"
             ))
             .bind(("user_id", user_id))
@@ -48,6 +50,7 @@ impl SessionRepo for SessionRepository {
             .bind(("scheduled_at", scheduled_at))
             .bind(("scope", scope))
             .bind(("group_ids", group_ids))
+            .bind(("notes", notes))
             .await?;
         res.take(0)
     }
@@ -58,7 +61,7 @@ impl SessionRepo for SessionRepository {
     ) -> Result<Option<SessionDetail>, surrealdb::Error> {
         let mut res = self.db
             .query(
-                "SELECT meta::id(id) as id, user_id, username, game, scheduled_at, scope, group_ids,
+                "SELECT meta::id(id) as id, user_id, username, game, scheduled_at, scope, group_ids, notes,
                         (SELECT keycloak_id, username FROM user
                          WHERE keycloak_id IN $parent.participants ?? []) as participants,
                         (SELECT VALUE name FROM group WHERE meta::id(id) IN $parent.group_ids) as group_names,
