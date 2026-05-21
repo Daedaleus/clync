@@ -38,3 +38,12 @@ export interface Invitation {
   inviter_id: string;
   inviter_username: string;
 }
+
+export interface SessionInvitation {
+  id: string;
+  session_id: string;
+  game: string;
+  scheduled_at: string;
+  inviter_id: string;
+  inviter_username: string;
+}

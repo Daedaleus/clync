@@ -9,6 +9,7 @@ pub mod library;
 pub mod me;
 pub mod push;
 pub mod session;
+pub mod session_invitation;
 pub mod user;
 
 use axum::Router;
@@ -34,6 +35,7 @@ pub fn protected_routes() -> Router<AppState> {
         .merge(session::routes())
         .merge(push::routes())
         .merge(invitation::routes())
+        .merge(session_invitation::routes())
         .merge(invite::protected_routes())
         .merge(library::routes())
 }

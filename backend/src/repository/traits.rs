@@ -8,6 +8,7 @@ use crate::model::{
     invite::InviteRecord,
     push_subscription::PushSubscription,
     session::{Session, SessionDetail},
+    session_invitation::SessionInvitationRecord,
     user::{User, UserFullProfile, UserSummary, Visibility},
 };
 
@@ -217,6 +218,34 @@ pub trait FriendRequestRepo: Send + Sync {
         req_id: String,
         user_id: String,
     ) -> Result<bool, surrealdb::Error>;
+}
+
+#[async_trait]
+pub trait SessionInvitationRepo: Send + Sync {
+    async fn create(
+        &self,
+        session_id: String,
+        game: String,
+        scheduled_at: String,
+        inviter_id: String,
+        inviter_username: String,
+        invitee_id: String,
+    ) -> Result<(), surrealdb::Error>;
+    async fn find_pending_for_user(
+        &self,
+        user_id: String,
+    ) -> Result<Vec<SessionInvitationRecord>, surrealdb::Error>;
+    async fn find_by_id_for_invitee(
+        &self,
+        inv_id: String,
+        user_id: String,
+    ) -> Result<Option<SessionInvitationRecord>, surrealdb::Error>;
+    async fn exists_for_session_and_invitee(
+        &self,
+        session_id: String,
+        invitee_id: String,
+    ) -> Result<bool, surrealdb::Error>;
+    async fn delete(&self, inv_id: String, user_id: String) -> Result<(), surrealdb::Error>;
 }
 
 #[async_trait]

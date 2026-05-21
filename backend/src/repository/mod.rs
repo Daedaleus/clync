@@ -5,5 +5,6 @@ pub mod invitation;
 pub mod invite;
 pub mod push_subscription;
 pub mod session;
+pub mod session_invitation;
 pub mod traits;
 pub mod user;

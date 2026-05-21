@@ -389,14 +389,14 @@ mod tests {
     #[test]
     fn empty_game_name_is_rejected() {
         assert!(
-            validate_create_request(&req("", "2026-05-20T18:00:00Z", "global", vec![])).is_err()
+            validate_create_request(&req("", "2099-12-31T18:00:00Z", "global", vec![])).is_err()
         );
     }
 
     #[test]
     fn whitespace_only_game_name_is_rejected() {
         assert!(
-            validate_create_request(&req("   ", "2026-05-20T18:00:00Z", "global", vec![])).is_err()
+            validate_create_request(&req("   ", "2099-12-31T18:00:00Z", "global", vec![])).is_err()
         );
     }
 
@@ -408,21 +408,21 @@ mod tests {
     #[test]
     fn invalid_scope_is_rejected() {
         assert!(
-            validate_create_request(&req("CS2", "2026-05-20T18:00:00Z", "public", vec![])).is_err()
+            validate_create_request(&req("CS2", "2099-12-31T18:00:00Z", "public", vec![])).is_err()
         );
     }
 
     #[test]
     fn groups_scope_without_group_ids_is_rejected() {
         assert!(
-            validate_create_request(&req("CS2", "2026-05-20T18:00:00Z", "groups", vec![])).is_err()
+            validate_create_request(&req("CS2", "2099-12-31T18:00:00Z", "groups", vec![])).is_err()
         );
     }
 
     #[test]
     fn global_scope_is_valid() {
         assert!(
-            validate_create_request(&req("CS2", "2026-05-20T18:00:00Z", "global", vec![])).is_ok()
+            validate_create_request(&req("CS2", "2099-12-31T18:00:00Z", "global", vec![])).is_ok()
         );
     }
 
@@ -431,7 +431,7 @@ mod tests {
         assert!(
             validate_create_request(&req(
                 "CS2",
-                "2026-05-20T18:00:00Z",
+                "2099-12-31T18:00:00Z",
                 "groups",
                 vec!["group1"]
             ))
