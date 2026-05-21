@@ -7,9 +7,11 @@ import ErrorBanner from '../components/molecules/ErrorBanner';
 import GameCard from '../components/molecules/GameCard';
 import SessionList from '../components/organisms/SessionList';
 import PageLayout from '../components/templates/PageLayout';
-import type { Game, GroupSummary, Invitation, Session } from '../types';
+import type { Game, GroupSummary, Invitation, Session, SessionInvitation } from '../types';
+import { fmtDateTime } from '../utils/date';
 import { api } from '../services/api';
 import { isPast, isLateJoinable } from '../utils/date';
+
 
 interface FriendRequest {
   id: string;
@@ -33,6 +35,7 @@ export default function MePage() {
   const [me, setMe] = useState<MeData | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [sessionInvitations, setSessionInvitations] = useState<SessionInvitation[]>([]);
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [library, setLibrary] = useState<Map<string, Game>>(new Map());
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +44,7 @@ export default function MePage() {
     api.get<MeData>('/api/v1/me').then(setMe).catch(() => setError('Profil konnte nicht geladen werden'));
     api.get<Session[]>('/api/v1/sessions/mine').then(setSessions).catch(console.error);
     api.get<Invitation[]>('/api/v1/invitations').then(setInvitations).catch(console.error);
+    api.get<SessionInvitation[]>('/api/v1/session-invitations').then(setSessionInvitations).catch(console.error);
     api.get<FriendRequest[]>('/api/v1/friends/requests').then(setFriendRequests).catch(console.error);
     api.get<Game[]>('/api/v1/library').then((gs) => setLibrary(new Map(gs.map((g) => [g.name, g])))).catch(console.error);
   }, []);
@@ -86,6 +90,20 @@ export default function MePage() {
     } catch { /* silently ignore */ }
   };
 
+  const handleAcceptSessionInvitation = async (id: string) => {
+    try {
+      await api.post(`/api/v1/session-invitations/${id}/accept`);
+      setSessionInvitations((p) => p.filter((inv) => inv.id !== id));
+    } catch { /* silently ignore */ }
+  };
+
+  const handleDeclineSessionInvitation = async (id: string) => {
+    try {
+      await api.delete(`/api/v1/session-invitations/${id}`);
+      setSessionInvitations((p) => p.filter((inv) => inv.id !== id));
+    } catch { /* silently ignore */ }
+  };
+
   const handleDeclineFriend = async (reqId: string) => {
     try {
       await api.delete(`/api/v1/friends/requests/${reqId}`);
@@ -128,6 +146,31 @@ export default function MePage() {
                         Annehmen
                       </Button>
                       <Button size="sm" variant="secondary" onClick={() => handleDecline(inv.id)}>
+                        Ablehnen
+                      </Button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* Pending session invitations */}
+          {sessionInvitations.length > 0 && (
+            <section className="space-y-2">
+              <SectionLabel>Session-Einladungen</SectionLabel>
+              <ul className="space-y-2">
+                {sessionInvitations.map((inv) => (
+                  <li key={inv.id} className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 flex items-center justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-zinc-100 truncate">{inv.game}</p>
+                      <p className="text-xs text-zinc-400">{fmtDateTime(inv.scheduled_at)} · von {inv.inviter_username}</p>
+                    </div>
+                    <div className="shrink-0 flex gap-2">
+                      <Button size="sm" variant="primary" onClick={() => handleAcceptSessionInvitation(inv.id)}>
+                        Annehmen
+                      </Button>
+                      <Button size="sm" variant="secondary" onClick={() => handleDeclineSessionInvitation(inv.id)}>
                         Ablehnen
                       </Button>
                     </div>

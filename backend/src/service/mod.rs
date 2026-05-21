@@ -7,4 +7,5 @@ pub mod me;
 pub mod push;
 pub mod rawg;
 pub mod session;
+pub mod session_invitation;
 pub mod user;
