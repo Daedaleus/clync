@@ -125,7 +125,7 @@ export default function SessionCreateForm({ groups, onCreate, onError, onCancel 
   };
 
   const selectClass =
-    'w-full bg-zinc-800 border border-zinc-700 text-sm text-zinc-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-violet-500';
+    'w-full h-9 bg-zinc-800 border border-zinc-700 text-sm text-zinc-200 rounded-lg px-3 focus:outline-none focus:ring-1 focus:ring-violet-500';
 
   return (
     <form onSubmit={handleSubmit} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-4">
@@ -138,7 +138,7 @@ export default function SessionCreateForm({ groups, onCreate, onError, onCancel 
 
       {/* Date + Time */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
+        <div className="min-w-0 space-y-1.5">
           <SectionLabel>Datum</SectionLabel>
           <input
             type="date"
@@ -149,7 +149,7 @@ export default function SessionCreateForm({ groups, onCreate, onError, onCancel 
             className={selectClass}
           />
         </div>
-        <div className="space-y-1.5">
+        <div className="min-w-0 space-y-1.5">
           <SectionLabel>Uhrzeit</SectionLabel>
           <select
             value={effectiveTime}
