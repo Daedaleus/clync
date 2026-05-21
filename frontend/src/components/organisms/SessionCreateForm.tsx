@@ -64,6 +64,7 @@ export default function SessionCreateForm({ groups, onCreate, onError, onCancel 
   const [time, setTime] = useState(defaults.time);
   const [scope, setScope] = useState<'global' | 'groups'>('global');
   const [selectedGroups, setSelectedGroups] = useState<Set<string>>(new Set());
+  const [notes, setNotes] = useState('');
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const availableSlots = useMemo(() => {
@@ -117,6 +118,7 @@ export default function SessionCreateForm({ groups, onCreate, onError, onCancel 
         scheduled_at: scheduledAt,
         scope,
         group_ids: scope === 'groups' ? [...selectedGroups] : [],
+        notes: notes.trim() || null,
       });
       onCreate(session);
     } catch (err) {
@@ -206,6 +208,22 @@ export default function SessionCreateForm({ groups, onCreate, onError, onCancel 
           ))}
         </div>
       )}
+
+      {/* Notes */}
+      <div className="space-y-1.5">
+        <SectionLabel>Notizen <span className="normal-case font-normal text-zinc-600">(optional)</span></SectionLabel>
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          maxLength={500}
+          rows={3}
+          placeholder="z.B. Serveradresse, Passwort, Discord-Link…"
+          className="w-full bg-zinc-800 border border-zinc-700 text-sm text-zinc-200 placeholder:text-zinc-600 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-violet-500"
+        />
+        {notes.length > 400 && (
+          <p className="text-xs text-zinc-500 text-right">{notes.length}/500</p>
+        )}
+      </div>
 
       <div className="flex gap-2">
         <Button type="submit" disabled={availableSlots.length === 0}>Eintragen</Button>

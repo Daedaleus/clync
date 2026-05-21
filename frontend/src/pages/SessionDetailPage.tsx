@@ -34,6 +34,7 @@ interface SessionDetail {
   is_mine: boolean;
   is_participant: boolean;
   thumbnail_url?: string | null;
+  notes?: string | null;
 }
 
 export default function SessionDetailPage() {
@@ -240,6 +241,16 @@ export default function SessionDetailPage() {
           <p className="text-sm text-zinc-600">Noch keine weiteren Teilnehmer.</p>
         )}
       </section>
+
+      {/* Notes */}
+      {session.notes && (
+        <section className="space-y-1.5">
+          <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Notizen</span>
+          <p className="text-sm text-zinc-300 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 whitespace-pre-wrap">
+            {session.notes}
+          </p>
+        </section>
+      )}
 
       {/* Invite panel */}
       {showInvite && (
