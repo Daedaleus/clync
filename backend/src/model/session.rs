@@ -16,6 +16,7 @@ pub struct Session {
     pub group_names: Vec<String>,
     #[serde(default)]
     pub game_has_thumbnail: bool,
+    pub notes: Option<String>,
 }
 
 /// Minimal projection used by the start-notification background task.
@@ -45,6 +46,7 @@ pub struct SessionDetail {
     pub game_has_thumbnail: bool,
     #[serde(default)]
     pub participants: Vec<ParticipantRecord>,
+    pub notes: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

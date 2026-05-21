@@ -11,6 +11,7 @@ export interface Session {
   group_ids: string[];
   group_names: string[];
   thumbnail_url?: string | null;
+  notes?: string | null;
 }
 
 export interface GroupSummary {

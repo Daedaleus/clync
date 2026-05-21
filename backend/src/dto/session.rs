@@ -11,6 +11,7 @@ pub struct CreateSessionRequest {
     pub scope: String,
     #[serde(default)]
     pub group_ids: Vec<String>,
+    pub notes: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -28,6 +29,7 @@ pub struct SessionResponse {
     pub is_mine: bool,
     pub is_participant: bool,
     pub thumbnail_url: Option<String>,
+    pub notes: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -51,6 +53,7 @@ pub struct SessionDetailResponse {
     pub is_mine: bool,
     pub is_participant: bool,
     pub thumbnail_url: Option<String>,
+    pub notes: Option<String>,
 }
 
 impl SessionDetail {
@@ -71,6 +74,7 @@ impl SessionDetail {
             participant_count,
             group_names: self.group_names,
             thumbnail_url,
+            notes: self.notes,
             id: self.id,
             user_id: self.user_id,
             username: self.username,
@@ -103,6 +107,7 @@ impl Session {
             participant_count: 1 + self.participants.len(),
             group_names: self.group_names,
             thumbnail_url,
+            notes: self.notes,
             id: self.id,
             user_id: self.user_id,
             username: self.username,

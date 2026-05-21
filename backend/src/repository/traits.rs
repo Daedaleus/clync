@@ -121,6 +121,7 @@ pub trait GameRepo: Send + Sync {
 
 #[async_trait]
 pub trait SessionRepo: Send + Sync {
+    #[allow(clippy::too_many_arguments)]
     async fn create(
         &self,
         user_id: String,
@@ -129,6 +130,7 @@ pub trait SessionRepo: Send + Sync {
         scheduled_at: String,
         scope: String,
         group_ids: Vec<String>,
+        notes: Option<String>,
     ) -> Result<Option<Session>, surrealdb::Error>;
     async fn find_feed(&self, my_group_ids: Vec<String>) -> Result<Vec<Session>, surrealdb::Error>;
     async fn find_mine(&self, user_id: String) -> Result<Vec<Session>, surrealdb::Error>;
