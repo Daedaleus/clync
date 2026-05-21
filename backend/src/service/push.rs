@@ -128,6 +128,24 @@ impl PushService {
         self.send_to_users(vec![user_id.to_owned()], payload).await
     }
 
+    /// Sends a session-start notification to all participants (creator + joined users).
+    pub async fn notify_session_start(
+        &self,
+        user_ids: Vec<String>,
+        game: &str,
+        session_id: &str,
+    ) -> Result<(), AppError> {
+        if self.vapid_private_key.is_empty() {
+            return Ok(());
+        }
+        let payload = serde_json::json!({
+            "title": "WhatsUp – Session beginnt",
+            "body": format!("{game} beginnt gleich!"),
+            "url": format!("/sessions/{session_id}"),
+        });
+        self.send_to_users(user_ids, payload).await
+    }
+
     async fn send_to_users(
         &self,
         user_ids: Vec<String>,

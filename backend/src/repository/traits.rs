@@ -7,7 +7,7 @@ use crate::model::{
     invitation::InvitationRecord,
     invite::InviteRecord,
     push_subscription::PushSubscription,
-    session::{Session, SessionDetail},
+    session::{Session, SessionDetail, SessionStartReminder},
     session_invitation::SessionInvitationRecord,
     user::{User, UserFullProfile, UserSummary, Visibility},
 };
@@ -150,6 +150,9 @@ pub trait SessionRepo: Send + Sync {
     ) -> Result<Vec<String>, surrealdb::Error>;
     /// Admin-only delete — skips owner check, always returns group_ids.
     async fn delete_as_admin(&self, session_id: String) -> Result<Vec<String>, surrealdb::Error>;
+    /// Sessions starting within the next 5 minutes that have not yet been notified.
+    async fn find_sessions_to_notify(&self) -> Result<Vec<SessionStartReminder>, surrealdb::Error>;
+    async fn mark_start_notified(&self, session_id: String) -> Result<(), surrealdb::Error>;
 }
 
 #[async_trait]

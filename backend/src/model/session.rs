@@ -18,6 +18,16 @@ pub struct Session {
     pub game_has_thumbnail: bool,
 }
 
+/// Minimal projection used by the start-notification background task.
+#[derive(Debug, serde::Deserialize)]
+pub struct SessionStartReminder {
+    pub id: String,
+    pub user_id: String,
+    #[serde(default)]
+    pub participants: Vec<String>,
+    pub game: String,
+}
+
 /// Session with participant names resolved — used for the detail endpoint.
 #[derive(Debug, Deserialize)]
 pub struct SessionDetail {
