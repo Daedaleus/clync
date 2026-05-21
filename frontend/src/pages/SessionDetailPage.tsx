@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import Avatar from '../components/atoms/Avatar';
 import Badge from '../components/atoms/Badge';
@@ -11,6 +11,11 @@ import { config } from '../config';
 import { fmtDateTime, isPast, isLateJoinable } from '../utils/date';
 
 interface Participant {
+  keycloak_id: string;
+  username: string;
+}
+
+interface InvitableUser {
   keycloak_id: string;
   username: string;
 }
@@ -36,6 +41,10 @@ export default function SessionDetailPage() {
   const [session, setSession] = useState<SessionDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showInvite, setShowInvite] = useState(false);
+  const [invitableUsers, setInvitableUsers] = useState<InvitableUser[] | null>(null);
+  const [invitedIds, setInvitedIds] = useState<Set<string>>(new Set());
+  const invitePanelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -60,6 +69,26 @@ export default function SessionDetailPage() {
     try { await api.delete(`/api/v1/sessions/${id}/join`); await refresh(); }
     catch (err) { setError(err instanceof Error ? err.message : 'Fehler'); }
     finally { setLoading(false); }
+  };
+
+  const handleToggleInvite = async () => {
+    if (showInvite) {
+      setShowInvite(false);
+      return;
+    }
+    if (invitableUsers === null) {
+      const users = await api.get<InvitableUser[]>(`/api/v1/sessions/${id}/invitable`);
+      setInvitableUsers(users);
+    }
+    setShowInvite(true);
+    setTimeout(() => invitePanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+  };
+
+  const handleInvite = async (userId: string) => {
+    try {
+      await api.post(`/api/v1/sessions/${id}/invite`, { user_id: userId });
+      setInvitedIds((p) => new Set(p).add(userId));
+    } catch { /* silently ignore */ }
   };
 
   const handleDelete = async () => {
@@ -160,6 +189,11 @@ export default function SessionDetailPage() {
                 {loading ? '…' : 'Austreten'}
               </Button>
             )}
+            {(session.is_mine || session.is_participant) && (
+              <Button variant="secondary" size="sm" onClick={handleToggleInvite}>
+                {showInvite ? 'Schließen' : '+ Einladen'}
+              </Button>
+            )}
           </div>
         )}
       </div>
@@ -206,6 +240,36 @@ export default function SessionDetailPage() {
           <p className="text-sm text-zinc-600">Noch keine weiteren Teilnehmer.</p>
         )}
       </section>
+
+      {/* Invite panel */}
+      {showInvite && (
+        <section ref={invitePanelRef} className="space-y-2">
+          <span className="text-sm font-medium text-zinc-400">Freunde einladen</span>
+          {invitableUsers === null && (
+            <p className="text-sm text-zinc-500">Lade…</p>
+          )}
+          {invitableUsers !== null && invitableUsers.length === 0 && (
+            <p className="text-sm text-zinc-500">Keine weiteren Freunde verfügbar.</p>
+          )}
+          {invitableUsers !== null && invitableUsers.length > 0 && (
+            <ul className="space-y-2">
+              {invitableUsers.map((u) => (
+                <li key={u.keycloak_id} className="flex items-center justify-between gap-3 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5">
+                  <span className="text-sm text-zinc-200">{u.username}</span>
+                  <Button
+                    size="sm"
+                    variant={invitedIds.has(u.keycloak_id) ? 'secondary' : 'primary'}
+                    disabled={invitedIds.has(u.keycloak_id)}
+                    onClick={() => handleInvite(u.keycloak_id)}
+                  >
+                    {invitedIds.has(u.keycloak_id) ? 'Eingeladen ✓' : 'Einladen'}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
     </PageLayout>
   );
 }
