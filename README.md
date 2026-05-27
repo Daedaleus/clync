@@ -49,7 +49,7 @@ whatsup/
 - **Friend system** — bidirectional; mutual friendship gates social data visibility
 - **Groups** — public (joinable by anyone) and private (invite-only); optional Discord invite link
 - **Game library** — shared catalogue of games with name, description, genre and thumbnail; RAWG.io autofill
-- **Sessions** — schedule play sessions per game with date/time (15-min slots); global or group scope; optional notes for server address, password, etc.
+- **Sessions** — schedule play sessions per game with a combined date/time picker; global or group scope; optional notes for server address, password, etc.
 - **Session invitations** — participants invite mutual friends directly to a session
 - **Real-time updates** — session created/joined/deleted events via SSE
 - **Web Push notifications** — foreground and background notifications as an installable PWA
