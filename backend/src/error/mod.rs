@@ -32,6 +32,7 @@ impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         match self {
             AppError::Unauthorized(msg) => {
+                tracing::warn!(reason = %msg, "Unauthorized request");
                 (StatusCode::UNAUTHORIZED, Json(json!({ "error": msg }))).into_response()
             }
 
