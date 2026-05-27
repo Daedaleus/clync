@@ -26,12 +26,13 @@ const base: Session = {
   participant_count: 3,
   is_mine: false,
   is_participant: false,
+  my_rsvp: null,
   group_ids: [],
   group_names: [],
 };
 
 export const Default: Story = {
-  args: { session: base, onJoin: () => {} },
+  args: { session: base, onRsvp: () => {} },
 };
 
 export const IsMine: Story = {
@@ -41,8 +42,16 @@ export const IsMine: Story = {
   },
 };
 
-export const IsParticipant: Story = {
-  args: { session: { ...base, is_participant: true } },
+export const IsAccepted: Story = {
+  args: { session: { ...base, is_participant: true, my_rsvp: 'accepted' }, onRsvp: () => {} },
+};
+
+export const IsMaybe: Story = {
+  args: { session: { ...base, my_rsvp: 'maybe' }, onRsvp: () => {} },
+};
+
+export const IsDeclined: Story = {
+  args: { session: { ...base, my_rsvp: 'declined' }, onRsvp: () => {} },
 };
 
 export const GroupScope: Story = {
@@ -53,7 +62,7 @@ export const GroupScope: Story = {
       group_ids: ['g1'],
       group_names: ['Stammtisch'],
     },
-    onJoin: () => {},
+    onRsvp: () => {},
   },
 };
 
@@ -63,7 +72,7 @@ export const LateJoinable: Story = {
       ...base,
       scheduled_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
     },
-    onJoin: () => {},
+    onRsvp: () => {},
   },
 };
 
@@ -88,14 +97,15 @@ export const List: Story = {
     <>
       <SessionRow
         session={base}
-        onJoin={() => {}}
+        onRsvp={() => {}}
       />
       <SessionRow
         session={{ ...base, id: 's2', game: 'Minecraft', scope: 'groups', group_names: ['Stammtisch'], is_mine: true }}
         onDelete={() => {}}
       />
       <SessionRow
-        session={{ ...base, id: 's3', game: 'Elden Ring', is_participant: true }}
+        session={{ ...base, id: 's3', game: 'Elden Ring', is_participant: true, my_rsvp: 'accepted' }}
+        onRsvp={() => {}}
       />
     </>
   ),

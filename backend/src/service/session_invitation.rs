@@ -132,7 +132,12 @@ impl SessionInvitationService {
             .ok_or_else(|| AppError::Validation("Einladung nicht gefunden".into()))?;
 
         self.session_repo
-            .join(inv.session_id, user.keycloak_id.clone())
+            .set_rsvp(
+                inv.session_id,
+                user.keycloak_id.clone(),
+                user.username.clone(),
+                "accepted".to_owned(),
+            )
             .await?
             .ok_or_else(|| AppError::Validation("Session nicht mehr verfügbar".into()))?;
 

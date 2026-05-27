@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import SessionRow from '../molecules/SessionRow';
-import type { Session } from '../../types';
+import type { RsvpStatus, Session } from '../../types';
 import { isPast, isLateJoinable, fmtTime } from '../../utils/date';
 import { config } from '../../config';
 
@@ -12,10 +12,10 @@ function dayKey(d: Date) { return d.toISOString().slice(0, 10); }
 
 interface Props {
   sessions: Session[];
-  onJoin: (id: string) => void;
+  onRsvp: (id: string, status: RsvpStatus | null) => void;
 }
 
-export default function WeekCalendar({ sessions, onJoin }: Props) {
+export default function WeekCalendar({ sessions, onRsvp }: Props) {
   const [showAllLater, setShowAllLater] = useState(false);
 
   const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -117,7 +117,7 @@ export default function WeekCalendar({ sessions, onJoin }: Props) {
           <p className="text-xs text-zinc-600 uppercase tracking-wider font-medium">Weitere Termine</p>
           <ul className="divide-y divide-zinc-800 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
             {visibleLater.map((s) => (
-              <SessionRow key={s.id} session={s} onJoin={onJoin} />
+              <SessionRow key={s.id} session={s} onRsvp={onRsvp} />
             ))}
           </ul>
           {later.length > LATER_LIMIT && (
