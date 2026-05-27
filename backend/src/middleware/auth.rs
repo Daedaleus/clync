@@ -67,11 +67,20 @@ pub async fn auth_middleware(
         .map(|ra| ra.roles.iter().any(|r| r == "admin"))
         .unwrap_or(false);
 
-    request.extensions_mut().insert(AuthUser {
+    let auth_user = AuthUser {
         keycloak_id: claims.sub,
         username: claims.preferred_username,
         is_admin,
-    });
+    };
+
+    tracing::debug!(
+        keycloak_id = %auth_user.keycloak_id,
+        username = %auth_user.username,
+        is_admin = auth_user.is_admin,
+        "Request authenticated"
+    );
+
+    request.extensions_mut().insert(auth_user);
 
     Ok(next.run(request).await)
 }

@@ -14,13 +14,19 @@ use axum::{
     Router,
     extract::DefaultBodyLimit,
     http::{
-        HeaderValue, Method,
+        HeaderValue, Method, Request,
         header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
     },
 };
 use tokio::sync::{RwLock, broadcast};
 use tokio::time::Duration;
-use tower_http::cors::CorsLayer;
+use tower_http::{
+    LatencyUnit,
+    cors::CorsLayer,
+    request_id::{MakeRequestUuid, PropagateRequestIdLayer, SetRequestIdLayer},
+    trace::{DefaultOnFailure, DefaultOnResponse, TraceLayer},
+};
+use tracing::Level;
 
 use config::app_state::AppState;
 use service::{
@@ -32,9 +38,10 @@ use service::{
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt()
+        .json()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "backend=info,tower_http=warn".into()),
+                .unwrap_or_else(|_| "backend=info,tower_http=info".into()),
         )
         .init();
 
@@ -102,8 +109,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Method::OPTIONS,
         ])
         .allow_headers([AUTHORIZATION, CONTENT_TYPE, ACCEPT]);
-    // expose_headers intentionally omitted — no custom headers need to be
-    // readable by JS.
 
     let protected = controller::protected_routes().layer(axum::middleware::from_fn_with_state(
         state.clone(),
@@ -131,17 +136,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 .await
                             {
                                 tracing::warn!(
-                                    "Session start push error (session {}): {e}",
-                                    session.id
+                                    session_id = %session.id,
+                                    error = %e,
+                                    "Session start push notification failed"
                                 );
                             }
                         }
                         if let Err(e) = repo.mark_start_notified(session.id).await {
-                            tracing::error!("mark_start_notified error: {e}");
+                            tracing::error!(error = %e, "mark_start_notified failed");
                         }
                     }
                 }
-                Err(e) => tracing::error!("find_sessions_to_notify error: {e}"),
+                Err(e) => tracing::error!(error = %e, "find_sessions_to_notify failed"),
                 _ => {}
             }
         }
@@ -162,10 +168,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             ];
             for q in &queries {
                 if let Err(e) = cleanup_db.query(*q).await {
-                    tracing::error!("Cleanup error ({q}): {e}");
+                    tracing::error!(query = q, error = %e, "Cleanup query failed");
                 }
             }
-            tracing::info!("Cleanup: stale sessions and session invitations purged");
+            tracing::debug!("Cleanup: stale sessions and session invitations purged");
         }
     });
 
@@ -177,14 +183,41 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .merge(controller::sse_routes()),
         )
         .with_state(state)
+        // Innermost: add security headers
         .layer(from_fn(middleware::security::security_headers))
+        // HTTP access logging — span carries request_id + method + path;
+        // all log calls within a handler automatically inherit these fields.
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(|req: &Request<_>| {
+                    let request_id = req
+                        .headers()
+                        .get("x-request-id")
+                        .and_then(|v| v.to_str().ok())
+                        .unwrap_or("-");
+                    tracing::info_span!(
+                        "request",
+                        request_id = request_id,
+                        method = %req.method(),
+                        path = %req.uri().path(),
+                    )
+                })
+                .on_response(
+                    DefaultOnResponse::new()
+                        .level(Level::INFO)
+                        .latency_unit(LatencyUnit::Millis),
+                )
+                .on_failure(DefaultOnFailure::new().level(Level::ERROR)),
+        )
+        // Propagate x-request-id to response headers
+        .layer(PropagateRequestIdLayer::x_request_id())
+        // Generate a UUID x-request-id for every incoming request
+        .layer(SetRequestIdLayer::x_request_id(MakeRequestUuid))
         .layer(cors)
-        // 2 MB global JSON body limit; thumbnail upload route sets its own
-        // higher limit via DefaultBodyLimit::disable() + manual size check.
         .layer(DefaultBodyLimit::max(2 * 1024 * 1024));
 
     let addr: std::net::SocketAddr = format!("0.0.0.0:{}", settings.server.port).parse()?;
-    tracing::info!("Server listening on {addr}");
+    tracing::info!(addr = %addr, "Server listening");
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
     axum::serve(listener, app).await?;
