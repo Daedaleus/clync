@@ -6,6 +6,7 @@ import ErrorBanner from '../components/molecules/ErrorBanner';
 import PageLayout from '../components/templates/PageLayout';
 import SectionLabel from '../components/atoms/SectionLabel';
 import { api } from '../services/api';
+import { isAbortError } from '../utils/abort';
 import keycloak from '../services/auth';
 import { isAdmin } from '../utils/auth';
 
@@ -31,7 +32,8 @@ export default function GroupEditPage() {
 
   useEffect(() => {
     if (!id) return;
-    api.get<GroupDetail>(`/api/v1/groups/${id}`)
+    const controller = new AbortController();
+    api.get<GroupDetail>(`/api/v1/groups/${id}`, controller.signal)
       .then((g) => {
         // Redirect away if not creator or admin
         if (g.creator_id !== myId && !isAdmin()) {
@@ -41,7 +43,8 @@ export default function GroupEditPage() {
         setGroup(g);
         setDiscordInvite(g.discord_invite ?? '');
       })
-      .catch(() => setError('Gruppe nicht gefunden'));
+      .catch((err: unknown) => { if (!isAbortError(err)) setError('Gruppe nicht gefunden'); });
+    return () => controller.abort();
   }, [id, myId, navigate]);
 
   const handleSave = async () => {

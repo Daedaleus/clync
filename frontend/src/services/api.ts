@@ -13,7 +13,12 @@ async function extractError(response: Response): Promise<string> {
   return `Fehler ${response.status}`;
 }
 
-async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+async function request<T>(
+  method: string,
+  path: string,
+  body?: unknown,
+  signal?: AbortSignal,
+): Promise<T> {
   // Refresh the token if it expires within the next 30 seconds.
   // Throws if the refresh token itself has expired — Keycloak will redirect to login.
   await keycloak.updateToken(30).catch(() => keycloak.login());
@@ -25,6 +30,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
       'Content-Type': 'application/json',
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
+    signal,
   });
 
   if (!response.ok) {
@@ -36,7 +42,8 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 }
 
 export const api = {
-  get: <T>(path: string) => request<T>('GET', path),
+  /** GET request. Pass an AbortSignal to cancel when the component unmounts. */
+  get: <T>(path: string, signal?: AbortSignal) => request<T>('GET', path, undefined, signal),
   post: <T>(path: string, body?: unknown) => request<T>('POST', path, body),
   put: <T>(path: string, body?: unknown) => request<T>('PUT', path, body),
   delete: <T>(path: string) => request<T>('DELETE', path),

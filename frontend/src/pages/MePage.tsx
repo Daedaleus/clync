@@ -10,6 +10,7 @@ import PageLayout from '../components/templates/PageLayout';
 import type { Game, GroupSummary, Invitation, RsvpStatus, Session, SessionInvitation } from '../types';
 import { fmtDateTime } from '../utils/date';
 import { api } from '../services/api';
+import { isAbortError } from '../utils/abort';
 import { isPast, isLateJoinable } from '../utils/date';
 
 
@@ -41,12 +42,26 @@ export default function MePage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.get<MeData>('/api/v1/me').then(setMe).catch(() => setError('Profil konnte nicht geladen werden'));
-    api.get<Session[]>('/api/v1/sessions/mine').then(setSessions).catch(console.error);
-    api.get<Invitation[]>('/api/v1/invitations').then(setInvitations).catch(console.error);
-    api.get<SessionInvitation[]>('/api/v1/session-invitations').then(setSessionInvitations).catch(console.error);
-    api.get<FriendRequest[]>('/api/v1/friends/requests').then(setFriendRequests).catch(console.error);
-    api.get<Game[]>('/api/v1/library').then((gs) => setLibrary(new Map(gs.map((g) => [g.name, g])))).catch(console.error);
+    const controller = new AbortController();
+    api.get<MeData>('/api/v1/me', controller.signal)
+      .then(setMe)
+      .catch((err: unknown) => { if (!isAbortError(err)) setError('Profil konnte nicht geladen werden'); });
+    api.get<Session[]>('/api/v1/sessions/mine', controller.signal)
+      .then(setSessions)
+      .catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
+    api.get<Invitation[]>('/api/v1/invitations', controller.signal)
+      .then(setInvitations)
+      .catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
+    api.get<SessionInvitation[]>('/api/v1/session-invitations', controller.signal)
+      .then(setSessionInvitations)
+      .catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
+    api.get<FriendRequest[]>('/api/v1/friends/requests', controller.signal)
+      .then(setFriendRequests)
+      .catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
+    api.get<Game[]>('/api/v1/library', controller.signal)
+      .then((gs) => setLibrary(new Map(gs.map((g) => [g.name, g]))))
+      .catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
+    return () => controller.abort();
   }, []);
 
   const upcomingSessions = useMemo(
