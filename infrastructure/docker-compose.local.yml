@@ -20,6 +20,11 @@ services:
     image: "quay.io/keycloak/keycloak:26.6.1"
     command: "start-dev --import-realm"
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
     depends_on:
       postgres:
         condition: service_healthy
@@ -39,6 +44,11 @@ services:
     image: "docker.io/surrealdb/surrealdb:v2"
     command: "start --bind 0.0.0.0:8000 --user root --pass root file:///data/whatsup.db"
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
     ports:
       - "127.0.0.1:8000:8000"
     volumes:
