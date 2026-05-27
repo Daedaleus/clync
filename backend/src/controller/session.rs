@@ -10,7 +10,7 @@ use serde_json::json;
 
 use crate::{
     config::app_state::{AppState, GroupEvent},
-    dto::session::CreateSessionRequest,
+    dto::session::{CreateSessionRequest, RsvpRequest},
     error::AppError,
     middleware::auth::AuthUser,
     service::{push::PushService, session::SessionService},
@@ -24,6 +24,10 @@ pub fn routes() -> Router<AppState> {
         .route(
             "/sessions/{id}/join",
             axum::routing::post(join_handler).delete(leave_handler),
+        )
+        .route(
+            "/sessions/{id}/rsvp",
+            axum::routing::put(rsvp_handler).delete(remove_rsvp_handler),
         )
 }
 
@@ -143,5 +147,46 @@ async fn delete_handler(
         });
     }
 
+    Ok(StatusCode::NO_CONTENT)
+}
+
+async fn rsvp_handler(
+    State(state): State<AppState>,
+    Extension(user): Extension<AuthUser>,
+    Path(id): Path<String>,
+    Json(body): Json<RsvpRequest>,
+) -> Result<StatusCode, AppError> {
+    if let Some(session) = SessionService::new(Arc::clone(&state.db))
+        .set_rsvp(&id, &user, body.status)
+        .await?
+    {
+        for group_id in &session.group_ids {
+            let _ = state.events.send(GroupEvent {
+                group_id: group_id.clone(),
+                kind: "session_joined".into(),
+                payload: json!({ "id": session.id, "participant_count": session.participant_count }),
+            });
+        }
+    }
+    Ok(StatusCode::NO_CONTENT)
+}
+
+async fn remove_rsvp_handler(
+    State(state): State<AppState>,
+    Extension(user): Extension<AuthUser>,
+    Path(id): Path<String>,
+) -> Result<StatusCode, AppError> {
+    if let Some(session) = SessionService::new(Arc::clone(&state.db))
+        .remove_rsvp(&id, &user)
+        .await?
+    {
+        for group_id in &session.group_ids {
+            let _ = state.events.send(GroupEvent {
+                group_id: group_id.clone(),
+                kind: "session_joined".into(),
+                payload: json!({ "id": session.id, "participant_count": session.participant_count }),
+            });
+        }
+    }
     Ok(StatusCode::NO_CONTENT)
 }

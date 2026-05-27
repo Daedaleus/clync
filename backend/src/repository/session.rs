@@ -13,6 +13,7 @@ pub struct SessionRepository {
 const SELECT_FIELDS: &str =
     "meta::id(id) as id, user_id, username, game, scheduled_at, scope, group_ids, notes,
      participants ?? [] as participants,
+     rsvps ?? [] as rsvps,
      (SELECT VALUE name FROM group WHERE meta::id(id) IN $parent.group_ids) as group_names,
      (SELECT VALUE (thumbnail_b64 IS NOT NONE) FROM type::thing('game', $parent.game) LIMIT 1)[0] ?? false as game_has_thumbnail";
 
@@ -62,6 +63,7 @@ impl SessionRepo for SessionRepository {
         let mut res = self.db
             .query(
                 "SELECT meta::id(id) as id, user_id, username, game, scheduled_at, scope, group_ids, notes,
+                        rsvps ?? [] as rsvps,
                         (SELECT keycloak_id, username FROM user
                          WHERE keycloak_id IN $parent.participants ?? []) as participants,
                         (SELECT VALUE name FROM group WHERE meta::id(id) IN $parent.group_ids) as group_names,
@@ -142,6 +144,61 @@ impl SessionRepo for SessionRepository {
             .bind(("user_id", user_id))
             .await?;
         Ok(())
+    }
+
+    async fn set_rsvp(
+        &self,
+        session_id: String,
+        user_id: String,
+        username: String,
+        status: String,
+    ) -> Result<Option<Session>, surrealdb::Error> {
+        // Single atomic query:
+        // - Update rsvps array (remove old entry for user, add new one)
+        // - Keep participants in sync: add if accepted, remove otherwise
+        let mut res = self
+            .db
+            .query(format!(
+                "UPDATE type::thing('session', $id)
+                 SET
+                   rsvps = array::push(
+                     array::filter(rsvps ?? [], |r| r.user_id != $user_id),
+                     {{ user_id: $user_id, username: $username, status: $status }}
+                   ),
+                   participants = array::union(
+                     array::filter(participants ?? [], |p| p != $user_id),
+                     IF $status = 'accepted' THEN [$user_id] ELSE [] END
+                   )
+                 WHERE user_id != $user_id
+                 RETURN {SELECT_FIELDS}"
+            ))
+            .bind(("id", session_id))
+            .bind(("user_id", user_id))
+            .bind(("username", username))
+            .bind(("status", status))
+            .await?;
+        res.take(0)
+    }
+
+    async fn remove_rsvp(
+        &self,
+        session_id: String,
+        user_id: String,
+    ) -> Result<Option<Session>, surrealdb::Error> {
+        let mut res = self
+            .db
+            .query(format!(
+                "UPDATE type::thing('session', $id)
+                 SET
+                   rsvps = array::filter(rsvps ?? [], |r| r.user_id != $user_id),
+                   participants = array::filter(participants ?? [], |p| p != $user_id)
+                 WHERE user_id != $user_id
+                 RETURN {SELECT_FIELDS}"
+            ))
+            .bind(("id", session_id))
+            .bind(("user_id", user_id))
+            .await?;
+        res.take(0)
     }
 
     async fn delete_as_admin(&self, session_id: String) -> Result<Vec<String>, surrealdb::Error> {
