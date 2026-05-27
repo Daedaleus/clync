@@ -10,6 +10,7 @@ import WeekCalendar from '../components/organisms/WeekCalendar';
 import PageLayout from '../components/templates/PageLayout';
 import type { Game, RsvpStatus, Session } from '../types';
 import { api } from '../services/api';
+import { isAbortError } from '../utils/abort';
 import keycloak from '../services/auth';
 import { isAdmin } from '../utils/auth';
 import ErrorBanner from '../components/molecules/ErrorBanner';
@@ -60,9 +61,15 @@ export default function GroupDetailPage() {
 
   useEffect(() => {
     if (!id) return;
-    api.get<GroupDetail>(`/api/v1/groups/${id}`).then(setGroup).catch(() => setError('Gruppe nicht gefunden'));
-    api.get<Session[]>(`/api/v1/groups/${id}/sessions`).then(setSessions).catch(console.error);
-    api.get<Game[]>('/api/v1/library').then((gs) => setLibrary(new Map(gs.map((g) => [g.name, g])))).catch(console.error);
+    const controller = new AbortController();
+    api.get<GroupDetail>(`/api/v1/groups/${id}`, controller.signal).then(setGroup)
+      .catch((err: unknown) => { if (!isAbortError(err)) setError('Gruppe nicht gefunden'); });
+    api.get<Session[]>(`/api/v1/groups/${id}/sessions`, controller.signal).then(setSessions)
+      .catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
+    api.get<Game[]>('/api/v1/library', controller.signal)
+      .then((gs) => setLibrary(new Map(gs.map((g) => [g.name, g]))))
+      .catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
+    return () => controller.abort();
   }, [id]);
 
   // SSE subscription for real-time session updates.

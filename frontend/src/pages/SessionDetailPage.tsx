@@ -6,6 +6,7 @@ import Button from '../components/atoms/Button';
 import ErrorBanner from '../components/molecules/ErrorBanner';
 import PageLayout from '../components/templates/PageLayout';
 import { api } from '../services/api';
+import { isAbortError } from '../utils/abort';
 import { isAdmin } from '../utils/auth';
 import { config } from '../config';
 import { fmtDateTime, isPast, isLateJoinable } from '../utils/date';
@@ -88,9 +89,11 @@ export default function SessionDetailPage() {
 
   useEffect(() => {
     if (!id) return;
-    api.get<SessionDetail>(`/api/v1/sessions/${id}`)
+    const controller = new AbortController();
+    api.get<SessionDetail>(`/api/v1/sessions/${id}`, controller.signal)
       .then(setSession)
-      .catch(() => setError('Session nicht gefunden'));
+      .catch((err: unknown) => { if (!isAbortError(err)) setError('Session nicht gefunden'); });
+    return () => controller.abort();
   }, [id]);
 
   const refresh = () => id

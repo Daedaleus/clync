@@ -8,6 +8,7 @@ import GameCard from '../components/molecules/GameCard';
 import PageLayout from '../components/templates/PageLayout';
 import type { Game } from '../types';
 import { api } from '../services/api';
+import { isAbortError } from '../utils/abort';
 
 interface MeGames { games: string[] }
 
@@ -26,8 +27,14 @@ export default function LibraryPage() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    api.get<Game[]>('/api/v1/library').then(setGames).catch(console.error);
-    api.get<MeGames>('/api/v1/me').then((me) => setMyGames(new Set(me.games))).catch(console.error);
+    const controller = new AbortController();
+    api.get<Game[]>('/api/v1/library', controller.signal)
+      .then(setGames)
+      .catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
+    api.get<MeGames>('/api/v1/me', controller.signal)
+      .then((me) => setMyGames(new Set(me.games)))
+      .catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
+    return () => controller.abort();
   }, []);
 
   const filtered = useMemo(() =>
