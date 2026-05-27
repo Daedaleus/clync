@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use axum::{
     Extension, Json, Router,
     extract::{Path, State},
@@ -13,7 +11,6 @@ use crate::{
     dto::session::{CreateSessionRequest, RsvpRequest},
     error::AppError,
     middleware::auth::AuthUser,
-    service::{push::PushService, session::SessionService},
 };
 
 pub fn routes() -> Router<AppState> {
@@ -36,7 +33,8 @@ async fn detail_handler(
     Extension(user): Extension<AuthUser>,
     Path(id): Path<String>,
 ) -> Result<Json<impl serde::Serialize>, AppError> {
-    SessionService::new(Arc::clone(&state.db))
+    state
+        .session_svc
         .get_detail(&id, &user.keycloak_id)
         .await?
         .map(Json)
@@ -47,20 +45,14 @@ async fn mine_handler(
     State(state): State<AppState>,
     Extension(user): Extension<AuthUser>,
 ) -> Result<Json<impl serde::Serialize>, AppError> {
-    let sessions = SessionService::new(Arc::clone(&state.db))
-        .get_mine(&user)
-        .await?;
-    Ok(Json(sessions))
+    Ok(Json(state.session_svc.get_mine(&user).await?))
 }
 
 async fn feed_handler(
     State(state): State<AppState>,
     Extension(user): Extension<AuthUser>,
 ) -> Result<Json<impl serde::Serialize>, AppError> {
-    let sessions = SessionService::new(Arc::clone(&state.db))
-        .get_feed(&user)
-        .await?;
-    Ok(Json(sessions))
+    Ok(Json(state.session_svc.get_feed(&user).await?))
 }
 
 async fn create_handler(
@@ -69,9 +61,7 @@ async fn create_handler(
     Json(body): Json<CreateSessionRequest>,
 ) -> Result<Json<impl serde::Serialize>, AppError> {
     let group_ids = body.group_ids.clone();
-    let session = SessionService::new(Arc::clone(&state.db))
-        .create(&user, body)
-        .await?;
+    let session = state.session_svc.create(&user, body).await?;
 
     for group_id in &group_ids {
         let _ = state.events.send(GroupEvent {
@@ -82,16 +72,13 @@ async fn create_handler(
     }
 
     // Send Web Push to group members in the background (non-blocking)
-    if !group_ids.is_empty() {
+    if !group_ids.is_empty()
+        && let Some(push) = state.push_svc.clone()
+    {
         let session_clone = session.clone();
-        let state_clone = state.clone();
         tokio::spawn(async move {
-            if let Ok(push_svc) = PushService::new(
-                Arc::clone(&state_clone.db),
-                state_clone.vapid_private_key.clone(),
-                state_clone.vapid_subject.clone(),
-            ) {
-                let _ = push_svc.notify_groups(&group_ids, &session_clone).await;
+            if let Err(e) = push.notify_groups(&group_ids, &session_clone).await {
+                tracing::warn!("Push notification failed (session_created): {e}");
             }
         });
     }
@@ -104,10 +91,7 @@ async fn join_handler(
     Extension(user): Extension<AuthUser>,
     Path(id): Path<String>,
 ) -> Result<StatusCode, AppError> {
-    if let Some(session) = SessionService::new(Arc::clone(&state.db))
-        .join(&id, &user)
-        .await?
-    {
+    if let Some(session) = state.session_svc.join(&id, &user).await? {
         for group_id in &session.group_ids {
             let _ = state.events.send(GroupEvent {
                 group_id: group_id.clone(),
@@ -124,9 +108,7 @@ async fn leave_handler(
     Extension(user): Extension<AuthUser>,
     Path(id): Path<String>,
 ) -> Result<StatusCode, AppError> {
-    SessionService::new(Arc::clone(&state.db))
-        .leave(&id, &user.keycloak_id)
-        .await?;
+    state.session_svc.leave(&id, &user.keycloak_id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -135,7 +117,8 @@ async fn delete_handler(
     Extension(user): Extension<AuthUser>,
     Path(id): Path<String>,
 ) -> Result<StatusCode, AppError> {
-    let group_ids = SessionService::new(Arc::clone(&state.db))
+    let group_ids = state
+        .session_svc
         .delete(&id, &user.keycloak_id, user.is_admin)
         .await?;
 
@@ -156,10 +139,7 @@ async fn rsvp_handler(
     Path(id): Path<String>,
     Json(body): Json<RsvpRequest>,
 ) -> Result<StatusCode, AppError> {
-    if let Some(session) = SessionService::new(Arc::clone(&state.db))
-        .set_rsvp(&id, &user, body.status)
-        .await?
-    {
+    if let Some(session) = state.session_svc.set_rsvp(&id, &user, body.status).await? {
         for group_id in &session.group_ids {
             let _ = state.events.send(GroupEvent {
                 group_id: group_id.clone(),
@@ -176,10 +156,7 @@ async fn remove_rsvp_handler(
     Extension(user): Extension<AuthUser>,
     Path(id): Path<String>,
 ) -> Result<StatusCode, AppError> {
-    if let Some(session) = SessionService::new(Arc::clone(&state.db))
-        .remove_rsvp(&id, &user)
-        .await?
-    {
+    if let Some(session) = state.session_svc.remove_rsvp(&id, &user).await? {
         for group_id in &session.group_ids {
             let _ = state.events.send(GroupEvent {
                 group_id: group_id.clone(),

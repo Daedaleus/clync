@@ -1,5 +1,4 @@
 use std::convert::Infallible;
-use std::sync::Arc;
 
 use axum::{
     Extension, Json, Router,
@@ -17,7 +16,6 @@ use crate::{
     dto::group::{CreateGroupRequest, SetDiscordInviteRequest},
     error::AppError,
     middleware::auth::{AuthUser, validate_query_token},
-    service::{group::GroupService, session::SessionService},
 };
 
 #[derive(Deserialize)]
@@ -49,7 +47,8 @@ async fn set_discord_invite_handler(
     Path(id): Path<String>,
     Json(body): Json<SetDiscordInviteRequest>,
 ) -> Result<StatusCode, AppError> {
-    GroupService::new(Arc::clone(&state.db))
+    state
+        .group_svc
         .set_discord_invite(&id, body.url, &user.keycloak_id, user.is_admin)
         .await?;
     Ok(StatusCode::NO_CONTENT)
@@ -66,10 +65,9 @@ async fn search_handler(
     Query(params): Query<SearchParams>,
 ) -> Result<Json<impl serde::Serialize>, AppError> {
     let query = params.q.as_deref().unwrap_or("");
-    let groups = GroupService::new(Arc::clone(&state.db))
-        .search_public(query, user.is_admin)
-        .await?;
-    Ok(Json(groups))
+    Ok(Json(
+        state.group_svc.search_public(query, user.is_admin).await?,
+    ))
 }
 
 async fn delete_handler(
@@ -82,7 +80,7 @@ async fn delete_handler(
             "Nur Admins können Gruppen löschen".into(),
         ));
     }
-    GroupService::new(Arc::clone(&state.db)).delete(&id).await?;
+    state.group_svc.delete(&id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -90,10 +88,7 @@ async fn mine_handler(
     State(state): State<AppState>,
     Extension(user): Extension<AuthUser>,
 ) -> Result<Json<impl serde::Serialize>, AppError> {
-    let groups = GroupService::new(Arc::clone(&state.db))
-        .my_groups(&user.keycloak_id)
-        .await?;
-    Ok(Json(groups))
+    Ok(Json(state.group_svc.my_groups(&user.keycloak_id).await?))
 }
 
 async fn detail_handler(
@@ -101,7 +96,8 @@ async fn detail_handler(
     Extension(user): Extension<AuthUser>,
     Path(id): Path<String>,
 ) -> Result<Json<impl serde::Serialize>, AppError> {
-    GroupService::new(Arc::clone(&state.db))
+    state
+        .group_svc
         .get_detail(&id, &user.keycloak_id)
         .await?
         .map(Json)
@@ -113,10 +109,12 @@ async fn group_sessions_handler(
     Extension(user): Extension<AuthUser>,
     Path(id): Path<String>,
 ) -> Result<Json<impl serde::Serialize>, AppError> {
-    let sessions = SessionService::new(Arc::clone(&state.db))
-        .get_for_group(&id, &user.keycloak_id)
-        .await?;
-    Ok(Json(sessions))
+    Ok(Json(
+        state
+            .session_svc
+            .get_for_group(&id, &user.keycloak_id)
+            .await?,
+    ))
 }
 
 async fn create_handler(
@@ -124,10 +122,7 @@ async fn create_handler(
     Extension(user): Extension<AuthUser>,
     Json(body): Json<CreateGroupRequest>,
 ) -> Result<Json<impl serde::Serialize>, AppError> {
-    let group = GroupService::new(Arc::clone(&state.db))
-        .create(body, &user.keycloak_id)
-        .await?;
-    Ok(Json(group))
+    Ok(Json(state.group_svc.create(body, &user.keycloak_id).await?))
 }
 
 async fn join_handler(
@@ -135,9 +130,7 @@ async fn join_handler(
     Extension(user): Extension<AuthUser>,
     Path(id): Path<String>,
 ) -> Result<StatusCode, AppError> {
-    GroupService::new(Arc::clone(&state.db))
-        .join(&id, &user.keycloak_id)
-        .await?;
+    state.group_svc.join(&id, &user.keycloak_id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 

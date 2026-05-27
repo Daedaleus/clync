@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use axum::{
     Extension, Json, Router,
     extract::{Query, State},
@@ -13,7 +11,6 @@ use crate::{
     dto::game::{AddGameRequest, RemoveGameQuery},
     error::AppError,
     middleware::auth::AuthUser,
-    service::game::GameService,
 };
 
 #[derive(Deserialize)]
@@ -33,10 +30,7 @@ async fn suggestions_handler(
     Query(params): Query<SearchParams>,
 ) -> Result<Json<Vec<String>>, AppError> {
     let q = params.q.as_deref().unwrap_or("");
-    let results = GameService::new(Arc::clone(&state.db))
-        .suggestions(q)
-        .await?;
-    Ok(Json(results))
+    Ok(Json(state.game_svc.suggestions(q).await?))
 }
 
 async fn add_handler(
@@ -44,9 +38,7 @@ async fn add_handler(
     Extension(user): Extension<AuthUser>,
     Json(body): Json<AddGameRequest>,
 ) -> Result<StatusCode, AppError> {
-    GameService::new(Arc::clone(&state.db))
-        .add(&user.keycloak_id, &body.name)
-        .await?;
+    state.game_svc.add(&user.keycloak_id, &body.name).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -55,7 +47,8 @@ async fn remove_handler(
     Extension(user): Extension<AuthUser>,
     Query(params): Query<RemoveGameQuery>,
 ) -> Result<StatusCode, AppError> {
-    GameService::new(Arc::clone(&state.db))
+    state
+        .game_svc
         .remove(&user.keycloak_id, &params.name)
         .await?;
     Ok(StatusCode::NO_CONTENT)
