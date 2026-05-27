@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use axum::{
     Extension, Json, Router,
     extract::{Path, State},
@@ -11,8 +9,6 @@ use serde::Deserialize;
 use crate::config::app_state::AppState;
 use crate::error::AppError;
 use crate::middleware::auth::AuthUser;
-use crate::service::push::PushService;
-use crate::service::session_invitation::SessionInvitationService;
 
 #[derive(Deserialize)]
 struct InviteBody {
@@ -32,10 +28,12 @@ async fn list_handler(
     State(state): State<AppState>,
     Extension(user): Extension<AuthUser>,
 ) -> Result<Json<impl serde::Serialize>, AppError> {
-    let invitations = SessionInvitationService::new(Arc::clone(&state.db))
-        .get_pending(&user.keycloak_id)
-        .await?;
-    Ok(Json(invitations))
+    Ok(Json(
+        state
+            .session_invitation_svc
+            .get_pending(&user.keycloak_id)
+            .await?,
+    ))
 }
 
 async fn accept_handler(
@@ -43,9 +41,7 @@ async fn accept_handler(
     Extension(user): Extension<AuthUser>,
     Path(id): Path<String>,
 ) -> Result<StatusCode, AppError> {
-    SessionInvitationService::new(Arc::clone(&state.db))
-        .accept(&id, &user)
-        .await?;
+    state.session_invitation_svc.accept(&id, &user).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -54,7 +50,8 @@ async fn decline_handler(
     Extension(user): Extension<AuthUser>,
     Path(id): Path<String>,
 ) -> Result<StatusCode, AppError> {
-    SessionInvitationService::new(Arc::clone(&state.db))
+    state
+        .session_invitation_svc
         .decline(&id, &user.keycloak_id)
         .await?;
     Ok(StatusCode::NO_CONTENT)
@@ -66,29 +63,32 @@ async fn invite_handler(
     Path(session_id): Path<String>,
     Json(body): Json<InviteBody>,
 ) -> Result<StatusCode, AppError> {
-    let svc = SessionInvitationService::new(Arc::clone(&state.db));
-    let game = svc.game_name_for_notify(&session_id).await?;
-    svc.invite(&session_id, &user, &body.user_id).await?;
+    let game = state
+        .session_invitation_svc
+        .game_name_for_notify(&session_id)
+        .await?;
+    state
+        .session_invitation_svc
+        .invite(&session_id, &user, &body.user_id)
+        .await?;
 
-    let invitee_id = body.user_id.clone();
-    let inviter_username = user.username.clone();
-    let state_clone = state.clone();
-    tokio::spawn(async move {
-        if let Ok(push) = PushService::new(
-            Arc::clone(&state_clone.db),
-            state_clone.vapid_private_key.clone(),
-            state_clone.vapid_subject.clone(),
-        ) {
-            let _ = push
+    if let Some(push) = state.push_svc.clone() {
+        let invitee_id = body.user_id.clone();
+        let inviter_username = user.username.clone();
+        tokio::spawn(async move {
+            if let Err(e) = push
                 .notify_user(
                     &invitee_id,
                     "WhatsUp – Session-Einladung",
                     &format!("{inviter_username} lädt dich ein, {game} zu spielen"),
                     "/me",
                 )
-                .await;
-        }
-    });
+                .await
+            {
+                tracing::warn!("Push notification failed (session invite to {invitee_id}): {e}");
+            }
+        });
+    }
 
     Ok(StatusCode::NO_CONTENT)
 }
@@ -98,8 +98,10 @@ async fn invitable_handler(
     Extension(user): Extension<AuthUser>,
     Path(session_id): Path<String>,
 ) -> Result<Json<impl serde::Serialize>, AppError> {
-    let users = SessionInvitationService::new(Arc::clone(&state.db))
-        .get_invitable(&session_id, &user)
-        .await?;
-    Ok(Json(users))
+    Ok(Json(
+        state
+            .session_invitation_svc
+            .get_invitable(&session_id, &user)
+            .await?,
+    ))
 }

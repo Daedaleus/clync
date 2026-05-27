@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use axum::{
     Extension, Json, Router,
     extract::State,
@@ -11,7 +9,6 @@ use crate::config::app_state::AppState;
 use crate::dto::me::UpdateProfileRequest;
 use crate::error::AppError;
 use crate::middleware::auth::AuthUser;
-use crate::service::me::MeService;
 
 pub fn routes() -> Router<AppState> {
     Router::new()
@@ -23,9 +20,7 @@ async fn me_handler(
     State(state): State<AppState>,
     Extension(user): Extension<AuthUser>,
 ) -> Result<Json<impl serde::Serialize>, AppError> {
-    Ok(Json(
-        MeService::new(Arc::clone(&state.db)).get_me(&user).await?,
-    ))
+    Ok(Json(state.me_svc.get_me(&user).await?))
 }
 
 async fn update_profile_handler(
@@ -33,8 +28,6 @@ async fn update_profile_handler(
     Extension(user): Extension<AuthUser>,
     Json(req): Json<UpdateProfileRequest>,
 ) -> Result<StatusCode, AppError> {
-    MeService::new(Arc::clone(&state.db))
-        .update_profile(&user.keycloak_id, req)
-        .await?;
+    state.me_svc.update_profile(&user.keycloak_id, req).await?;
     Ok(StatusCode::NO_CONTENT)
 }
