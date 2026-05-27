@@ -5,6 +5,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [0.4.0] — 2026-05-27
+
+### Fixed
+
+- Session form now uses a single `datetime-local` input instead of separate date and time fields — eliminates the overlap and sizing inconsistency on iOS
+
+### Dependencies
+
+- `react-router-dom` 7.15.0 → 7.15.1
+- `@vitejs/plugin-react` 6.0.1 → 6.0.2
+- `eslint` 10.3.0 → 10.4.0
+- `storybook` 10.4.0 → 10.4.1
+- `@types/node` 25.8.0 → 25.9.1
+- `serde_json` 1.0.149 → 1.0.150 (backend)
+- `tower-http` 0.6.10 → 0.6.11 (backend)
+
+---
+
 ## [0.3.0] — 2026-05-21
 
 ### Added
