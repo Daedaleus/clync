@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use serde::{Deserialize, Serialize};
 use surrealdb::{Surreal, engine::remote::ws::Client};
@@ -26,7 +26,10 @@ impl InviteService {
     ) -> Self {
         Self {
             repo: Box::new(InviteRepository::new(db)),
-            client: reqwest::Client::new(),
+            client: reqwest::Client::builder()
+                .timeout(Duration::from_secs(10))
+                .build()
+                .expect("reqwest client construction failed"),
             admin_url,
             realm,
             admin_user,
