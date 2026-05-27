@@ -1,6 +1,13 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RsvpRecord {
+    pub user_id: String,
+    pub username: String,
+    pub status: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Session {
     pub id: String,
     pub user_id: String,
@@ -17,6 +24,8 @@ pub struct Session {
     #[serde(default)]
     pub game_has_thumbnail: bool,
     pub notes: Option<String>,
+    #[serde(default)]
+    pub rsvps: Vec<RsvpRecord>,
 }
 
 /// Minimal projection used by the start-notification background task.
@@ -47,6 +56,8 @@ pub struct SessionDetail {
     #[serde(default)]
     pub participants: Vec<ParticipantRecord>,
     pub notes: Option<String>,
+    #[serde(default)]
+    pub rsvps: Vec<RsvpRecord>,
 }
 
 #[derive(Debug, Deserialize)]

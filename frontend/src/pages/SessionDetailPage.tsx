@@ -9,10 +9,17 @@ import { api } from '../services/api';
 import { isAdmin } from '../utils/auth';
 import { config } from '../config';
 import { fmtDateTime, isPast, isLateJoinable } from '../utils/date';
+import type { RsvpStatus } from '../types';
 
 interface Participant {
   keycloak_id: string;
   username: string;
+}
+
+interface RsvpInfo {
+  user_id: string;
+  username: string;
+  status: RsvpStatus;
 }
 
 interface InvitableUser {
@@ -33,9 +40,41 @@ interface SessionDetail {
   participant_count: number;
   is_mine: boolean;
   is_participant: boolean;
+  my_rsvp: RsvpStatus | null;
+  rsvps: RsvpInfo[];
   thumbnail_url?: string | null;
   notes?: string | null;
 }
+
+const RSVP_OPTIONS: { status: RsvpStatus; label: string; icon: string; active: string; hover: string }[] = [
+  {
+    status: 'accepted',
+    label: 'Zusagen',
+    icon: '✓',
+    active: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/40',
+    hover: 'hover:bg-emerald-500/10 hover:text-emerald-400 hover:border-emerald-500/30',
+  },
+  {
+    status: 'maybe',
+    label: 'Vielleicht',
+    icon: '?',
+    active: 'bg-amber-500/15 text-amber-400 border-amber-500/40',
+    hover: 'hover:bg-amber-500/10 hover:text-amber-400 hover:border-amber-500/30',
+  },
+  {
+    status: 'declined',
+    label: 'Absagen',
+    icon: '✕',
+    active: 'bg-red-500/15 text-red-400 border-red-500/40',
+    hover: 'hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30',
+  },
+];
+
+const RSVP_STATUS_LABEL: Record<RsvpStatus, string> = {
+  accepted: 'Zusagen',
+  maybe: 'Vielleicht',
+  declined: 'Absagen',
+};
 
 export default function SessionDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -58,17 +97,19 @@ export default function SessionDetailPage() {
     ? api.get<SessionDetail>(`/api/v1/sessions/${id}`).then(setSession)
     : Promise.resolve();
 
-  const handleJoin = async () => {
+  const handleRsvp = async (status: RsvpStatus) => {
+    if (!session) return;
     setLoading(true); setError(null);
-    try { await api.post(`/api/v1/sessions/${id}/join`); await refresh(); }
-    catch (err) { setError(err instanceof Error ? err.message : 'Fehler'); }
-    finally { setLoading(false); }
-  };
-
-  const handleLeave = async () => {
-    setLoading(true); setError(null);
-    try { await api.delete(`/api/v1/sessions/${id}/join`); await refresh(); }
-    catch (err) { setError(err instanceof Error ? err.message : 'Fehler'); }
+    try {
+      if (session.my_rsvp === status) {
+        // Toggle off → remove RSVP
+        await api.delete(`/api/v1/sessions/${id}/rsvp`);
+        await refresh();
+      } else {
+        await api.put(`/api/v1/sessions/${id}/rsvp`, { status });
+        await refresh();
+      }
+    } catch (err) { setError(err instanceof Error ? err.message : 'Fehler'); }
     finally { setLoading(false); }
   };
 
@@ -112,6 +153,13 @@ export default function SessionDetailPage() {
   const thumbSrc = session.thumbnail_url
     ? `${config.apiUrl}/api/v1/library/${encodeURIComponent(session.game)}/thumbnail`
     : undefined;
+
+  // Group RSVPs by status for the breakdown
+  const rsvpByStatus = {
+    accepted: session.rsvps.filter((r) => r.status === 'accepted'),
+    maybe: session.rsvps.filter((r) => r.status === 'maybe'),
+    declined: session.rsvps.filter((r) => r.status === 'declined'),
+  };
 
   return (
     <PageLayout>
@@ -175,20 +223,24 @@ export default function SessionDetailPage() {
                 Löschen
               </Button>
             )}
-            {!session.is_mine && !session.is_participant && (
-              <Button variant="primary" disabled={loading} onClick={handleJoin}>
-                {loading ? '…' : '+ Beitreten'}
-              </Button>
-            )}
-            {!session.is_mine && session.is_participant && (
-              <Button
-                variant="secondary"
-                disabled={loading}
-                onClick={handleLeave}
-                className="hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30"
-              >
-                {loading ? '…' : 'Austreten'}
-              </Button>
+            {!session.is_mine && (
+              <div className="flex gap-1.5">
+                {RSVP_OPTIONS.map(({ status, label, icon, active, hover }) => (
+                  <button
+                    key={status}
+                    disabled={loading}
+                    onClick={() => handleRsvp(status)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors disabled:opacity-50 ${
+                      session.my_rsvp === status
+                        ? active
+                        : `border-zinc-700 text-zinc-400 ${hover}`
+                    }`}
+                  >
+                    <span className="text-xs">{icon}</span>
+                    {label}
+                  </button>
+                ))}
+              </div>
             )}
             {(session.is_mine || session.is_participant) && (
               <Button variant="secondary" size="sm" onClick={handleToggleInvite}>
@@ -198,6 +250,20 @@ export default function SessionDetailPage() {
           </div>
         )}
       </div>
+
+      {/* RSVP breakdown */}
+      {!session.is_mine && session.my_rsvp && (
+        <p className="text-sm text-zinc-500">
+          Deine Antwort:{' '}
+          <span className={
+            session.my_rsvp === 'accepted' ? 'text-emerald-400 font-medium'
+            : session.my_rsvp === 'maybe' ? 'text-amber-400 font-medium'
+            : 'text-red-400 font-medium'
+          }>
+            {RSVP_STATUS_LABEL[session.my_rsvp]}
+          </span>
+        </p>
+      )}
 
       {/* Participants */}
       <section className="space-y-3">
@@ -239,6 +305,24 @@ export default function SessionDetailPage() {
 
         {session.participants.length === 0 && !session.is_mine && (
           <p className="text-sm text-zinc-600">Noch keine weiteren Teilnehmer.</p>
+        )}
+
+        {/* RSVP breakdown: maybe + declined */}
+        {(rsvpByStatus.maybe.length > 0 || rsvpByStatus.declined.length > 0) && (
+          <div className="flex flex-wrap gap-3 pt-1">
+            {rsvpByStatus.maybe.length > 0 && (
+              <div className="flex items-center gap-1.5 text-xs text-amber-400">
+                <span className="font-bold">?</span>
+                <span>{rsvpByStatus.maybe.map((r) => r.username).join(', ')}</span>
+              </div>
+            )}
+            {rsvpByStatus.declined.length > 0 && (
+              <div className="flex items-center gap-1.5 text-xs text-red-400/70">
+                <span className="font-bold">✕</span>
+                <span>{rsvpByStatus.declined.map((r) => r.username).join(', ')}</span>
+              </div>
+            )}
+          </div>
         )}
       </section>
 

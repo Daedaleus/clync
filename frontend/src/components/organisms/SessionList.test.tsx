@@ -18,6 +18,7 @@ function session(id: string, game: string, overrides: Partial<Session> = {}): Se
     participant_count: 1,
     is_mine: false,
     is_participant: false,
+    my_rsvp: null,
     group_ids: [], group_names: [],
     ...overrides,
   };
@@ -48,11 +49,11 @@ describe('SessionList', () => {
     expect(screen.queryByText('Keine Spielzeiten.')).not.toBeInTheDocument();
   });
 
-  it('calls onJoin with the correct id', async () => {
-    const onJoin = vi.fn();
-    wrap(<SessionList sessions={[session('sess-1', 'CS2')]} onJoin={onJoin} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Beitreten' }));
-    expect(onJoin).toHaveBeenCalledWith('sess-1');
+  it('calls onRsvp with the correct id and status', async () => {
+    const onRsvp = vi.fn();
+    wrap(<SessionList sessions={[session('sess-1', 'CS2')]} onRsvp={onRsvp} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Zusagen' }));
+    expect(onRsvp).toHaveBeenCalledWith('sess-1', 'accepted');
   });
 
   it('calls onDelete with the correct id', async () => {

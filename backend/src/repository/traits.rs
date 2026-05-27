@@ -145,6 +145,21 @@ pub trait SessionRepo: Send + Sync {
         user_id: String,
     ) -> Result<Option<Session>, surrealdb::Error>;
     async fn leave(&self, session_id: String, user_id: String) -> Result<(), surrealdb::Error>;
+    /// Set RSVP status ("accepted" | "maybe" | "declined") for a session.
+    /// Creator cannot RSVP their own session (returns None without error).
+    async fn set_rsvp(
+        &self,
+        session_id: String,
+        user_id: String,
+        username: String,
+        status: String,
+    ) -> Result<Option<Session>, surrealdb::Error>;
+    /// Remove RSVP for a session entirely (= no answer).
+    async fn remove_rsvp(
+        &self,
+        session_id: String,
+        user_id: String,
+    ) -> Result<Option<Session>, surrealdb::Error>;
     async fn delete(
         &self,
         session_id: String,

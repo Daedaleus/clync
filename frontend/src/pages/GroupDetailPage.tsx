@@ -8,7 +8,7 @@ import SectionLabel from '../components/atoms/SectionLabel';
 import UserRow from '../components/molecules/UserRow';
 import WeekCalendar from '../components/organisms/WeekCalendar';
 import PageLayout from '../components/templates/PageLayout';
-import type { Game, Session } from '../types';
+import type { Game, RsvpStatus, Session } from '../types';
 import { api } from '../services/api';
 import keycloak from '../services/auth';
 import { isAdmin } from '../utils/auth';
@@ -129,12 +129,30 @@ export default function GroupDetailPage() {
     } catch (err) { setError(err instanceof Error ? err.message : 'Fehler'); }
   };
 
-  const handleJoin = async (sessionId: string) => {
+  const handleRsvp = async (sessionId: string, status: RsvpStatus | null) => {
     try {
-      await api.post(`/api/v1/sessions/${sessionId}/join`);
-      setSessions((p) => p.map((s) => s.id === sessionId
-        ? { ...s, is_participant: true, participant_count: s.participant_count + 1 }
-        : s));
+      if (status === null) {
+        await api.delete(`/api/v1/sessions/${sessionId}/rsvp`);
+        setSessions((p) => p.map((s) => s.id === sessionId
+          ? { ...s, my_rsvp: null, is_participant: false, participant_count: s.is_participant ? s.participant_count - 1 : s.participant_count }
+          : s));
+      } else {
+        await api.put(`/api/v1/sessions/${sessionId}/rsvp`, { status });
+        setSessions((p) => p.map((s) => {
+          if (s.id !== sessionId) return s;
+          const wasParticipant = s.is_participant;
+          const willBeParticipant = status === 'accepted';
+          return {
+            ...s,
+            my_rsvp: status,
+            is_participant: willBeParticipant,
+            participant_count:
+              willBeParticipant && !wasParticipant ? s.participant_count + 1
+              : !willBeParticipant && wasParticipant ? s.participant_count - 1
+              : s.participant_count,
+          };
+        }));
+      }
     } catch (err) { setError(err instanceof Error ? err.message : 'Fehler'); }
   };
 
@@ -182,7 +200,7 @@ export default function GroupDetailPage() {
 
           <section className="space-y-3">
             <SectionLabel>Spielzeiten diese Woche</SectionLabel>
-            <WeekCalendar sessions={sessions} onJoin={handleJoin} />
+            <WeekCalendar sessions={sessions} onRsvp={handleRsvp} />
           </section>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -22,6 +22,7 @@ const sessions: Session[] = [
     participant_count: 4,
     is_mine: true,
     is_participant: false,
+    my_rsvp: null,
     group_ids: [],
     group_names: [],
   },
@@ -35,6 +36,7 @@ const sessions: Session[] = [
     participant_count: 2,
     is_mine: false,
     is_participant: true,
+    my_rsvp: 'accepted',
     group_ids: ['g1'],
     group_names: ['Stammtisch'],
   },
@@ -48,13 +50,14 @@ const sessions: Session[] = [
     participant_count: 1,
     is_mine: false,
     is_participant: false,
+    my_rsvp: null,
     group_ids: [],
     group_names: [],
   },
 ];
 
 export const WithSessions: Story = {
-  args: { sessions, onJoin: () => {}, onDelete: () => {} },
+  args: { sessions, onRsvp: () => {}, onDelete: () => {} },
 };
 
 export const Empty: Story = {
