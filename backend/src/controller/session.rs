@@ -78,7 +78,7 @@ async fn create_handler(
         let session_clone = session.clone();
         tokio::spawn(async move {
             if let Err(e) = push.notify_groups(&group_ids, &session_clone).await {
-                tracing::warn!("Push notification failed (session_created): {e}");
+                tracing::warn!(error = %e, "Push notification failed (session_created)");
             }
         });
     }

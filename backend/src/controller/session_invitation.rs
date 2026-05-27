@@ -85,7 +85,7 @@ async fn invite_handler(
                 )
                 .await
             {
-                tracing::warn!("Push notification failed (session invite to {invitee_id}): {e}");
+                tracing::warn!(invitee_id = %invitee_id, error = %e, "Push notification failed (session invite)");
             }
         });
     }
