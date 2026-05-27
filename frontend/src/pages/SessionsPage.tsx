@@ -7,6 +7,7 @@ import SessionList from '../components/organisms/SessionList';
 import PageLayout from '../components/templates/PageLayout';
 import type { GroupSummary, RsvpStatus, Session } from '../types';
 import { api } from '../services/api';
+import { isAbortError } from '../utils/abort';
 import { isPast, isLateJoinable } from '../utils/date';
 
 export default function SessionsPage() {
@@ -16,8 +17,14 @@ export default function SessionsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.get<Session[]>('/api/v1/sessions').then(setSessions).catch(console.error);
-    api.get<GroupSummary[]>('/api/v1/groups/mine').then(setMyGroups).catch(console.error);
+    const controller = new AbortController();
+    api.get<Session[]>('/api/v1/sessions', controller.signal)
+      .then(setSessions)
+      .catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
+    api.get<GroupSummary[]>('/api/v1/groups/mine', controller.signal)
+      .then(setMyGroups)
+      .catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
+    return () => controller.abort();
   }, []);
 
   const upcoming = useMemo(

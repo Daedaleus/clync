@@ -108,7 +108,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Method::DELETE,
             Method::OPTIONS,
         ])
-        .allow_headers([AUTHORIZATION, CONTENT_TYPE, ACCEPT]);
+        .allow_headers([AUTHORIZATION, CONTENT_TYPE, ACCEPT])
+        // Expose x-request-id so the browser JS can read it for error correlation.
+        .expose_headers([axum::http::HeaderName::from_static("x-request-id")]);
 
     let protected = controller::protected_routes().layer(axum::middleware::from_fn_with_state(
         state.clone(),

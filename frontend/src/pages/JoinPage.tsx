@@ -18,10 +18,15 @@ export default function JoinPage() {
 
   useEffect(() => {
     if (!token) return;
-    fetch(`${config.apiUrl}/api/v1/invites/${token}`)
+    const controller = new AbortController();
+    fetch(`${config.apiUrl}/api/v1/invites/${token}`, { signal: controller.signal })
       .then((r) => r.json())
       .then((d: { valid: boolean }) => setValid(d.valid))
-      .catch(() => setValid(false));
+      .catch((err: unknown) => {
+        if (err instanceof Error && err.name === 'AbortError') return;
+        setValid(false);
+      });
+    return () => controller.abort();
   }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {

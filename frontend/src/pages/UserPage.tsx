@@ -9,6 +9,7 @@ import ErrorBanner from '../components/molecules/ErrorBanner';
 import PageLayout from '../components/templates/PageLayout';
 import keycloak from '../services/auth';
 import { api } from '../services/api';
+import { isAbortError } from '../utils/abort';
 import type { Game, GroupSummary } from '../types';
 
 interface UserProfile {
@@ -59,20 +60,22 @@ export default function UserPage() {
 
   useEffect(() => {
     if (!id) return;
-    api.get<UserProfile>(`/api/v1/users/${id}`)
+    const controller = new AbortController();
+    api.get<UserProfile>(`/api/v1/users/${id}`, controller.signal)
       .then(setProfile)
-      .catch(() => setError('Benutzer nicht gefunden'));
-    api.get<Game[]>('/api/v1/library')
+      .catch((err: unknown) => { if (!isAbortError(err)) setError('Benutzer nicht gefunden'); });
+    api.get<Game[]>('/api/v1/library', controller.signal)
       .then((gs) => setLibrary(new Map(gs.map((g) => [g.name, g]))))
-      .catch(console.error);
-    api.get<GroupSummary[]>(`/api/v1/users/${id}/groups`)
+      .catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
+    api.get<GroupSummary[]>(`/api/v1/users/${id}/groups`, controller.signal)
       .then(setPublicGroups)
-      .catch(console.error);
+      .catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
     if (!isOwnProfile) {
-      api.get<{ games: string[] }>('/api/v1/me')
+      api.get<{ games: string[] }>('/api/v1/me', controller.signal)
         .then((me) => setMyGames(new Set(me.games)))
-        .catch(console.error);
+        .catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
     }
+    return () => controller.abort();
   }, [id, isOwnProfile]);
 
   const commonGames = useMemo(
