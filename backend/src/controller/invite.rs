@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use axum::{
     Extension, Json, Router,
     extract::{Path, State},
@@ -11,17 +9,6 @@ use serde::{Deserialize, Serialize};
 use crate::config::app_state::AppState;
 use crate::error::AppError;
 use crate::middleware::auth::AuthUser;
-use crate::service::invite::InviteService;
-
-fn svc(state: &AppState) -> InviteService {
-    InviteService::new(
-        Arc::clone(&state.db),
-        state.keycloak_admin_url.clone(),
-        state.keycloak_realm.clone(),
-        state.keycloak_admin_user.clone(),
-        state.keycloak_admin_password.clone(),
-    )
-}
 
 pub fn protected_routes() -> Router<AppState> {
     Router::new().route("/invites", post(create_handler))
@@ -42,7 +29,7 @@ async fn create_handler(
     State(state): State<AppState>,
     Extension(user): Extension<AuthUser>,
 ) -> Result<Json<CreateResponse>, AppError> {
-    let code = svc(&state).create_invite(&user.keycloak_id).await?;
+    let code = state.invite_svc.create_invite(&user.keycloak_id).await?;
     Ok(Json(CreateResponse { token: code }))
 }
 
@@ -55,7 +42,7 @@ async fn validate_handler(
     State(state): State<AppState>,
     Path(code): Path<String>,
 ) -> Result<Json<ValidateResponse>, AppError> {
-    let valid = svc(&state).validate(&code).await?;
+    let valid = state.invite_svc.validate(&code).await?;
     Ok(Json(ValidateResponse { valid }))
 }
 
@@ -70,7 +57,8 @@ async fn register_handler(
     Path(code): Path<String>,
     Json(body): Json<RegisterBody>,
 ) -> Result<StatusCode, AppError> {
-    svc(&state)
+    state
+        .invite_svc
         .register(&code, &body.username, &body.password)
         .await?;
     Ok(StatusCode::NO_CONTENT)

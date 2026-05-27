@@ -7,6 +7,12 @@ use serde_json::Value;
 use surrealdb::{Surreal, engine::remote::ws::Client};
 use tokio::sync::{RwLock, broadcast};
 
+use crate::service::{
+    game::GameService, group::GroupService, invitation::InvitationService, invite::InviteService,
+    me::MeService, push::PushService, session::SessionService,
+    session_invitation::SessionInvitationService, user::UserService,
+};
+
 /// Event broadcast to all SSE subscribers of a specific group.
 #[derive(Clone, Debug, Serialize)]
 pub struct GroupEvent {
@@ -26,14 +32,17 @@ pub struct AppState {
     pub events: broadcast::Sender<GroupEvent>,
     /// VAPID public key (base64url) — sent to frontend for push subscription.
     pub vapid_public_key: String,
-    /// VAPID private key (base64url) — used server-side to sign push messages.
-    pub vapid_private_key: String,
-    /// VAPID subject — mailto: or https: URI identifying the sender.
-    pub vapid_subject: String,
     /// RAWG API key — empty string disables the autofill feature.
     pub rawg_api_key: String,
-    pub keycloak_admin_url: String,
-    pub keycloak_realm: String,
-    pub keycloak_admin_user: String,
-    pub keycloak_admin_password: String,
+    // ── Services (created once at startup, shared across requests) ────────────
+    pub session_svc: Arc<SessionService>,
+    pub group_svc: Arc<GroupService>,
+    pub game_svc: Arc<GameService>,
+    pub user_svc: Arc<UserService>,
+    pub me_svc: Arc<MeService>,
+    pub invitation_svc: Arc<InvitationService>,
+    pub session_invitation_svc: Arc<SessionInvitationService>,
+    pub invite_svc: Arc<InviteService>,
+    /// None when VAPID key is not configured (push notifications disabled).
+    pub push_svc: Option<Arc<PushService>>,
 }

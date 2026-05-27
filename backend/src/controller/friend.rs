@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use axum::{
     Extension, Json, Router,
     extract::{Path, State},
@@ -7,10 +5,7 @@ use axum::{
     routing::get,
 };
 
-use crate::{
-    config::app_state::AppState, error::AppError, middleware::auth::AuthUser,
-    service::user::UserService,
-};
+use crate::{config::app_state::AppState, error::AppError, middleware::auth::AuthUser};
 
 pub fn routes() -> Router<AppState> {
     Router::new()
@@ -22,10 +17,7 @@ async fn list_handler(
     State(state): State<AppState>,
     Extension(user): Extension<AuthUser>,
 ) -> Result<Json<impl serde::Serialize>, AppError> {
-    let friends = UserService::new(Arc::clone(&state.db))
-        .get_friends(&user.keycloak_id)
-        .await?;
-    Ok(Json(friends))
+    Ok(Json(state.user_svc.get_friends(&user.keycloak_id).await?))
 }
 
 async fn remove_handler(
@@ -33,8 +25,6 @@ async fn remove_handler(
     Extension(user): Extension<AuthUser>,
     Path(id): Path<String>,
 ) -> Result<StatusCode, AppError> {
-    UserService::new(Arc::clone(&state.db))
-        .remove_friend(&user.keycloak_id, &id)
-        .await?;
+    state.user_svc.remove_friend(&user.keycloak_id, &id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
