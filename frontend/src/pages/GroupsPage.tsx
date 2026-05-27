@@ -10,6 +10,7 @@ import PageLayout from '../components/templates/PageLayout';
 import type { GroupSummary, Session } from '../types';
 import { api } from '../services/api';
 import { isAdmin } from '../utils/auth';
+import { isAbortError } from '../utils/abort';
 
 interface GroupResult extends GroupSummary { member_count: number }
 
@@ -33,15 +34,18 @@ export default function GroupsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.get<GroupSummary[]>('/api/v1/groups/mine').then(setMyGroups)
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Fehler'));
+    const controller = new AbortController();
+    api.get<GroupSummary[]>('/api/v1/groups/mine', controller.signal).then(setMyGroups)
+      .catch((err: unknown) => { if (!isAbortError(err)) setError(err instanceof Error ? err.message : 'Fehler'); });
 
     // Admin: auto-load all groups (incl. private) without requiring a search
     if (isAdmin()) {
-      api.get<GroupResult[]>('/api/v1/groups').then(setSearchResults).catch(console.error);
+      api.get<GroupResult[]>('/api/v1/groups', controller.signal)
+        .then(setSearchResults)
+        .catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
     }
 
-    api.get<Session[]>('/api/v1/sessions').then((sessions) => {
+    api.get<Session[]>('/api/v1/sessions', controller.signal).then((sessions) => {
       const now = new Date();
       const map = new Map<string, Session[]>();
       for (const s of sessions) {
@@ -52,7 +56,8 @@ export default function GroupsPage() {
         }
       }
       setSessionsByGroup(map);
-    }).catch(console.error);
+    }).catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
+    return () => controller.abort();
   }, []);
 
   const handleSearch = async (e: React.FormEvent) => {

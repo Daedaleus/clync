@@ -8,6 +8,7 @@ import ErrorBanner from '../components/molecules/ErrorBanner';
 import PageLayout from '../components/templates/PageLayout';
 import type { Game } from '../types';
 import { api } from '../services/api';
+import { isAbortError } from '../utils/abort';
 import { config } from '../config';
 
 interface MeGames { games: string[] }
@@ -35,12 +36,16 @@ export default function GameDetailPage() {
 
   useEffect(() => {
     if (!name) return;
-    api.get<Game>(`/api/v1/library/${encodeURIComponent(name)}`).then((g) => {
+    const controller = new AbortController();
+    api.get<Game>(`/api/v1/library/${encodeURIComponent(name)}`, controller.signal).then((g) => {
       setGame(g);
       setEditGenre(g.genre ?? '');
       setEditDesc(g.description ?? '');
-    }).catch(() => setError('Spiel nicht gefunden'));
-    api.get<MeGames>('/api/v1/me').then((me) => setInWishlist(me.games.includes(name))).catch(console.error);
+    }).catch((err: unknown) => { if (!isAbortError(err)) setError('Spiel nicht gefunden'); });
+    api.get<MeGames>('/api/v1/me', controller.signal)
+      .then((me) => setInWishlist(me.games.includes(name)))
+      .catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
+    return () => controller.abort();
   }, [name]);
 
   const handleDelete = async () => {

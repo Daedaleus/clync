@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { isAbortError } from '../utils/abort';
 import SectionLabel from '../components/atoms/SectionLabel';
 import { config } from '../config';
 import VisibilitySelect, { type Visibility } from '../components/atoms/VisibilitySelect';
@@ -32,14 +33,18 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.get<Game[]>('/api/v1/library').then((gs) => setLibrary(new Map(gs.map((g) => [g.name, g])))).catch(console.error);
-    api.get<ProfileData>('/api/v1/me').then((d) => {
+    const controller = new AbortController();
+    api.get<Game[]>('/api/v1/library', controller.signal)
+      .then((gs) => setLibrary(new Map(gs.map((g) => [g.name, g]))))
+      .catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
+    api.get<ProfileData>('/api/v1/me', controller.signal).then((d) => {
       setData(d);
       setSteam(d.steam_handle ?? '');
       setSteamVis(d.steam_visibility ?? 'public');
       setDiscord(d.discord_handle ?? '');
       setDiscordVis(d.discord_visibility ?? 'public');
-    }).catch(() => setError('Profil konnte nicht geladen werden'));
+    }).catch((err: unknown) => { if (!isAbortError(err)) setError('Profil konnte nicht geladen werden'); });
+    return () => controller.abort();
   }, []);
 
   const handleAddGame = async (name: string) => {

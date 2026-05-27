@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { isAbortError } from '../utils/abort';
 import Badge from '../components/atoms/Badge';
 import Button from '../components/atoms/Button';
 import SectionLabel from '../components/atoms/SectionLabel';
@@ -24,10 +25,12 @@ export default function FriendsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.get<Friend[]>('/api/v1/friends').then(setFriends)
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Fehler'));
-    api.get<FriendRequest[]>('/api/v1/friends/requests').then(setIncoming)
-      .catch(console.error);
+    const controller = new AbortController();
+    api.get<Friend[]>('/api/v1/friends', controller.signal).then(setFriends)
+      .catch((err: unknown) => { if (!isAbortError(err)) setError(err instanceof Error ? err.message : 'Fehler'); });
+    api.get<FriendRequest[]>('/api/v1/friends/requests', controller.signal).then(setIncoming)
+      .catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
+    return () => controller.abort();
   }, []);
 
   const handleSearch = async (e: React.FormEvent) => {
