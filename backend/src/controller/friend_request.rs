@@ -108,7 +108,7 @@ async fn send_handler(
                 )
                 .await
             {
-                tracing::warn!("Push notification failed (friend request to {to_id}): {e}");
+                tracing::warn!(to_id = %to_id, error = %e, "Push notification failed (friend request)");
             }
         });
     }

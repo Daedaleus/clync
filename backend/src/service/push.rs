@@ -75,10 +75,10 @@ impl PushService {
         group_ids: &[String],
         session: &SessionResponse,
     ) -> Result<(), AppError> {
-        tracing::info!("Push: session '{}' in groups {:?}", session.game, group_ids);
+        tracing::debug!(game = %session.game, ?group_ids, "Push: notify_groups called");
 
         if group_ids.is_empty() || self.vapid_private_key.is_empty() {
-            tracing::info!("Push: skipping — no group_ids or VAPID key missing");
+            tracing::debug!("Push: skipping — no group_ids or VAPID key missing");
             return Ok(());
         }
 
@@ -180,7 +180,7 @@ impl PushService {
             let vapid = match VapidSignatureBuilder::from_der(Cursor::new(&sec1_der), &info) {
                 Ok(v) => v,
                 Err(e) => {
-                    tracing::error!("VAPID builder error: {e}");
+                    tracing::error!(endpoint = %sub.endpoint, error = %e, "VAPID builder error");
                     continue;
                 }
             };
@@ -188,7 +188,7 @@ impl PushService {
             let sig = match vapid.build() {
                 Ok(s) => s,
                 Err(e) => {
-                    tracing::error!("VAPID sign error: {e}");
+                    tracing::error!(endpoint = %sub.endpoint, error = %e, "VAPID sign error");
                     continue;
                 }
             };
@@ -200,13 +200,13 @@ impl PushService {
             let msg = match builder.build() {
                 Ok(m) => m,
                 Err(e) => {
-                    tracing::error!("Push message build error: {e}");
+                    tracing::error!(endpoint = %sub.endpoint, error = %e, "Push message build error");
                     continue;
                 }
             };
 
             if let Err(e) = self.client.send(msg).await {
-                tracing::error!("Push send failed: {e}");
+                tracing::warn!(endpoint = %sub.endpoint, error = %e, "Push send failed");
             }
         }
 

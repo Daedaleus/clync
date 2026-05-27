@@ -41,6 +41,7 @@ impl InviteService {
         self.repo
             .create(code.clone(), creator_id.to_owned(), expires_at)
             .await?;
+        tracing::info!(creator_id = %creator_id, "Invite created");
         Ok(code)
     }
 
@@ -72,6 +73,7 @@ impl InviteService {
         self.create_keycloak_user(&admin_token, username, password)
             .await?;
         self.repo.mark_used(invite.code).await?;
+        tracing::info!(username = %username, "New user registered via invite");
         Ok(())
     }
 
