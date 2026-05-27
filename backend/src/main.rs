@@ -41,7 +41,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .json()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "backend=info,tower_http=info".into()),
+                .unwrap_or_else(|_| "backend=info,tower_http=warn".into()),
         )
         .init();
 
@@ -204,7 +204,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 })
                 .on_response(
                     DefaultOnResponse::new()
-                        .level(Level::INFO)
+                        .level(Level::DEBUG)
                         .latency_unit(LatencyUnit::Millis),
                 )
                 .on_failure(DefaultOnFailure::new().level(Level::ERROR)),
