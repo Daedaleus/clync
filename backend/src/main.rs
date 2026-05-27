@@ -23,6 +23,11 @@ use tokio::time::Duration;
 use tower_http::cors::CorsLayer;
 
 use config::app_state::AppState;
+use service::{
+    game::GameService, group::GroupService, invitation::InvitationService, invite::InviteService,
+    me::MeService, push::PushService, session::SessionService,
+    session_invitation::SessionInvitationService, user::UserService,
+};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -45,19 +50,46 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let db = config::db::connect(&settings.database).await?;
     let (events_tx, _) = broadcast::channel(256);
 
+    let push_svc = match PushService::new(
+        Arc::clone(&db),
+        settings.vapid.private_key.clone(),
+        settings.vapid.subject.clone(),
+    ) {
+        Ok(svc) => {
+            if settings.vapid.private_key.is_empty() {
+                None
+            } else {
+                Some(Arc::new(svc))
+            }
+        }
+        Err(e) => {
+            tracing::error!("PushService init failed: {e} — push notifications disabled");
+            None
+        }
+    };
+
     let state = AppState {
-        db,
         jwks_uri: settings.keycloak.jwks_uri.clone(),
         jwks_cache: Arc::new(RwLock::new(None)),
         events: events_tx,
         vapid_public_key: settings.vapid.public_key.clone(),
-        vapid_private_key: settings.vapid.private_key.clone(),
-        vapid_subject: settings.vapid.subject.clone(),
         rawg_api_key: settings.rawg.api_key.clone(),
-        keycloak_admin_url: settings.keycloak.admin_url.clone(),
-        keycloak_realm: settings.keycloak.realm.clone(),
-        keycloak_admin_user: settings.keycloak.admin_user.clone(),
-        keycloak_admin_password: settings.keycloak.admin_password.clone(),
+        session_svc: Arc::new(SessionService::new(Arc::clone(&db))),
+        group_svc: Arc::new(GroupService::new(Arc::clone(&db))),
+        game_svc: Arc::new(GameService::new(Arc::clone(&db))),
+        user_svc: Arc::new(UserService::new(Arc::clone(&db))),
+        me_svc: Arc::new(MeService::new(Arc::clone(&db))),
+        invitation_svc: Arc::new(InvitationService::new(Arc::clone(&db))),
+        session_invitation_svc: Arc::new(SessionInvitationService::new(Arc::clone(&db))),
+        invite_svc: Arc::new(InviteService::new(
+            Arc::clone(&db),
+            settings.keycloak.admin_url.clone(),
+            settings.keycloak.realm.clone(),
+            settings.keycloak.admin_user.clone(),
+            settings.keycloak.admin_password.clone(),
+        )),
+        push_svc,
+        db,
     };
 
     let cors = CorsLayer::new()
@@ -85,31 +117,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
         loop {
             interval.tick().await;
-            let db = Arc::clone(&notify_state.db);
-            let repo = repository::session::SessionRepository::new(Arc::clone(&db));
+            let repo = repository::session::SessionRepository::new(Arc::clone(&notify_state.db));
             use repository::traits::SessionRepo;
             match repo.find_sessions_to_notify().await {
                 Ok(sessions) if !sessions.is_empty() => {
-                    let push = match service::push::PushService::new(
-                        db,
-                        notify_state.vapid_private_key.clone(),
-                        notify_state.vapid_subject.clone(),
-                    ) {
-                        Ok(p) => p,
-                        Err(e) => {
-                            tracing::error!("Push init error: {e}");
-                            continue;
-                        }
-                    };
                     for session in sessions {
-                        let mut user_ids = vec![session.user_id.clone()];
-                        user_ids.extend(session.participants.iter().cloned());
-                        user_ids.dedup();
-                        if let Err(e) = push
-                            .notify_session_start(user_ids, &session.game, &session.id)
-                            .await
-                        {
-                            tracing::error!("Session start push error: {e}");
+                        if let Some(push) = &notify_state.push_svc {
+                            let mut user_ids = vec![session.user_id.clone()];
+                            user_ids.extend(session.participants.iter().cloned());
+                            user_ids.dedup();
+                            if let Err(e) = push
+                                .notify_session_start(user_ids, &session.game, &session.id)
+                                .await
+                            {
+                                tracing::warn!(
+                                    "Session start push error (session {}): {e}",
+                                    session.id
+                                );
+                            }
                         }
                         if let Err(e) = repo.mark_start_notified(session.id).await {
                             tracing::error!("mark_start_notified error: {e}");

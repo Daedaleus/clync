@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use axum::{
     Extension, Json, Router,
     extract::{Path, State},
@@ -11,8 +9,6 @@ use serde::Deserialize;
 use crate::config::app_state::AppState;
 use crate::error::AppError;
 use crate::middleware::auth::AuthUser;
-use crate::service::invitation::InvitationService;
-use crate::service::push::PushService;
 
 #[derive(Deserialize)]
 struct InviteBody {
@@ -34,10 +30,9 @@ async fn list_handler(
     State(state): State<AppState>,
     Extension(user): Extension<AuthUser>,
 ) -> Result<Json<impl serde::Serialize>, AppError> {
-    let invitations = InvitationService::new(Arc::clone(&state.db))
-        .get_pending(&user.keycloak_id)
-        .await?;
-    Ok(Json(invitations))
+    Ok(Json(
+        state.invitation_svc.get_pending(&user.keycloak_id).await?,
+    ))
 }
 
 async fn accept_handler(
@@ -45,9 +40,7 @@ async fn accept_handler(
     Extension(user): Extension<AuthUser>,
     Path(id): Path<String>,
 ) -> Result<StatusCode, AppError> {
-    InvitationService::new(Arc::clone(&state.db))
-        .accept(&id, &user)
-        .await?;
+    state.invitation_svc.accept(&id, &user).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -56,9 +49,7 @@ async fn decline_handler(
     Extension(user): Extension<AuthUser>,
     Path(id): Path<String>,
 ) -> Result<StatusCode, AppError> {
-    InvitationService::new(Arc::clone(&state.db))
-        .decline(&id, &user.keycloak_id)
-        .await?;
+    state.invitation_svc.decline(&id, &user.keycloak_id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -68,30 +59,32 @@ async fn invite_handler(
     Path(group_id): Path<String>,
     Json(body): Json<InviteBody>,
 ) -> Result<StatusCode, AppError> {
-    let svc = InvitationService::new(Arc::clone(&state.db));
-    // Fetch group name before invite so we can include it in the notification
-    let group_name = svc.group_name_for_notify(&group_id).await?;
-    svc.invite(&group_id, &user, &body.user_id).await?;
+    let group_name = state
+        .invitation_svc
+        .group_name_for_notify(&group_id)
+        .await?;
+    state
+        .invitation_svc
+        .invite(&group_id, &user, &body.user_id)
+        .await?;
 
-    let invitee_id = body.user_id.clone();
-    let inviter_username = user.username.clone();
-    let state_clone = state.clone();
-    tokio::spawn(async move {
-        if let Ok(push) = PushService::new(
-            Arc::clone(&state_clone.db),
-            state_clone.vapid_private_key.clone(),
-            state_clone.vapid_subject.clone(),
-        ) {
-            let _ = push
+    if let Some(push) = state.push_svc.clone() {
+        let invitee_id = body.user_id.clone();
+        let inviter_username = user.username.clone();
+        tokio::spawn(async move {
+            if let Err(e) = push
                 .notify_user(
                     &invitee_id,
                     "WhatsUp – Gruppeneinladung",
                     &format!("{inviter_username} hat dich zu \"{group_name}\" eingeladen"),
                     "/me",
                 )
-                .await;
-        }
-    });
+                .await
+            {
+                tracing::warn!("Push notification failed (group invite to {invitee_id}): {e}");
+            }
+        });
+    }
 
     Ok(StatusCode::NO_CONTENT)
 }
@@ -101,8 +94,7 @@ async fn invitable_handler(
     Extension(user): Extension<AuthUser>,
     Path(group_id): Path<String>,
 ) -> Result<Json<impl serde::Serialize>, AppError> {
-    let users = InvitationService::new(Arc::clone(&state.db))
-        .get_invitable(&group_id, &user)
-        .await?;
-    Ok(Json(users))
+    Ok(Json(
+        state.invitation_svc.get_invitable(&group_id, &user).await?,
+    ))
 }

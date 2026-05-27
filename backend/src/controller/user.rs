@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use axum::{
     Extension, Json, Router,
     extract::{Path, Query, State},
@@ -13,7 +11,6 @@ use crate::{
     error::AppError,
     middleware::auth::AuthUser,
     repository::{group::GroupRepository, traits::GroupRepo},
-    service::user::UserService,
 };
 
 #[derive(Deserialize)]
@@ -34,10 +31,7 @@ async fn search_handler(
     Query(params): Query<SearchParams>,
 ) -> Result<Json<impl serde::Serialize>, AppError> {
     let q = params.q.as_deref().unwrap_or("");
-    let users = UserService::new(Arc::clone(&state.db))
-        .search(q, &user.keycloak_id)
-        .await?;
-    Ok(Json(users))
+    Ok(Json(state.user_svc.search(q, &user.keycloak_id).await?))
 }
 
 async fn public_groups_handler(
@@ -45,7 +39,8 @@ async fn public_groups_handler(
     Extension(_user): Extension<AuthUser>,
     Path(id): Path<String>,
 ) -> Result<Json<Vec<GroupSummary>>, AppError> {
-    let groups = GroupRepository::new(Arc::clone(&state.db))
+    // This query is a direct repo call — no service layer needed here.
+    let groups = GroupRepository::new(std::sync::Arc::clone(&state.db))
         .find_public_by_member(id)
         .await?
         .into_iter()
@@ -59,7 +54,8 @@ async fn profile_handler(
     Extension(requester): Extension<AuthUser>,
     Path(id): Path<String>,
 ) -> Result<Json<impl serde::Serialize>, AppError> {
-    UserService::new(Arc::clone(&state.db))
+    state
+        .user_svc
         .get_profile(&id, &requester.keycloak_id)
         .await?
         .map(Json)
