@@ -123,6 +123,43 @@ impl SessionService {
         Ok(())
     }
 
+    /// Set RSVP status. Returns updated session (for SSE broadcast), None if caller is the creator.
+    pub async fn set_rsvp(
+        &self,
+        session_id: &str,
+        user: &AuthUser,
+        status: String,
+    ) -> Result<Option<SessionResponse>, AppError> {
+        if status != "accepted" && status != "maybe" && status != "declined" {
+            return Err(AppError::Validation(
+                "Ungültiger RSVP-Status (accepted, maybe oder declined)".into(),
+            ));
+        }
+        let session = self
+            .repo
+            .set_rsvp(
+                session_id.to_owned(),
+                user.keycloak_id.clone(),
+                user.username.clone(),
+                status,
+            )
+            .await?;
+        Ok(session.map(|s| s.into_response(&user.keycloak_id)))
+    }
+
+    /// Remove RSVP. Returns updated session (for SSE broadcast), None if caller is the creator.
+    pub async fn remove_rsvp(
+        &self,
+        session_id: &str,
+        user: &AuthUser,
+    ) -> Result<Option<SessionResponse>, AppError> {
+        let session = self
+            .repo
+            .remove_rsvp(session_id.to_owned(), user.keycloak_id.clone())
+            .await?;
+        Ok(session.map(|s| s.into_response(&user.keycloak_id)))
+    }
+
     /// Returns the group_ids for broadcast routing.
     pub async fn delete(
         &self,
@@ -231,6 +268,22 @@ mod tests {
         async fn leave(&self, _: String, _: String) -> Result<(), surrealdb::Error> {
             unimplemented!()
         }
+        async fn set_rsvp(
+            &self,
+            _: String,
+            _: String,
+            _: String,
+            _: String,
+        ) -> Result<Option<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn remove_rsvp(
+            &self,
+            _: String,
+            _: String,
+        ) -> Result<Option<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
         async fn delete(&self, _: String, _: String) -> Result<Vec<String>, surrealdb::Error> {
             unimplemented!()
         }
@@ -318,6 +371,7 @@ mod tests {
             group_names: vec![],
             game_has_thumbnail: false,
             notes: None,
+            rsvps: vec![],
         }
     }
 

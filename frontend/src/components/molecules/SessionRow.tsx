@@ -1,13 +1,13 @@
 import { Link } from 'react-router-dom';
 import Badge from '../atoms/Badge';
 import Button from '../atoms/Button';
-import type { Session } from '../../types';
+import type { RsvpStatus, Session } from '../../types';
 import { isPast, isLateJoinable, fmtDateTime } from '../../utils/date';
 import { config } from '../../config';
 
 interface Props {
   session: Session;
-  onJoin?: (id: string) => void;
+  onRsvp?: (id: string, status: RsvpStatus | null) => void;
   onDelete?: (id: string) => void;
 }
 
@@ -16,10 +16,40 @@ function thumbnailSrc(session: { thumbnail_url?: string | null; game: string }) 
   return `${config.apiUrl}/api/v1/library/${encodeURIComponent(session.game)}/thumbnail`;
 }
 
-export default function SessionRow({ session: s, onJoin, onDelete }: Props) {
+const RSVP_BUTTONS: { status: RsvpStatus; icon: string; ariaLabel: string; active: string; inactive: string }[] = [
+  {
+    status: 'accepted',
+    icon: '✓',
+    ariaLabel: 'Zusagen',
+    active: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40',
+    inactive: 'text-zinc-500 border-zinc-700 hover:text-emerald-400 hover:border-emerald-500/40',
+  },
+  {
+    status: 'maybe',
+    icon: '?',
+    ariaLabel: 'Vielleicht',
+    active: 'bg-amber-500/20 text-amber-400 border-amber-500/40',
+    inactive: 'text-zinc-500 border-zinc-700 hover:text-amber-400 hover:border-amber-500/40',
+  },
+  {
+    status: 'declined',
+    icon: '✕',
+    ariaLabel: 'Absagen',
+    active: 'bg-red-500/20 text-red-400 border-red-500/40',
+    inactive: 'text-zinc-500 border-zinc-700 hover:text-red-400 hover:border-red-500/40',
+  },
+];
+
+export default function SessionRow({ session: s, onRsvp, onDelete }: Props) {
   const lateJoinable = isLateJoinable(s.scheduled_at);
   const past = isPast(s.scheduled_at) && !lateJoinable;
   const src = thumbnailSrc(s);
+
+  const handleRsvp = (status: RsvpStatus) => {
+    if (!onRsvp) return;
+    // Toggle off if already selected
+    onRsvp(s.id, s.my_rsvp === status ? null : status);
+  };
 
   return (
     <li className={`flex items-center gap-3 px-3 py-3 ${past ? 'opacity-40' : ''}`}>
@@ -65,12 +95,22 @@ export default function SessionRow({ session: s, onJoin, onDelete }: Props) {
       </Link>
 
       {/* Actions */}
-      <div className="shrink-0 flex items-center gap-2">
-        {s.is_participant && (
-          <span className="text-xs text-emerald-400 font-medium">Zugesagt</span>
-        )}
-        {!s.is_mine && !s.is_participant && !past && onJoin && (
-          <Button variant="primary" size="sm" onClick={() => onJoin(s.id)}>Beitreten</Button>
+      <div className="shrink-0 flex items-center gap-1.5">
+        {!s.is_mine && !past && onRsvp && (
+          <div className="flex gap-1">
+            {RSVP_BUTTONS.map(({ status, icon, ariaLabel, active, inactive }) => (
+              <button
+                key={status}
+                onClick={() => handleRsvp(status)}
+                aria-label={ariaLabel}
+                className={`w-7 h-7 rounded-lg border text-xs font-bold transition-colors ${
+                  s.my_rsvp === status ? active : inactive
+                }`}
+              >
+                {icon}
+              </button>
+            ))}
+          </div>
         )}
         {s.is_mine && onDelete && (
           <Button variant="danger" size="sm" onClick={() => onDelete(s.id)}>Löschen</Button>

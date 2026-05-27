@@ -19,6 +19,7 @@ function session(overrides: Partial<Session> = {}): Session {
     participant_count: 3,
     is_mine: false,
     is_participant: false,
+    my_rsvp: null,
     group_ids: [], group_names: [],
     ...overrides,
   };
@@ -38,32 +39,36 @@ describe('SessionRow', () => {
     expect(screen.getByText('alice')).toBeInTheDocument();
   });
 
-  it('shows join button when not mine, not participant, not past, and onJoin provided', () => {
-    const onJoin = vi.fn();
-    wrap(<ul><SessionRow session={session()} onJoin={onJoin} /></ul>);
-    expect(screen.getByRole('button', { name: 'Beitreten' })).toBeInTheDocument();
+  it('shows RSVP buttons when not mine, not past, and onRsvp provided', () => {
+    const onRsvp = vi.fn();
+    wrap(<ul><SessionRow session={session()} onRsvp={onRsvp} /></ul>);
+    expect(screen.getByRole('button', { name: 'Zusagen' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Vielleicht' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Absagen' })).toBeInTheDocument();
   });
 
-  it('calls onJoin with session id when join button clicked', async () => {
-    const onJoin = vi.fn();
-    wrap(<ul><SessionRow session={session({ id: 'sess-42' })} onJoin={onJoin} /></ul>);
-    await userEvent.click(screen.getByRole('button', { name: 'Beitreten' }));
-    expect(onJoin).toHaveBeenCalledWith('sess-42');
+  it('calls onRsvp with session id and accepted status when clicked', async () => {
+    const onRsvp = vi.fn();
+    wrap(<ul><SessionRow session={session({ id: 'sess-42' })} onRsvp={onRsvp} /></ul>);
+    await userEvent.click(screen.getByRole('button', { name: 'Zusagen' }));
+    expect(onRsvp).toHaveBeenCalledWith('sess-42', 'accepted');
   });
 
-  it('does not show join button for past sessions', () => {
-    wrap(<ul><SessionRow session={session({ scheduled_at: PAST })} onJoin={vi.fn()} /></ul>);
-    expect(screen.queryByRole('button', { name: 'Beitreten' })).not.toBeInTheDocument();
+  it('calls onRsvp with null when toggling off the active status', async () => {
+    const onRsvp = vi.fn();
+    wrap(<ul><SessionRow session={session({ id: 'sess-1', my_rsvp: 'accepted' })} onRsvp={onRsvp} /></ul>);
+    await userEvent.click(screen.getByRole('button', { name: 'Zusagen' }));
+    expect(onRsvp).toHaveBeenCalledWith('sess-1', null);
   });
 
-  it('does not show join button when already a participant', () => {
-    wrap(<ul><SessionRow session={session({ is_participant: true })} onJoin={vi.fn()} /></ul>);
-    expect(screen.queryByRole('button', { name: 'Beitreten' })).not.toBeInTheDocument();
+  it('does not show RSVP buttons for past sessions', () => {
+    wrap(<ul><SessionRow session={session({ scheduled_at: PAST })} onRsvp={vi.fn()} /></ul>);
+    expect(screen.queryByRole('button', { name: 'Zusagen' })).not.toBeInTheDocument();
   });
 
-  it('shows "Zugesagt" when already a participant', () => {
-    wrap(<ul><SessionRow session={session({ is_participant: true })} /></ul>);
-    expect(screen.getByText('Zugesagt')).toBeInTheDocument();
+  it('does not show RSVP buttons for own sessions', () => {
+    wrap(<ul><SessionRow session={session({ is_mine: true })} onRsvp={vi.fn()} /></ul>);
+    expect(screen.queryByRole('button', { name: 'Zusagen' })).not.toBeInTheDocument();
   });
 
   it('shows delete button when is_mine and onDelete provided', () => {

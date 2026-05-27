@@ -1,3 +1,5 @@
+export type RsvpStatus = 'accepted' | 'maybe' | 'declined';
+
 export interface Session {
   id: string;
   user_id: string;
@@ -8,6 +10,7 @@ export interface Session {
   participant_count: number;
   is_mine: boolean;
   is_participant: boolean;
+  my_rsvp: RsvpStatus | null;
   group_ids: string[];
   group_names: string[];
   thumbnail_url?: string | null;

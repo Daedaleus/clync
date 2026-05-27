@@ -5,7 +5,7 @@ import ErrorBanner from '../components/molecules/ErrorBanner';
 import SessionCreateForm from '../components/organisms/SessionCreateForm';
 import SessionList from '../components/organisms/SessionList';
 import PageLayout from '../components/templates/PageLayout';
-import type { GroupSummary, Session } from '../types';
+import type { GroupSummary, RsvpStatus, Session } from '../types';
 import { api } from '../services/api';
 import { isPast, isLateJoinable } from '../utils/date';
 
@@ -27,12 +27,29 @@ export default function SessionsPage() {
   const groupSessions = useMemo(() => upcoming.filter((s) => s.scope === 'groups'), [upcoming]);
   const globalSessions = useMemo(() => upcoming.filter((s) => s.scope === 'global'), [upcoming]);
 
-  const handleJoin = async (id: string) => {
+  const handleRsvp = async (id: string, status: RsvpStatus | null) => {
     try {
-      await api.post(`/api/v1/sessions/${id}/join`);
-      setSessions((p) => p.map((s) => s.id === id
-        ? { ...s, is_participant: true, participant_count: s.participant_count + 1 }
-        : s));
+      if (status === null) {
+        await api.delete(`/api/v1/sessions/${id}/rsvp`);
+        setSessions((p) => p.map((s) => s.id === id
+          ? { ...s, my_rsvp: null, is_participant: false, participant_count: s.is_participant ? s.participant_count - 1 : s.participant_count }
+          : s));
+      } else {
+        await api.put(`/api/v1/sessions/${id}/rsvp`, { status });
+        const wasParticipant = sessions.find((s) => s.id === id)?.is_participant ?? false;
+        const willBeParticipant = status === 'accepted';
+        setSessions((p) => p.map((s) => s.id === id
+          ? {
+              ...s,
+              my_rsvp: status,
+              is_participant: willBeParticipant,
+              participant_count:
+                willBeParticipant && !wasParticipant ? s.participant_count + 1
+                : !willBeParticipant && wasParticipant ? s.participant_count - 1
+                : s.participant_count,
+            }
+          : s));
+      }
     } catch (err) { setError(err instanceof Error ? err.message : 'Fehler'); }
   };
 
@@ -72,7 +89,7 @@ export default function SessionsPage() {
         <SectionLabel>Gruppen</SectionLabel>
         <SessionList
           sessions={groupSessions}
-          onJoin={handleJoin}
+          onRsvp={handleRsvp}
           onDelete={handleDelete}
           emptyMessage="Keine bevorstehenden Gruppen-Sessions."
         />
@@ -82,7 +99,7 @@ export default function SessionsPage() {
         <SectionLabel>Global</SectionLabel>
         <SessionList
           sessions={globalSessions}
-          onJoin={handleJoin}
+          onRsvp={handleRsvp}
           onDelete={handleDelete}
           emptyMessage="Keine bevorstehenden globalen Sessions."
         />

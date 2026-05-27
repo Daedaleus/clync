@@ -7,7 +7,7 @@ import ErrorBanner from '../components/molecules/ErrorBanner';
 import GameCard from '../components/molecules/GameCard';
 import SessionList from '../components/organisms/SessionList';
 import PageLayout from '../components/templates/PageLayout';
-import type { Game, GroupSummary, Invitation, Session, SessionInvitation } from '../types';
+import type { Game, GroupSummary, Invitation, RsvpStatus, Session, SessionInvitation } from '../types';
 import { fmtDateTime } from '../utils/date';
 import { api } from '../services/api';
 import { isPast, isLateJoinable } from '../utils/date';
@@ -54,12 +54,30 @@ export default function MePage() {
     [sessions],
   );
 
-  const handleJoin = async (id: string) => {
+  const handleRsvp = async (id: string, status: RsvpStatus | null) => {
     try {
-      await api.post(`/api/v1/sessions/${id}/join`);
-      setSessions((p) => p.map((s) => s.id === id
-        ? { ...s, is_participant: true, participant_count: s.participant_count + 1 }
-        : s));
+      if (status === null) {
+        await api.delete(`/api/v1/sessions/${id}/rsvp`);
+        setSessions((p) => p.map((s) => s.id === id
+          ? { ...s, my_rsvp: null, is_participant: false, participant_count: s.is_participant ? s.participant_count - 1 : s.participant_count }
+          : s));
+      } else {
+        await api.put(`/api/v1/sessions/${id}/rsvp`, { status });
+        setSessions((p) => p.map((s) => {
+          if (s.id !== id) return s;
+          const wasParticipant = s.is_participant;
+          const willBeParticipant = status === 'accepted';
+          return {
+            ...s,
+            my_rsvp: status,
+            is_participant: willBeParticipant,
+            participant_count:
+              willBeParticipant && !wasParticipant ? s.participant_count + 1
+              : !willBeParticipant && wasParticipant ? s.participant_count - 1
+              : s.participant_count,
+          };
+        }));
+      }
     } catch { /* handled by SessionRow */ }
   };
 
@@ -221,7 +239,7 @@ export default function MePage() {
                 </Link>
               </div>
             ) : (
-              <SessionList sessions={upcomingSessions} onJoin={handleJoin} onDelete={handleDelete} />
+              <SessionList sessions={upcomingSessions} onRsvp={handleRsvp} onDelete={handleDelete} />
             )}
           </section>
 
