@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Button from '../atoms/Button';
 import SectionLabel from '../atoms/SectionLabel';
 import GamePicker from '../molecules/GamePicker';
@@ -14,47 +14,61 @@ interface Props {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-/**
- * Formats a Date as the `YYYY-MM-DDTHH:MM` string required by datetime-local inputs.
- * Uses local time so the input reflects what the user sees on their device.
- */
-function toDatetimeLocal(d: Date): string {
-  return (
-    `${d.getFullYear()}-` +
-    `${String(d.getMonth() + 1).padStart(2, '0')}-` +
-    `${String(d.getDate()).padStart(2, '0')}T` +
-    `${String(d.getHours()).padStart(2, '0')}:` +
-    `${String(d.getMinutes()).padStart(2, '0')}`
-  );
+/** All 96 quarter-hour slots for a day. */
+const ALL_SLOTS = Array.from({ length: 96 }, (_, i) => {
+  const h = String(Math.floor(i / 4)).padStart(2, '0');
+  const m = String((i % 4) * 15).padStart(2, '0');
+  return `${h}:${m}`;
+});
+
+function todayLocal(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-/** Returns the next full 15-minute slot at least 15 min from now. */
-function nextSlotDefault(): string {
+/** Returns the next 15-min-aligned slot at least 15 min from now. */
+function nextSlot(): { date: string; time: string } {
   const now = new Date();
   now.setMinutes(now.getMinutes() + 15);
-  // Round up to the next 15-minute boundary
   const remainder = now.getMinutes() % 15;
   if (remainder !== 0) now.setMinutes(now.getMinutes() + (15 - remainder));
   now.setSeconds(0, 0);
-  return toDatetimeLocal(now);
+
+  const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  return { date, time };
 }
 
-/** Minimum selectable datetime: now + 2 minutes (small buffer to avoid race). */
-function minDatetimeLocal(): string {
+/** First slot index that is strictly in the future for today (with 5-min buffer). */
+function firstAvailableMinutes(): number {
   const now = new Date();
-  now.setMinutes(now.getMinutes() + 2);
-  return toDatetimeLocal(now);
+  now.setMinutes(now.getMinutes() + 5);
+  return Math.ceil((now.getHours() * 60 + now.getMinutes()) / 15) * 15;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function SessionCreateForm({ groups, onCreate, onError, onCancel }: Props) {
+  const defaults = nextSlot();
   const [game, setGame] = useState('');
-  const [datetimeLocal, setDatetimeLocal] = useState(nextSlotDefault);
+  const [date, setDate] = useState(defaults.date);
+  const [time, setTime] = useState(defaults.time);
   const [scope, setScope] = useState<'global' | 'groups'>('global');
   const [selectedGroups, setSelectedGroups] = useState<Set<string>>(new Set());
   const [notes, setNotes] = useState('');
   const [validationError, setValidationError] = useState<string | null>(null);
+
+  const availableSlots = useMemo(() => {
+    if (date !== todayLocal()) return ALL_SLOTS;
+    const minMins = firstAvailableMinutes();
+    return ALL_SLOTS.filter((slot) => {
+      const [h, m] = slot.split(':').map(Number);
+      return h * 60 + m >= minMins;
+    });
+  }, [date]);
+
+  // If the selected time is no longer available after a date change, bump to first slot.
+  const effectiveTime = availableSlots.includes(time) ? time : (availableSlots[0] ?? '00:00');
 
   const toggleGroup = (id: string) =>
     setSelectedGroups((p) => {
@@ -62,6 +76,23 @@ export default function SessionCreateForm({ groups, onCreate, onError, onCancel 
       if (n.has(id)) { n.delete(id); } else { n.add(id); }
       return n;
     });
+
+  const handleDateChange = (val: string) => {
+    setDate(val);
+    setValidationError(null);
+    // If the current time slot is no longer valid for the new date, reset it.
+    if (val === todayLocal()) {
+      const minMins = firstAvailableMinutes();
+      const [h, m] = time.split(':').map(Number);
+      if (h * 60 + m < minMins) {
+        const first = ALL_SLOTS.find((s) => {
+          const [sh, sm] = s.split(':').map(Number);
+          return sh * 60 + sm >= minMins;
+        });
+        if (first) setTime(first);
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,8 +103,7 @@ export default function SessionCreateForm({ groups, onCreate, onError, onCancel 
       return;
     }
 
-    // datetime-local value is local time; new Date() interprets it as local → correct UTC ISO string
-    const scheduledAt = new Date(datetimeLocal).toISOString();
+    const scheduledAt = new Date(`${date}T${effectiveTime}:00`).toISOString();
     if (new Date(scheduledAt) <= new Date()) {
       setValidationError('Der Zeitpunkt muss in der Zukunft liegen.');
       return;
@@ -93,11 +123,9 @@ export default function SessionCreateForm({ groups, onCreate, onError, onCancel 
     }
   };
 
-  const inputClass =
-    'w-full h-9 bg-zinc-800 border border-zinc-700 text-sm text-zinc-200 rounded-lg px-3 ' +
-    'focus:outline-none focus:ring-1 focus:ring-violet-500 ' +
-    // Ensure calendar/clock icons use light colours in Webkit/Blink
-    '[color-scheme:dark]';
+  const fieldClass =
+    'w-full h-10 bg-zinc-800 border border-zinc-700 text-sm text-zinc-200 rounded-lg px-3 ' +
+    'focus:outline-none focus:ring-1 focus:ring-violet-500 [color-scheme:dark]';
 
   return (
     <form onSubmit={handleSubmit} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-4">
@@ -108,18 +136,34 @@ export default function SessionCreateForm({ groups, onCreate, onError, onCancel 
         <GamePicker value={game} onChange={setGame} required />
       </div>
 
-      {/* Date + Time — single datetime-local input */}
-      <div className="space-y-1.5">
-        <SectionLabel>Datum &amp; Uhrzeit</SectionLabel>
-        <input
-          type="datetime-local"
-          value={datetimeLocal}
-          min={minDatetimeLocal()}
-          step={900}
-          onChange={(e) => { setDatetimeLocal(e.target.value); setValidationError(null); }}
-          required
-          className={inputClass}
-        />
+      {/* Date + Time — stacked on mobile, side-by-side on sm+ */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <SectionLabel>Datum</SectionLabel>
+          <input
+            type="date"
+            value={date}
+            min={todayLocal()}
+            onChange={(e) => handleDateChange(e.target.value)}
+            required
+            className={fieldClass}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <SectionLabel>Uhrzeit</SectionLabel>
+          <select
+            value={effectiveTime}
+            onChange={(e) => { setTime(e.target.value); setValidationError(null); }}
+            className={fieldClass}
+          >
+            {availableSlots.map((slot) => (
+              <option key={slot} value={slot}>{slot} Uhr</option>
+            ))}
+            {availableSlots.length === 0 && (
+              <option disabled>Kein Slot verfügbar</option>
+            )}
+          </select>
+        </div>
       </div>
 
       {validationError && (
@@ -180,7 +224,7 @@ export default function SessionCreateForm({ groups, onCreate, onError, onCancel 
       </div>
 
       <div className="flex gap-2">
-        <Button type="submit">Eintragen</Button>
+        <Button type="submit" disabled={availableSlots.length === 0}>Eintragen</Button>
         <Button type="button" variant="secondary" onClick={onCancel}>Abbrechen</Button>
       </div>
     </form>
