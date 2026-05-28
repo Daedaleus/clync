@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import logo from '../../assets/logo.svg';
 import { Link, NavLink } from 'react-router-dom';
 import keycloak from '../../services/auth';
@@ -47,6 +48,7 @@ const dropdownItem =
 // ── AppHeader ─────────────────────────────────────────────────────────────────
 
 export default function AppHeader() {
+  const { t, i18n } = useTranslation();
   const username = keycloak.tokenParsed?.preferred_username as string | undefined;
   const { permission, subscribed, enable, disable } = useNotifications();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -92,10 +94,10 @@ export default function AppHeader() {
             <img src={logo} alt="WhatsUp" className="h-7 w-auto" />
           </Link>
           <nav className="hidden sm:flex items-center gap-4">
-            <NavLink to="/sessions" className={navLink}>Sessions</NavLink>
-            <NavLink to="/groups" className={navLink}>Gruppen</NavLink>
-            <NavLink to="/library" className={navLink}>Bibliothek</NavLink>
-            <NavLink to="/friends" className={navLink}>Freunde</NavLink>
+            <NavLink to="/sessions" className={navLink}>{t('nav.sessions')}</NavLink>
+            <NavLink to="/groups" className={navLink}>{t('nav.groups')}</NavLink>
+            <NavLink to="/library" className={navLink}>{t('nav.library')}</NavLink>
+            <NavLink to="/friends" className={navLink}>{t('nav.friends')}</NavLink>
           </nav>
         </div>
 
@@ -106,7 +108,7 @@ export default function AppHeader() {
           {showBell && (
             <button
               onClick={handleBellToggle}
-              title={subscribed ? 'Benachrichtigungen deaktivieren' : 'Benachrichtigungen aktivieren'}
+              title={subscribed ? t('header.notifications_disable') : t('header.notifications_enable')}
               className="hidden sm:flex items-center justify-center w-8 h-8 rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer"
             >
               <BellIcon active={subscribed} />
@@ -128,30 +130,37 @@ export default function AppHeader() {
 
                 {/* Mobile-only nav items */}
                 <div className="sm:hidden">
-                  <Link to="/sessions" className={dropdownItem} onClick={close}>Sessions</Link>
-                  <Link to="/groups" className={dropdownItem} onClick={close}>Gruppen</Link>
-                  <Link to="/library" className={dropdownItem} onClick={close}>Bibliothek</Link>
-                  <Link to="/friends" className={dropdownItem} onClick={close}>Freunde</Link>
+                  <Link to="/sessions" className={dropdownItem} onClick={close}>{t('nav.sessions')}</Link>
+                  <Link to="/groups" className={dropdownItem} onClick={close}>{t('nav.groups')}</Link>
+                  <Link to="/library" className={dropdownItem} onClick={close}>{t('nav.library')}</Link>
+                  <Link to="/friends" className={dropdownItem} onClick={close}>{t('nav.friends')}</Link>
                   {showBell && (
                     <button className={dropdownItem} onClick={handleBellToggle}>
                       <BellIcon active={subscribed} />
-                      <span>Benachrichtigungen {subscribed ? 'an' : 'aus'}</span>
+                      <span>{subscribed ? t('header.notifications_on') : t('header.notifications_off')}</span>
                     </button>
                   )}
                   <hr className="border-zinc-800 my-1" />
                 </div>
 
                 {/* Always: Profil + logout */}
-                <Link to="/profile" className={dropdownItem} onClick={close}>Profil</Link>
+                <Link to="/profile" className={dropdownItem} onClick={close}>{t('header.profile')}</Link>
                 <button className={dropdownItem} onClick={handleInvite}>
-                  Freund einladen
+                  {t('header.invite_friend')}
+                </button>
+                <hr className="border-zinc-800 my-1" />
+                <button
+                  className={dropdownItem}
+                  onClick={() => { i18n.changeLanguage(i18n.language.startsWith('de') ? 'en' : 'de'); close(); }}
+                >
+                  {i18n.language.startsWith('de') ? '🇬🇧 English' : '🇩🇪 Deutsch'}
                 </button>
                 <hr className="border-zinc-800 my-1" />
                 <button
                   className={`${dropdownItem} text-zinc-400`}
                   onClick={() => keycloak.logout()}
                 >
-                  Abmelden
+                  {t('header.logout')}
                 </button>
               </div>
             )}

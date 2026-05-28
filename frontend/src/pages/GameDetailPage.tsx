@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import Button from '../components/atoms/Button';
 import Input from '../components/atoms/Input';
@@ -21,6 +22,7 @@ function thumbnailSrc(name: string, url: string | null | undefined): string | un
 }
 
 export default function GameDetailPage() {
+  const { t } = useTranslation();
   const { name } = useParams<{ name: string }>();
   const navigate = useNavigate();
   const [game, setGame] = useState<Game | null>(null);
@@ -42,19 +44,19 @@ export default function GameDetailPage() {
       setGame(g);
       setEditGenre(g.genre ?? '');
       setEditDesc(g.description ?? '');
-    }).catch((err: unknown) => { if (!isAbortError(err)) setError('Spiel nicht gefunden'); });
+    }).catch((err: unknown) => { if (!isAbortError(err)) setError(t('game_detail.not_found')); });
     api.get<MeGames>('/api/v1/me', controller.signal)
       .then((me) => setInWishlist(me.games.includes(name)))
       .catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
     return () => controller.abort();
-  }, [name]);
+  }, [name, t]);
 
   const handleDelete = async () => {
-    if (!name || !window.confirm(`"${name}" aus der Bibliothek löschen?`)) return;
+    if (!name || !window.confirm(t('game_detail.delete_confirm', { name }))) return;
     try {
       await api.delete(`/api/v1/library/${encodeURIComponent(name)}`);
       navigate('/library');
-    } catch (err) { setError(err instanceof Error ? err.message : 'Löschen fehlgeschlagen'); }
+    } catch (err) { setError(err instanceof Error ? err.message : t('game_detail.delete_error')); }
   };
 
   const handleAutofill = async () => {
@@ -63,7 +65,7 @@ export default function GameDetailPage() {
     try {
       const result = await api.get<AutofillCandidate[]>(`/api/v1/library/${encodeURIComponent(name)}/autofill`);
       setCandidates(result);
-    } catch (err) { setError(err instanceof Error ? err.message : 'Autofill fehlgeschlagen'); }
+    } catch (err) { setError(err instanceof Error ? err.message : t('game_detail.autofill_error')); }
     finally { setAutofilling(false); }
   };
 
@@ -78,7 +80,7 @@ export default function GameDetailPage() {
       setGame(updated);
       setEditGenre(updated.genre ?? '');
       setEditDesc(updated.description ?? '');
-    } catch (err) { setError(err instanceof Error ? err.message : 'Fehler beim Speichern'); }
+    } catch (err) { setError(err instanceof Error ? err.message : t('game_detail.save_error')); }
   };
 
   const handleToggleWishlist = async () => {
@@ -91,7 +93,7 @@ export default function GameDetailPage() {
         await api.post('/api/v1/me/games', { name });
         setInWishlist(true);
       }
-    } catch (err) { setError(err instanceof Error ? err.message : 'Fehler'); }
+    } catch (err) { setError(err instanceof Error ? err.message : t('game_detail.save_error')); }
   };
 
   const handleSave = async () => {
@@ -121,7 +123,7 @@ export default function GameDetailPage() {
         thumbnail_url: newThumb,
       });
       setEditing(false);
-    } catch (err) { setError(err instanceof Error ? err.message : 'Fehler'); }
+    } catch (err) { setError(err instanceof Error ? err.message : t('game_detail.save_error')); }
     finally { setSaving(false); }
   };
 
@@ -130,7 +132,7 @@ export default function GameDetailPage() {
   return (
     <PageLayout>
       {error && <ErrorBanner message={error} />}
-      {!game && !error && <p className="text-zinc-500 text-sm">Lade Spiel…</p>}
+      {!game && !error && <p className="text-zinc-500 text-sm">{t('game_detail.loading')}</p>}
 
       {game && (
         <>
@@ -156,22 +158,22 @@ export default function GameDetailPage() {
                 onClick={handleToggleWishlist}
                 className={inWishlist ? 'hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30' : ''}
               >
-                {inWishlist ? 'Aus Liste entfernen' : '+ Zur Liste'}
+                {inWishlist ? t('game_detail.remove_from_list') : t('game_detail.add_to_list')}
               </Button>
               {isAdmin() && (
                 <>
                   <Button variant="secondary" disabled={autofilling} onClick={handleAutofill}>
-                    {autofilling ? 'Laden…' : '✨ Auto-Ausfüllen'}
+                    {autofilling ? t('game_detail.autofill_loading') : t('game_detail.autofill_button')}
                   </Button>
                   <Button variant="secondary" onClick={() => setEditing((v) => !v)}>
-                    {editing ? 'Abbrechen' : 'Bearbeiten'}
+                    {editing ? t('game_detail.cancel') : t('game_detail.edit')}
                   </Button>
                   <Button
                     variant="danger"
                     onClick={handleDelete}
-                    title="Aus Bibliothek löschen (nur wenn niemand das Spiel hat)"
+                    title={t('game_detail.delete_confirm', { name: game.name })}
                   >
-                    Löschen
+                    {t('game_detail.delete')}
                   </Button>
                 </>
               )}
@@ -192,28 +194,28 @@ export default function GameDetailPage() {
             <p className="text-sm text-zinc-400 leading-relaxed">{game.description}</p>
           )}
           {!editing && !game.description && !game.genre && !game.thumbnail_url && (
-            <p className="text-sm text-zinc-600 italic">Noch keine Details hinterlegt.</p>
+            <p className="text-sm text-zinc-600 italic">{t('game_detail.no_details')}</p>
           )}
 
           {editing && (
             <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
-              <SectionLabel>Details bearbeiten</SectionLabel>
+              <SectionLabel>{t('game_detail.edit_section')}</SectionLabel>
               <div className="space-y-1.5">
-                <label className="text-xs text-zinc-500">Genre</label>
-                <Input value={editGenre} onChange={(e) => setEditGenre(e.target.value)} placeholder="z.B. Shooter, RPG, Strategy" className="w-full" />
+                <label className="text-xs text-zinc-500">{t('game_detail.genre_label')}</label>
+                <Input value={editGenre} onChange={(e) => setEditGenre(e.target.value)} placeholder={t('game_detail.genre_placeholder')} className="w-full" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs text-zinc-500">Kurzbeschreibung</label>
+                <label className="text-xs text-zinc-500">{t('game_detail.description_label')}</label>
                 <textarea
                   value={editDesc}
                   onChange={(e) => setEditDesc(e.target.value)}
-                  placeholder="Kurze Beschreibung des Spiels…"
+                  placeholder={t('game_detail.description_placeholder')}
                   rows={3}
                   className="w-full bg-zinc-800 border border-zinc-700 text-sm text-zinc-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-violet-500 resize-none placeholder-zinc-600"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs text-zinc-500">Thumbnail</label>
+                <label className="text-xs text-zinc-500">{t('game_detail.thumbnail_label')}</label>
                 <input
                   ref={fileRef}
                   type="file"
@@ -224,9 +226,9 @@ export default function GameDetailPage() {
               </div>
               <div className="flex gap-2">
                 <Button onClick={handleSave} disabled={saving}>
-                  {saving ? 'Speichern…' : 'Speichern'}
+                  {saving ? t('game_detail.saving') : t('game_detail.save')}
                 </Button>
-                <Button variant="secondary" onClick={() => setEditing(false)}>Abbrechen</Button>
+                <Button variant="secondary" onClick={() => setEditing(false)}>{t('game_detail.cancel')}</Button>
               </div>
             </div>
           )}

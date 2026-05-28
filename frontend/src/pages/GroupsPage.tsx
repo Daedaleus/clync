@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import Badge from '../components/atoms/Badge';
 import Button from '../components/atoms/Button';
@@ -14,15 +15,8 @@ import { isAbortError } from '../utils/abort';
 
 interface GroupResult extends GroupSummary { member_count: number }
 
-function fmtSession(s: Session): string {
-  const d = new Date(s.scheduled_at).toLocaleDateString(undefined, {
-    weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
-  });
-  const n = s.participant_count;
-  return `${n} ${n === 1 ? 'Person' : 'Personen'} · ${d} · ${s.game}`;
-}
-
 export default function GroupsPage() {
+  const { t } = useTranslation();
   const [myGroups, setMyGroups] = useState<GroupSummary[]>([]);
   const [sessionsByGroup, setSessionsByGroup] = useState<Map<string, Session[]>>(new Map());
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,10 +27,18 @@ export default function GroupsPage() {
   const [newIsPublic, setNewIsPublic] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  function fmtSession(s: Session): string {
+    const d = new Date(s.scheduled_at).toLocaleDateString(undefined, {
+      weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+    });
+    const n = s.participant_count;
+    return `${t('sessions.participant_count', { count: n })} · ${d} · ${s.game}`;
+  }
+
   useEffect(() => {
     const controller = new AbortController();
     api.get<GroupSummary[]>('/api/v1/groups/mine', controller.signal).then(setMyGroups)
-      .catch((err: unknown) => { if (!isAbortError(err)) setError(err instanceof Error ? err.message : 'Fehler'); });
+      .catch((err: unknown) => { if (!isAbortError(err)) setError(err instanceof Error ? err.message : t('common.error')); });
 
     // Admin: auto-load all groups (incl. private) without requiring a search
     if (isAdmin()) {
@@ -58,14 +60,14 @@ export default function GroupsPage() {
       setSessionsByGroup(map);
     }).catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
     return () => controller.abort();
-  }, []);
+  }, [t]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     try {
       setSearchResults(await api.get<GroupResult[]>(`/api/v1/groups?q=${encodeURIComponent(searchQuery)}`));
-    } catch (err) { setError(err instanceof Error ? err.message : 'Fehler'); }
+    } catch (err) { setError(err instanceof Error ? err.message : t('common.error')); }
   };
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -75,7 +77,7 @@ export default function GroupsPage() {
       const group = await api.post<GroupSummary>('/api/v1/groups', { name: newName, is_public: newIsPublic });
       setMyGroups((p) => [...p, group]);
       setNewName(''); setShowCreateForm(false);
-    } catch (err) { setError(err instanceof Error ? err.message : 'Fehler'); }
+    } catch (err) { setError(err instanceof Error ? err.message : t('common.error')); }
   };
 
   const handleJoin = async (group: GroupResult) => {
@@ -85,7 +87,7 @@ export default function GroupsPage() {
       setJoined((p) => new Set(p).add(group.id));
       setMyGroups((p) => [...p, { id: group.id, name: group.name, is_public: group.is_public }]);
       setSearchResults((p) => p.map((g) => g.id === group.id ? { ...g, member_count: g.member_count + 1 } : g));
-    } catch (err) { setError(err instanceof Error ? err.message : 'Fehler'); }
+    } catch (err) { setError(err instanceof Error ? err.message : t('common.error')); }
   };
 
   const myGroupIds = new Set(myGroups.map((g) => g.id));
@@ -97,28 +99,28 @@ export default function GroupsPage() {
       {/* Meine Gruppen */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <SectionLabel count={myGroups.length}>Meine Gruppen</SectionLabel>
+          <SectionLabel count={myGroups.length}>{t('groups.my_groups')}</SectionLabel>
           <Button variant="secondary" onClick={() => setShowCreateForm((v) => !v)}>
-            {showCreateForm ? 'Abbrechen' : '+ Erstellen'}
+            {showCreateForm ? t('common.cancel') : t('groups.create')}
           </Button>
         </div>
 
         {showCreateForm && (
           <form onSubmit={handleCreate} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex flex-wrap gap-3 items-end">
             <div className="flex-1 min-w-40 space-y-1.5">
-              <SectionLabel>Name</SectionLabel>
-              <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Gruppenname" required className="w-full" />
+              <SectionLabel>{t('common.edit')}</SectionLabel>
+              <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder={t('groups.group_name_placeholder')} required className="w-full" />
             </div>
             <label className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer">
               <input type="checkbox" checked={newIsPublic} onChange={(e) => setNewIsPublic(e.target.checked)} className="accent-violet-500" />
-              Öffentlich
+              {t('groups.is_public_label')}
             </label>
-            <Button type="submit">Erstellen</Button>
+            <Button type="submit">{t('common.create')}</Button>
           </form>
         )}
 
         {myGroups.length === 0 ? (
-          <p className="text-zinc-500 text-sm">Noch keiner Gruppe beigetreten.</p>
+          <p className="text-zinc-500 text-sm">{t('groups.no_groups')}</p>
         ) : (
           <ul className="divide-y divide-zinc-800 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
             {myGroups.map((g) => (
@@ -149,8 +151,8 @@ export default function GroupsPage() {
 
       {/* Suche */}
       <section className="space-y-3">
-        <SectionLabel>{isAdmin() ? 'Alle Gruppen' : 'Öffentliche Gruppen suchen'}</SectionLabel>
-        <SearchBar value={searchQuery} onChange={setSearchQuery} onSubmit={handleSearch} placeholder="Gruppenname…" />
+        <SectionLabel>{isAdmin() ? t('groups.search_title_admin') : t('groups.search_title')}</SectionLabel>
+        <SearchBar value={searchQuery} onChange={setSearchQuery} onSubmit={handleSearch} placeholder={t('groups.search_placeholder')} />
 
         {searchResults.length > 0 && (
           <ul className="divide-y divide-zinc-800 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
@@ -163,18 +165,20 @@ export default function GroupsPage() {
                       <Link to={`/groups/${g.id}`} className="text-sm font-medium text-zinc-100 hover:text-violet-400 transition-colors truncate">{g.name}</Link>
                       <Badge variant={g.is_public ? 'public' : 'private'} />
                     </div>
-                    <p className="text-xs text-zinc-500 mt-0.5">{g.member_count} {g.member_count === 1 ? 'Mitglied' : 'Mitglieder'}</p>
+                    <p className="text-xs text-zinc-500 mt-0.5">
+                      {t('groups.member_count', { count: g.member_count })}
+                    </p>
                   </div>
                   {isMember
                     ? <Badge variant="joined" />
-                    : <Button size="sm" onClick={() => handleJoin(g)}>Beitreten</Button>
+                    : <Button size="sm" onClick={() => handleJoin(g)}>{t('common.join')}</Button>
                   }
                 </li>
               );
             })}
           </ul>
         )}
-        {searchResults.length === 0 && searchQuery && <p className="text-zinc-500 text-sm">Keine Gruppen gefunden.</p>}
+        {searchResults.length === 0 && searchQuery && <p className="text-zinc-500 text-sm">{t('groups.no_results')}</p>}
       </section>
     </PageLayout>
   );

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import AutofillPicker, { type AutofillCandidate } from '../components/molecules/AutofillPicker';
 import Button from '../components/atoms/Button';
 import Input from '../components/atoms/Input';
@@ -13,6 +14,7 @@ import { isAbortError } from '../utils/abort';
 interface MeGames { games: string[] }
 
 export default function LibraryPage() {
+  const { t } = useTranslation();
   const [games, setGames] = useState<Game[]>([]);
   const [myGames, setMyGames] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
@@ -51,7 +53,7 @@ export default function LibraryPage() {
         await api.post('/api/v1/me/games', { name });
         setMyGames((p) => new Set([...p, name]));
       }
-    } catch (err) { setError(err instanceof Error ? err.message : 'Fehler'); }
+    } catch (err) { setError(err instanceof Error ? err.message : t('common.error')); }
   };
 
   const handleAutofillSearch = async () => {
@@ -61,7 +63,7 @@ export default function LibraryPage() {
     try {
       const result = await api.get<AutofillCandidate[]>(`/api/v1/library/${encodeURIComponent(name)}/autofill`);
       setCandidates(result);
-    } catch (err) { setError(err instanceof Error ? err.message : 'Autofill fehlgeschlagen'); }
+    } catch (err) { setError(err instanceof Error ? err.message : t('library.autofill_error')); }
     finally { setAutofilling(false); }
   };
 
@@ -78,7 +80,7 @@ export default function LibraryPage() {
       setGames(updated);
       setNewName(''); setNewGenre(''); setNewDesc(''); setNewFile(null);
       setShowCreate(false);
-    } catch (err) { setError(err instanceof Error ? err.message : 'Fehler beim Speichern'); }
+    } catch (err) { setError(err instanceof Error ? err.message : t('library.save_error')); }
   };
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -103,15 +105,15 @@ export default function LibraryPage() {
       setNewName(''); setNewGenre(''); setNewDesc(''); setNewFile(null);
       if (fileRef.current) fileRef.current.value = '';
       setShowCreate(false);
-    } catch (err) { setError(err instanceof Error ? err.message : 'Fehler'); }
+    } catch (err) { setError(err instanceof Error ? err.message : t('common.error')); }
   };
 
   return (
     <PageLayout>
       <div className="flex items-center justify-between">
-        <SectionLabel>Bibliothek</SectionLabel>
+        <SectionLabel>{t('library.title')}</SectionLabel>
         <Button variant="secondary" onClick={() => setShowCreate((v) => !v)}>
-          {showCreate ? 'Abbrechen' : '+ Neues Spiel'}
+          {showCreate ? t('common.cancel') : t('library.new_game')}
         </Button>
       </div>
 
@@ -119,11 +121,11 @@ export default function LibraryPage() {
 
       {showCreate && (
         <form onSubmit={handleCreate} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
-          <SectionLabel>Neues Spiel</SectionLabel>
+          <SectionLabel>{t('library.new_game_section')}</SectionLabel>
           <div className="flex gap-2">
-            <Input value={newName} onChange={(e) => { setNewName(e.target.value); setCandidates(null); }} placeholder="Name *" required className="flex-1" />
+            <Input value={newName} onChange={(e) => { setNewName(e.target.value); setCandidates(null); }} placeholder={t('library.name_placeholder')} required className="flex-1" />
             <Button type="button" variant="secondary" disabled={autofilling || !newName.trim()} onClick={handleAutofillSearch}>
-              {autofilling ? 'Laden…' : '✨ Auto-Ausfüllen'}
+              {autofilling ? t('library.autofill_loading') : t('library.autofill_button')}
             </Button>
           </div>
           {(autofilling || candidates !== null) && (
@@ -134,10 +136,10 @@ export default function LibraryPage() {
               onCancel={() => setCandidates(null)}
             />
           )}
-          <Input value={newGenre} onChange={(e) => setNewGenre(e.target.value)} placeholder="Genre" className="w-full" />
-          <Input value={newDesc} onChange={(e) => setNewDesc(e.target.value)} placeholder="Kurzbeschreibung" className="w-full" />
+          <Input value={newGenre} onChange={(e) => setNewGenre(e.target.value)} placeholder={t('library.genre_placeholder')} className="w-full" />
+          <Input value={newDesc} onChange={(e) => setNewDesc(e.target.value)} placeholder={t('library.description_placeholder')} className="w-full" />
           <div className="space-y-1">
-            <p className="text-xs text-zinc-500">Thumbnail</p>
+            <p className="text-xs text-zinc-500">{t('library.thumbnail_label')}</p>
             <input
               ref={fileRef}
               type="file"
@@ -147,8 +149,8 @@ export default function LibraryPage() {
             />
           </div>
           <div className="flex gap-2">
-            <Button type="submit">Erstellen</Button>
-            <Button type="button" variant="secondary" onClick={() => setShowCreate(false)}>Abbrechen</Button>
+            <Button type="submit">{t('common.create')}</Button>
+            <Button type="button" variant="secondary" onClick={() => setShowCreate(false)}>{t('common.cancel')}</Button>
           </div>
         </form>
       )}
@@ -156,13 +158,13 @@ export default function LibraryPage() {
       <Input
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        placeholder="Spiele suchen…"
+        placeholder={t('library.search_placeholder')}
         className="w-full"
       />
 
       {filtered.length === 0 ? (
         <p className="text-zinc-500 text-sm text-center py-8">
-          {games.length === 0 ? 'Noch keine Spiele in der Bibliothek.' : 'Keine Spiele gefunden.'}
+          {games.length === 0 ? t('library.empty_library') : t('library.no_results')}
         </p>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import Avatar from '../components/atoms/Avatar';
 import Badge from '../components/atoms/Badge';
@@ -29,6 +30,7 @@ interface GroupDetail {
 interface InvitableUser { keycloak_id: string; username: string }
 
 export default function GroupDetailPage() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [group, setGroup] = useState<GroupDetail | null>(null);
@@ -47,8 +49,6 @@ export default function GroupDetailPage() {
   const myId = keycloak.tokenParsed?.sub as string | undefined;
 
   // Track token changes so the EventSource reconnects with a fresh token after refresh.
-  // Keycloak renews the access token transparently; without this the EventSource would
-  // keep sending the expired token and get 401s (reported by Firefox as CORS: null status).
   const [tokenVersion, setTokenVersion] = useState(0);
   useEffect(() => {
     const prev = keycloak.onAuthRefreshSuccess;
@@ -63,17 +63,16 @@ export default function GroupDetailPage() {
     if (!id) return;
     const controller = new AbortController();
     api.get<GroupDetail>(`/api/v1/groups/${id}`, controller.signal).then(setGroup)
-      .catch((err: unknown) => { if (!isAbortError(err)) setError('Gruppe nicht gefunden'); });
+      .catch((err: unknown) => { if (!isAbortError(err)) setError(t('group_detail.not_found')); });
     api.get<Session[]>(`/api/v1/groups/${id}/sessions`, controller.signal).then(setSessions)
       .catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
     api.get<Game[]>('/api/v1/library', controller.signal)
       .then((gs) => setLibrary(new Map(gs.map((g) => [g.name, g]))))
       .catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
     return () => controller.abort();
-  }, [id]);
+  }, [id, t]);
 
   // SSE subscription for real-time session updates.
-  // Reconnects automatically when the Keycloak token is refreshed (tokenVersion).
   useEffect(() => {
     if (!id || !keycloak.token) return;
 
@@ -86,7 +85,6 @@ export default function GroupDetailPage() {
         if (prev.some((s) => s.id === session.id)) return prev;
         return [...prev, session].sort((a, b) => a.scheduled_at.localeCompare(b.scheduled_at));
       });
-      // Direct notification when tab is active (Web Push handles the background case)
       if (session.user_id !== keycloak.tokenParsed?.sub) {
         notify(
           `WhatsUp – ${session.game}`,
@@ -125,15 +123,15 @@ export default function GroupDetailPage() {
     try {
       await api.post(`/api/v1/groups/${id}/invite`, { user_id: userId });
       setInvitedIds((p) => new Set([...p, userId]));
-    } catch (err) { setError(err instanceof Error ? err.message : 'Fehler'); }
+    } catch (err) { setError(err instanceof Error ? err.message : t('common.error')); }
   };
 
   const handleDeleteGroup = async () => {
-    if (!id || !window.confirm(`Gruppe "${group?.name}" wirklich löschen?`)) return;
+    if (!id || !window.confirm(t('group_detail.delete_confirm', { name: group?.name }))) return;
     try {
       await api.delete(`/api/v1/groups/${id}`);
       navigate('/groups');
-    } catch (err) { setError(err instanceof Error ? err.message : 'Fehler'); }
+    } catch (err) { setError(err instanceof Error ? err.message : t('common.error')); }
   };
 
   const handleRsvp = async (sessionId: string, status: RsvpStatus | null) => {
@@ -160,13 +158,13 @@ export default function GroupDetailPage() {
           };
         }));
       }
-    } catch (err) { setError(err instanceof Error ? err.message : 'Fehler'); }
+    } catch (err) { setError(err instanceof Error ? err.message : t('common.error')); }
   };
 
   return (
     <PageLayout size="lg">
       {error && <ErrorBanner message={error} />}
-      {!group && !error && <p className="text-zinc-500 text-sm">Lade Gruppe…</p>}
+      {!group && !error && <p className="text-zinc-500 text-sm">{t('group_detail.loading')}</p>}
 
       {group && (
         <>
@@ -178,12 +176,12 @@ export default function GroupDetailPage() {
             <div className="flex items-center gap-2 shrink-0">
               {(myId && (myId === group.creator_id || isAdmin())) && (
                 <Button variant="secondary" size="sm" onClick={() => navigate(`/groups/${id}/edit`)}>
-                  Bearbeiten
+                  {t('group_detail.edit')}
                 </Button>
               )}
               {isAdmin() && (
                 <Button variant="danger" size="sm" onClick={handleDeleteGroup}>
-                  Löschen
+                  {t('group_detail.delete')}
                 </Button>
               )}
             </div>
@@ -200,23 +198,23 @@ export default function GroupDetailPage() {
                 <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/>
               </svg>
               <span className="text-sm font-medium text-[#5865F2] group-hover:text-[#7289da]">
-                Discord beitreten
+                {t('group_detail.discord_join')}
               </span>
             </a>
           )}
 
           <section className="space-y-3">
-            <SectionLabel>Spielzeiten diese Woche</SectionLabel>
+            <SectionLabel>{t('group_detail.week_sessions')}</SectionLabel>
             <WeekCalendar sessions={sessions} onRsvp={handleRsvp} />
           </section>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <SectionLabel count={group.members.length}>Mitglieder</SectionLabel>
+                <SectionLabel count={group.members.length}>{t('group_detail.members')}</SectionLabel>
                 {!group.is_public && myId && group.members.some((m) => m.keycloak_id === myId) && (
                   <Button size="sm" variant="secondary" onClick={handleShowInvite}>
-                    {showInvite ? 'Schließen' : '+ Einladen'}
+                    {showInvite ? t('group_detail.invite_toggle_close') : t('group_detail.invite_toggle_open')}
                   </Button>
                 )}
               </div>
@@ -224,7 +222,7 @@ export default function GroupDetailPage() {
               {showInvite && (
                 <div className="border border-zinc-700 rounded-lg overflow-hidden">
                   {invitable.length === 0 ? (
-                    <p className="px-3 py-2 text-xs text-zinc-500">Keine einladbaren Freunde verfügbar.</p>
+                    <p className="px-3 py-2 text-xs text-zinc-500">{t('group_detail.no_invitable_friends')}</p>
                   ) : (
                     <ul className="divide-y divide-zinc-800">
                       {invitable.map((u) => (
@@ -237,7 +235,7 @@ export default function GroupDetailPage() {
                             disabled={invitedIds.has(u.keycloak_id)}
                             onClick={() => handleInvite(u.keycloak_id)}
                           >
-                            {invitedIds.has(u.keycloak_id) ? 'Eingeladen ✓' : 'Einladen'}
+                            {invitedIds.has(u.keycloak_id) ? t('group_detail.invited_check') : t('group_detail.invite_button')}
                           </Button>
                         </li>
                       ))}
@@ -247,7 +245,7 @@ export default function GroupDetailPage() {
               )}
 
               {group.members.length === 0
-                ? <p className="text-zinc-500 text-sm">Keine Mitglieder.</p>
+                ? <p className="text-zinc-500 text-sm">{t('group_detail.no_members')}</p>
                 : (() => {
                   const visible = showAllMembers ? group.members : group.members.slice(0, MEMBER_LIMIT);
                   const hidden = group.members.length - MEMBER_LIMIT;
@@ -269,7 +267,9 @@ export default function GroupDetailPage() {
                           onClick={() => setShowAllMembers((v) => !v)}
                           className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
                         >
-                          {showAllMembers ? '▲ Weniger anzeigen' : `▼ ${hidden} weitere anzeigen`}
+                          {showAllMembers
+                            ? t('group_detail.show_less')
+                            : t('group_detail.show_more', { count: hidden })}
                         </button>
                       )}
                     </>
@@ -278,10 +278,12 @@ export default function GroupDetailPage() {
             </section>
 
             <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
-              <SectionLabel count={group.possible_games.length}>Mögliche Spiele</SectionLabel>
+              <SectionLabel count={group.possible_games.length}>{t('group_detail.possible_games')}</SectionLabel>
               {group.possible_games.length === 0 ? (
                 <p className="text-zinc-500 text-sm">
-                  {group.members.length < 2 ? 'Noch zu wenige Mitglieder.' : 'Keine Spiele eingetragen.'}
+                  {group.members.length < 2
+                    ? t('group_detail.no_games_too_few_members')
+                    : t('group_detail.no_games')}
                 </p>
               ) : (() => {
                 const visible = showAllGames ? group.possible_games : group.possible_games.slice(0, GAME_LIMIT);
@@ -310,7 +312,9 @@ export default function GroupDetailPage() {
                         onClick={() => setShowAllGames((v) => !v)}
                         className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
                       >
-                        {showAllGames ? '▲ Weniger anzeigen' : `▼ ${hidden} weitere anzeigen`}
+                        {showAllGames
+                          ? t('group_detail.show_less')
+                          : t('group_detail.show_more', { count: hidden })}
                       </button>
                     )}
                   </>

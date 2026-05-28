@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import Button from '../components/atoms/Button';
 import Input from '../components/atoms/Input';
@@ -19,6 +20,7 @@ interface GroupDetail {
 }
 
 export default function GroupEditPage() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
@@ -43,9 +45,9 @@ export default function GroupEditPage() {
         setGroup(g);
         setDiscordInvite(g.discord_invite ?? '');
       })
-      .catch((err: unknown) => { if (!isAbortError(err)) setError('Gruppe nicht gefunden'); });
+      .catch((err: unknown) => { if (!isAbortError(err)) setError(t('group_edit.not_found')); });
     return () => controller.abort();
-  }, [id, myId, navigate]);
+  }, [id, myId, navigate, t]);
 
   const handleSave = async () => {
     if (!id) return;
@@ -58,7 +60,7 @@ export default function GroupEditPage() {
       });
       setSaved(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Fehler beim Speichern');
+      setError(err instanceof Error ? err.message : t('group_edit.save_error'));
     } finally {
       setSaving(false);
     }
@@ -67,7 +69,7 @@ export default function GroupEditPage() {
   if (!group && !error) {
     return (
       <PageLayout>
-        <p className="text-zinc-500 text-sm">Lade Gruppe…</p>
+        <p className="text-zinc-500 text-sm">{t('group_edit.loading')}</p>
       </PageLayout>
     );
   }
@@ -80,43 +82,43 @@ export default function GroupEditPage() {
             onClick={() => navigate(`/groups/${id}`)}
             className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors mb-1"
           >
-            ← Zurück zur Gruppe
+            {t('group_edit.back_to_group')}
           </button>
           <h1 className="text-xl font-bold text-zinc-100">
-            {group?.name} — Bearbeiten
+            {t('group_edit.title', { name: group?.name })}
           </h1>
         </div>
 
         {error && <ErrorBanner message={error} />}
 
         {saved && (
-          <p className="text-sm text-green-400">Änderungen gespeichert.</p>
+          <p className="text-sm text-green-400">{t('group_edit.saved')}</p>
         )}
 
         <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-4">
-          <SectionLabel>Discord</SectionLabel>
+          <SectionLabel>{t('group_edit.discord_section')}</SectionLabel>
 
           <div className="space-y-2">
             <label className="text-xs text-zinc-400">
-              Einladungslink (leer lassen zum Entfernen)
+              {t('group_edit.discord_invite_label')}
             </label>
             <Input
               value={discordInvite}
               onChange={(e) => { setDiscordInvite(e.target.value); setSaved(false); }}
-              placeholder="https://discord.gg/..."
+              placeholder={t('group_edit.discord_invite_placeholder')}
               className="w-full font-mono text-sm"
             />
             <p className="text-xs text-zinc-600">
-              Erlaubt: discord.gg/… oder discord.com/invite/…
+              {t('group_edit.discord_invite_hint')}
             </p>
           </div>
 
           <div className="flex gap-3">
             <Button onClick={handleSave} disabled={saving}>
-              {saving ? 'Speichern…' : 'Speichern'}
+              {saving ? t('group_edit.saving') : t('group_edit.save')}
             </Button>
             <Button variant="secondary" onClick={() => navigate(`/groups/${id}`)}>
-              Abbrechen
+              {t('group_edit.cancel')}
             </Button>
           </div>
         </section>

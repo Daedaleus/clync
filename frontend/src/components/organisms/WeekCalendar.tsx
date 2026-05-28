@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import SessionRow from '../molecules/SessionRow';
 import type { RsvpStatus, Session } from '../../types';
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export default function WeekCalendar({ sessions, onRsvp }: Props) {
+  const { t } = useTranslation();
   const [showAllLater, setShowAllLater] = useState(false);
 
   const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -98,7 +100,7 @@ export default function WeekCalendar({ sessions, onRsvp }: Props) {
                       to={`/sessions/${daySessions[DAY_LIMIT].id}`}
                       className="block text-center text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors py-0.5"
                     >
-                      +{overflow} weitere
+                      +{overflow} {t('week_calendar.show_more', { count: overflow }).replace('▼ ', '')}
                     </Link>
                   )}
 
@@ -114,7 +116,7 @@ export default function WeekCalendar({ sessions, onRsvp }: Props) {
 
       {later.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs text-zinc-600 uppercase tracking-wider font-medium">Weitere Termine</p>
+          <p className="text-xs text-zinc-600 uppercase tracking-wider font-medium">{t('week_calendar.later_section')}</p>
           <ul className="divide-y divide-zinc-800 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
             {visibleLater.map((s) => (
               <SessionRow key={s.id} session={s} onRsvp={onRsvp} />
@@ -125,14 +127,16 @@ export default function WeekCalendar({ sessions, onRsvp }: Props) {
               onClick={() => setShowAllLater((v) => !v)}
               className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
             >
-              {showAllLater ? '▲ Weniger anzeigen' : `▼ ${later.length - LATER_LIMIT} weitere anzeigen`}
+              {showAllLater
+                ? t('week_calendar.show_less')
+                : t('week_calendar.show_more', { count: later.length - LATER_LIMIT })}
             </button>
           )}
         </div>
       )}
 
       {futureSessions.length === 0 && (
-        <p className="text-zinc-500 text-sm">Keine geplanten Spielzeiten.</p>
+        <p className="text-zinc-500 text-sm">{t('week_calendar.no_sessions')}</p>
       )}
     </div>
   );

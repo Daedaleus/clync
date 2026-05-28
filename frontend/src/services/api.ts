@@ -1,16 +1,19 @@
 import keycloak from './auth';
 import { config } from '../config';
+import i18n from '../i18n';
 
 const API_BASE = config.apiUrl;
 
-/** Extracts the human-readable message from a non-OK response. */
+/** Extracts and translates the error message from a non-OK response. */
 async function extractError(response: Response): Promise<string> {
   try {
     const body = await response.json();
-    if (typeof body.error === 'string' && body.error.length > 0) return body.error;
+    if (typeof body.error === 'string' && body.error.length > 0) {
+      const msg = body.error;
+      return /^error\.[a-z_]+\.[a-z_]+$/.test(msg) ? i18n.t(msg) : msg;
+    }
   } catch { /* response was not JSON */ }
-  // Fallback: only the status code — no statusText (can vary by server)
-  return `Fehler ${response.status}`;
+  return i18n.t('error.http', { status: response.status });
 }
 
 async function request<T>(

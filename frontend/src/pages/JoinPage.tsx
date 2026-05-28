@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import Button from '../components/atoms/Button';
 import Input from '../components/atoms/Input';
@@ -6,6 +7,7 @@ import ErrorBanner from '../components/molecules/ErrorBanner';
 import { config } from '../config';
 
 export default function JoinPage() {
+  const { t } = useTranslation();
   const { token } = useParams<{ token: string }>();
 
   const [valid, setValid] = useState<boolean | null>(null);
@@ -32,8 +34,8 @@ export default function JoinPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (password !== confirm) { setError('Passwörter stimmen nicht überein.'); return; }
-    if (password.length < 6) { setError('Passwort muss mindestens 6 Zeichen haben.'); return; }
+    if (password !== confirm) { setError(t('join.error_password_mismatch')); return; }
+    if (password.length < 6) { setError(t('join.error_password_short')); return; }
 
     setLoading(true);
     try {
@@ -46,22 +48,22 @@ export default function JoinPage() {
       if (!resp.ok) {
         try {
           const body = await resp.json();
-          setError(typeof body.error === 'string' ? body.error : 'Registrierung fehlgeschlagen.');
+          setError(typeof body.error === 'string' ? body.error : t('join.error_registration_failed'));
         } catch {
-          setError('Registrierung fehlgeschlagen.');
+          setError(t('join.error_registration_failed'));
         }
         return;
       }
 
       setDone(true);
-    } catch { setError('Netzwerkfehler. Bitte versuche es erneut.'); }
+    } catch { setError(t('join.error_network')); }
     finally { setLoading(false); }
   };
 
   if (valid === null) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <p className="text-zinc-500 text-sm">Überprüfe Einladungslink…</p>
+        <p className="text-zinc-500 text-sm">{t('join.checking')}</p>
       </div>
     );
   }
@@ -71,8 +73,8 @@ export default function JoinPage() {
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
         <div className="w-full max-w-sm text-center space-y-4">
           <p className="text-4xl">🔗</p>
-          <h1 className="text-xl font-bold text-zinc-100">Link ungültig</h1>
-          <p className="text-sm text-zinc-500">Dieser Einladungslink ist abgelaufen oder wurde bereits verwendet.</p>
+          <h1 className="text-xl font-bold text-zinc-100">{t('join.invalid_title')}</h1>
+          <p className="text-sm text-zinc-500">{t('join.invalid_subtitle')}</p>
         </div>
       </div>
     );
@@ -83,9 +85,9 @@ export default function JoinPage() {
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
         <div className="w-full max-w-sm text-center space-y-4">
           <p className="text-4xl">🎉</p>
-          <h1 className="text-xl font-bold text-zinc-100">Konto erstellt!</h1>
-          <p className="text-sm text-zinc-500">Du kannst dich jetzt mit deinen Zugangsdaten anmelden.</p>
-          <Button onClick={() => { window.location.href = '/'; }} className="w-full">Zur Anmeldung</Button>
+          <h1 className="text-xl font-bold text-zinc-100">{t('join.done_title')}</h1>
+          <p className="text-sm text-zinc-500">{t('join.done_subtitle')}</p>
+          <Button onClick={() => { window.location.href = '/'; }} className="w-full">{t('join.done_cta')}</Button>
         </div>
       </div>
     );
@@ -96,8 +98,8 @@ export default function JoinPage() {
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-2">
           <p className="text-4xl">👋</p>
-          <h1 className="text-2xl font-bold text-zinc-100">Du wurdest eingeladen!</h1>
-          <p className="text-sm text-zinc-500">Wähle einen Nutzernamen und Passwort um loszulegen.</p>
+          <h1 className="text-2xl font-bold text-zinc-100">{t('join.welcome_title')}</h1>
+          <p className="text-sm text-zinc-500">{t('join.welcome_subtitle')}</p>
         </div>
 
         {error && <ErrorBanner message={error} />}
@@ -106,7 +108,7 @@ export default function JoinPage() {
           <Input
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="Nutzername"
+            placeholder={t('join.username_placeholder')}
             required
             className="w-full"
           />
@@ -114,7 +116,7 @@ export default function JoinPage() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Passwort (min. 6 Zeichen)"
+            placeholder={t('join.password_placeholder')}
             required
             className="w-full"
           />
@@ -122,12 +124,12 @@ export default function JoinPage() {
             type="password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
-            placeholder="Passwort wiederholen"
+            placeholder={t('join.confirm_placeholder')}
             required
             className="w-full"
           />
           <Button type="submit" disabled={loading} className="w-full">
-            {loading ? 'Konto wird erstellt…' : 'Konto erstellen'}
+            {loading ? t('join.submitting') : t('join.submit')}
           </Button>
         </form>
       </div>

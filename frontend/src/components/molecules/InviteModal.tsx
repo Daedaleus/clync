@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Button from '../atoms/Button';
 
 interface Props {
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export default function InviteModal({ url, onClose }: Props) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
@@ -31,8 +33,8 @@ export default function InviteModal({ url, onClose }: Props) {
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold text-zinc-100">Freund einladen</h2>
-            <p className="text-xs text-zinc-500 mt-0.5">Link ist 7 Tage gültig und kann nur einmal benutzt werden.</p>
+            <h2 className="text-lg font-semibold text-zinc-100">{t('invite_modal.title')}</h2>
+            <p className="text-xs text-zinc-500 mt-0.5">{t('invite_modal.validity_hint')}</p>
           </div>
           <button
             onClick={onClose}
@@ -52,12 +54,12 @@ export default function InviteModal({ url, onClose }: Props) {
             className="flex-1 min-w-0 bg-zinc-800 border border-zinc-700 text-xs text-zinc-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-violet-500 cursor-text select-all"
           />
           <Button onClick={copy} variant={copied ? 'secondary' : 'primary'}>
-            {copied ? '✓ Kopiert' : 'Kopieren'}
+            {copied ? t('invite_modal.copied') : t('invite_modal.copy')}
           </Button>
         </div>
 
         <p className="text-xs text-zinc-600 text-center">
-          Schick diesen Link an die Person, die du einladen möchtest. Sie werden nach Nutzername und Passwort gefragt.
+          {t('invite_modal.instructions')}
         </p>
       </div>
     </div>

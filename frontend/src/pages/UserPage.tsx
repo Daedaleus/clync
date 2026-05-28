@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 import Avatar from '../components/atoms/Avatar';
 import Badge from '../components/atoms/Badge';
@@ -48,6 +49,7 @@ function steamUrl(handle: string): string {
 // ── UserPage ─────────────────────────────────────────────────────────────────
 
 export default function UserPage() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [library, setLibrary] = useState<Map<string, Game>>(new Map());
@@ -63,7 +65,7 @@ export default function UserPage() {
     const controller = new AbortController();
     api.get<UserProfile>(`/api/v1/users/${id}`, controller.signal)
       .then(setProfile)
-      .catch((err: unknown) => { if (!isAbortError(err)) setError('Benutzer nicht gefunden'); });
+      .catch((err: unknown) => { if (!isAbortError(err)) setError(t('user.not_found')); });
     api.get<Game[]>('/api/v1/library', controller.signal)
       .then((gs) => setLibrary(new Map(gs.map((g) => [g.name, g]))))
       .catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
@@ -76,7 +78,7 @@ export default function UserPage() {
         .catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
     }
     return () => controller.abort();
-  }, [id, isOwnProfile]);
+  }, [id, isOwnProfile, t]);
 
   const commonGames = useMemo(
     () => profile?.games.filter((g) => myGames.has(g)) ?? [],
@@ -98,7 +100,7 @@ export default function UserPage() {
         await api.post(`/api/v1/friends/${id}`);
         setProfile((p) => p && { ...p, is_friend: true });
       }
-    } catch (err) { setError(err instanceof Error ? err.message : 'Fehler'); }
+    } catch (err) { setError(err instanceof Error ? err.message : t('common.error')); }
     finally { setLoading(false); }
   };
 
@@ -107,7 +109,7 @@ export default function UserPage() {
   return (
     <PageLayout>
       {error && <ErrorBanner message={error} />}
-      {!profile && !error && <p className="text-zinc-500 text-sm">Lade Profil…</p>}
+      {!profile && !error && <p className="text-zinc-500 text-sm">{t('user.loading')}</p>}
 
       {profile && (
         <>
@@ -119,14 +121,14 @@ export default function UserPage() {
                 <div className="min-w-0">
                   <h1 className="text-lg font-semibold text-zinc-100">{profile.username}</h1>
                   {profile.is_friend && (
-                    <span className="text-xs text-violet-400">Freund</span>
+                    <span className="text-xs text-violet-400">{t('user.is_friend')}</span>
                   )}
                 </div>
               </div>
 
               {isOwnProfile ? (
                 <Link to="/profile">
-                  <Button variant="secondary" size="sm">Profil bearbeiten</Button>
+                  <Button variant="secondary" size="sm">{t('user.edit_profile')}</Button>
                 </Link>
               ) : (
                 <Button
@@ -136,7 +138,7 @@ export default function UserPage() {
                   size="sm"
                   className={profile.is_friend ? 'hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30' : ''}
                 >
-                  {loading ? '…' : profile.is_friend ? 'Freundschaft entfernen' : '+ Freund hinzufügen'}
+                  {loading ? '…' : profile.is_friend ? t('user.remove_friend') : t('user.add_friend')}
                 </Button>
               )}
             </div>
@@ -145,7 +147,7 @@ export default function UserPage() {
           {/* Social accounts */}
           {hasSocial && (
             <section className="space-y-2">
-              <SectionLabel>Social</SectionLabel>
+              <SectionLabel>{t('user.social_section')}</SectionLabel>
               <div className="bg-zinc-900 border border-zinc-800 rounded-xl divide-y divide-zinc-800">
                 {profile.steam_handle && (
                   <a
@@ -175,7 +177,7 @@ export default function UserPage() {
           {!isOwnProfile && commonGames.length > 0 && (
             <section className="space-y-2">
               <div className="flex items-center gap-2">
-                <SectionLabel>Gemeinsame Spiele</SectionLabel>
+                <SectionLabel>{t('user.common_games')}</SectionLabel>
                 <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-medium">
                   {commonGames.length}
                 </span>
@@ -185,7 +187,7 @@ export default function UserPage() {
                   <div key={name} className="relative">
                     <GameCard game={library.get(name) ?? { name }} />
                     <span className="absolute top-1.5 right-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-medium border border-emerald-500/30">
-                      ✓ Gemeinsam
+                      {t('user.common_badge')}
                     </span>
                   </div>
                 ))}
@@ -196,7 +198,7 @@ export default function UserPage() {
           {/* Public groups */}
           {!isOwnProfile && publicGroups.length > 0 && (
             <section className="space-y-2">
-              <SectionLabel count={publicGroups.length}>Öffentliche Gruppen</SectionLabel>
+              <SectionLabel count={publicGroups.length}>{t('user.public_groups')}</SectionLabel>
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {publicGroups.map((g) => (
                   <li key={g.id}>
@@ -216,7 +218,11 @@ export default function UserPage() {
           {/* Their other games */}
           {(isOwnProfile ? profile.games : otherGames).length > 0 && (
             <section className="space-y-2">
-              <SectionLabel>{isOwnProfile ? 'Spiele' : (otherGames.length > 0 ? 'Weitere Spiele' : 'Spiele')}</SectionLabel>
+              <SectionLabel>
+                {isOwnProfile
+                  ? t('user.games')
+                  : otherGames.length > 0 ? t('user.more_games') : t('user.games')}
+              </SectionLabel>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {(isOwnProfile ? profile.games : otherGames).map((name) => (
                   <GameCard key={name} game={library.get(name) ?? { name }} />

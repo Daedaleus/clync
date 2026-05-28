@@ -131,9 +131,7 @@ impl SessionService {
         status: String,
     ) -> Result<Option<SessionResponse>, AppError> {
         if status != "accepted" && status != "maybe" && status != "declined" {
-            return Err(AppError::Validation(
-                "Ungültiger RSVP-Status (accepted, maybe oder declined)".into(),
-            ));
+            return Err(AppError::Validation("error.session.invalid_rsvp".into()));
         }
         let session = self
             .repo
@@ -180,36 +178,26 @@ impl SessionService {
 
 pub(crate) fn validate_create_request(req: &CreateSessionRequest) -> Result<(), AppError> {
     if req.game.trim().is_empty() {
-        return Err(AppError::Validation(
-            "Spielname darf nicht leer sein".into(),
-        ));
+        return Err(AppError::Validation("error.game.name_required".into()));
     }
     if req.scheduled_at.is_empty() {
-        return Err(AppError::Validation("Datum darf nicht leer sein".into()));
+        return Err(AppError::Validation("error.session.date_required".into()));
     }
     let scheduled = chrono::DateTime::parse_from_rfc3339(&req.scheduled_at)
-        .map_err(|_| AppError::Validation("Ungültiges Datumsformat".into()))?;
+        .map_err(|_| AppError::Validation("error.session.invalid_date".into()))?;
     if scheduled <= chrono::Utc::now() {
-        return Err(AppError::Validation(
-            "Session kann nicht in der Vergangenheit liegen".into(),
-        ));
+        return Err(AppError::Validation("error.session.date_in_past".into()));
     }
     if req.scope != "global" && req.scope != "groups" {
-        return Err(AppError::Validation(
-            "Ungültiger Scope (global oder groups)".into(),
-        ));
+        return Err(AppError::Validation("error.session.invalid_scope".into()));
     }
     if req.scope == "groups" && req.group_ids.is_empty() {
-        return Err(AppError::Validation(
-            "Mindestens eine Gruppe auswählen".into(),
-        ));
+        return Err(AppError::Validation("error.session.groups_required".into()));
     }
     if let Some(notes) = &req.notes
         && notes.trim().len() > 500
     {
-        return Err(AppError::Validation(
-            "Notizen dürfen maximal 500 Zeichen lang sein".into(),
-        ));
+        return Err(AppError::Validation("error.session.notes_too_long".into()));
     }
     Ok(())
 }

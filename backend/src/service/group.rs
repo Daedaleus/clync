@@ -39,9 +39,7 @@ impl GroupService {
     ) -> Result<GroupResponse, AppError> {
         let name = req.name.trim().to_owned();
         if name.is_empty() {
-            return Err(AppError::Validation(
-                "Gruppenname darf nicht leer sein".into(),
-            ));
+            return Err(AppError::Validation("error.group.name_required".into()));
         }
         let group = self
             .repo
@@ -148,12 +146,12 @@ impl GroupService {
                 || u.starts_with("https://discord.com/invite/");
             if !valid {
                 return Err(AppError::Validation(
-                    "Ungültiger Discord-Einladungslink. Erlaubt: discord.gg/... oder discord.com/invite/...".into(),
+                    "error.group.invalid_discord_url".into(),
                 ));
             }
             if u.len() > 200 {
                 return Err(AppError::Validation(
-                    "Link zu lang (max. 200 Zeichen)".into(),
+                    "error.group.discord_url_too_long".into(),
                 ));
             }
         }
@@ -162,12 +160,12 @@ impl GroupService {
             .repo
             .find_by_id(group_id.to_owned())
             .await?
-            .ok_or_else(|| AppError::Validation("Gruppe nicht gefunden".into()))?;
+            .ok_or_else(|| AppError::Validation("error.group.not_found".into()))?;
 
         let is_creator = group.creator_id.as_deref() == Some(requester_id);
         if !is_creator && !is_admin {
             return Err(AppError::Unauthorized(
-                "Nur der Ersteller oder Admins können den Discord-Link bearbeiten".into(),
+                "error.group.discord_url_unauthorized".into(),
             ));
         }
 

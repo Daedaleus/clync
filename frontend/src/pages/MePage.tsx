@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import Badge from '../components/atoms/Badge';
 import Button from '../components/atoms/Button';
@@ -26,13 +27,8 @@ interface MeData {
   groups: GroupSummary[];
 }
 
-function greeting(name: string): string {
-  const h = new Date().getHours();
-  const salutation = h < 5 ? 'Gute Nacht' : h < 12 ? 'Guten Morgen' : h < 18 ? 'Guten Tag' : 'Guten Abend';
-  return `${salutation}, ${name}`;
-}
-
 export default function MePage() {
+  const { t } = useTranslation();
   const [me, setMe] = useState<MeData | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
@@ -41,11 +37,19 @@ export default function MePage() {
   const [library, setLibrary] = useState<Map<string, Game>>(new Map());
   const [error, setError] = useState<string | null>(null);
 
+  function greeting(name: string): string {
+    const h = new Date().getHours();
+    if (h < 5) return t('me.greeting_night', { name });
+    if (h < 12) return t('me.greeting_morning', { name });
+    if (h < 18) return t('me.greeting_day', { name });
+    return t('me.greeting_evening', { name });
+  }
+
   useEffect(() => {
     const controller = new AbortController();
     api.get<MeData>('/api/v1/me', controller.signal)
       .then(setMe)
-      .catch((err: unknown) => { if (!isAbortError(err)) setError('Profil konnte nicht geladen werden'); });
+      .catch((err: unknown) => { if (!isAbortError(err)) setError(t('me.load_error')); });
     api.get<Session[]>('/api/v1/sessions/mine', controller.signal)
       .then(setSessions)
       .catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
@@ -62,7 +66,7 @@ export default function MePage() {
       .then((gs) => setLibrary(new Map(gs.map((g) => [g.name, g]))))
       .catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
     return () => controller.abort();
-  }, []);
+  }, [t]);
 
   const upcomingSessions = useMemo(
     () => sessions.filter((s) => !isPast(s.scheduled_at) || isLateJoinable(s.scheduled_at)).slice(0, 3),
@@ -155,7 +159,7 @@ export default function MePage() {
   return (
     <PageLayout>
       {error && <ErrorBanner message={error} />}
-      {!me && !error && <p className="text-zinc-500 text-sm">Lade…</p>}
+      {!me && !error && <p className="text-zinc-500 text-sm">{t('me.loading')}</p>}
 
       {me && (
         <>
@@ -167,20 +171,20 @@ export default function MePage() {
           {/* Pending invitations */}
           {invitations.length > 0 && (
             <section className="space-y-2">
-              <SectionLabel>Offene Einladungen</SectionLabel>
+              <SectionLabel>{t('me.pending_invitations')}</SectionLabel>
               <ul className="space-y-2">
                 {invitations.map((inv) => (
                   <li key={inv.id} className="bg-violet-500/10 border border-violet-500/30 rounded-xl px-4 py-3 flex items-center justify-between gap-4">
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-zinc-100 truncate">{inv.group_name}</p>
-                      <p className="text-xs text-zinc-400">Eingeladen von {inv.inviter_username}</p>
+                      <p className="text-xs text-zinc-400">{t('me.invited_by', { name: inv.inviter_username })}</p>
                     </div>
                     <div className="shrink-0 flex gap-2">
                       <Button size="sm" variant="primary" onClick={() => handleAccept(inv.id, inv.group_id)}>
-                        Annehmen
+                        {t('common.accept')}
                       </Button>
                       <Button size="sm" variant="secondary" onClick={() => handleDecline(inv.id)}>
-                        Ablehnen
+                        {t('common.decline')}
                       </Button>
                     </div>
                   </li>
@@ -192,20 +196,22 @@ export default function MePage() {
           {/* Pending session invitations */}
           {sessionInvitations.length > 0 && (
             <section className="space-y-2">
-              <SectionLabel>Session-Einladungen</SectionLabel>
+              <SectionLabel>{t('me.session_invitations')}</SectionLabel>
               <ul className="space-y-2">
                 {sessionInvitations.map((inv) => (
                   <li key={inv.id} className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 flex items-center justify-between gap-4">
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-zinc-100 truncate">{inv.game}</p>
-                      <p className="text-xs text-zinc-400">{fmtDateTime(inv.scheduled_at)} · von {inv.inviter_username}</p>
+                      <p className="text-xs text-zinc-400">
+                        {t('me.session_invitation_meta', { datetime: fmtDateTime(inv.scheduled_at), name: inv.inviter_username })}
+                      </p>
                     </div>
                     <div className="shrink-0 flex gap-2">
                       <Button size="sm" variant="primary" onClick={() => handleAcceptSessionInvitation(inv.id)}>
-                        Annehmen
+                        {t('common.accept')}
                       </Button>
                       <Button size="sm" variant="secondary" onClick={() => handleDeclineSessionInvitation(inv.id)}>
-                        Ablehnen
+                        {t('common.decline')}
                       </Button>
                     </div>
                   </li>
@@ -217,20 +223,20 @@ export default function MePage() {
           {/* Pending friend requests */}
           {friendRequests.length > 0 && (
             <section className="space-y-2">
-              <SectionLabel>Freundschaftsanfragen</SectionLabel>
+              <SectionLabel>{t('me.friend_requests')}</SectionLabel>
               <ul className="space-y-2">
                 {friendRequests.map((req) => (
                   <li key={req.id} className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-4 py-3 flex items-center justify-between gap-4">
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-zinc-100 truncate">{req.from_username}</p>
-                      <p className="text-xs text-zinc-400">möchte dein Freund sein</p>
+                      <p className="text-xs text-zinc-400">{t('me.friend_request_subtitle')}</p>
                     </div>
                     <div className="shrink-0 flex gap-2">
                       <Button size="sm" variant="primary" onClick={() => handleAcceptFriend(req)}>
-                        Annehmen
+                        {t('common.accept')}
                       </Button>
                       <Button size="sm" variant="secondary" onClick={() => handleDeclineFriend(req.id)}>
-                        Ablehnen
+                        {t('common.decline')}
                       </Button>
                     </div>
                   </li>
@@ -242,16 +248,16 @@ export default function MePage() {
           {/* Upcoming sessions */}
           <section className="space-y-2">
             <div className="flex items-center justify-between">
-              <SectionLabel>Nächste Sessions</SectionLabel>
+              <SectionLabel>{t('me.upcoming_sessions')}</SectionLabel>
               <Link to="/sessions" className="text-xs text-zinc-500 hover:text-violet-400 transition-colors">
-                Alle ansehen →
+                {t('common.view_all')}
               </Link>
             </div>
             {upcomingSessions.length === 0 ? (
               <div className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-6 text-center space-y-2">
-                <p className="text-sm text-zinc-500">Keine anstehenden Sessions.</p>
+                <p className="text-sm text-zinc-500">{t('me.no_upcoming_sessions')}</p>
                 <Link to="/sessions" className="text-sm text-violet-400 hover:text-violet-300 transition-colors">
-                  Jetzt eine erstellen →
+                  {t('me.create_session_cta')}
                 </Link>
               </div>
             ) : (
@@ -262,16 +268,16 @@ export default function MePage() {
           {/* Groups */}
           <section className="space-y-2">
             <div className="flex items-center justify-between">
-              <SectionLabel>Deine Gruppen</SectionLabel>
+              <SectionLabel>{t('me.your_groups')}</SectionLabel>
               <Link to="/groups" className="text-xs text-zinc-500 hover:text-violet-400 transition-colors">
-                Alle ansehen →
+                {t('common.view_all')}
               </Link>
             </div>
             {me.groups.length === 0 ? (
               <div className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-6 text-center space-y-2">
-                <p className="text-sm text-zinc-500">Noch keiner Gruppe beigetreten.</p>
+                <p className="text-sm text-zinc-500">{t('me.no_groups')}</p>
                 <Link to="/groups" className="text-sm text-violet-400 hover:text-violet-300 transition-colors">
-                  Gruppen entdecken →
+                  {t('me.discover_groups_cta')}
                 </Link>
               </div>
             ) : (
@@ -294,16 +300,16 @@ export default function MePage() {
           {/* Games */}
           <section className="space-y-2">
             <div className="flex items-center justify-between">
-              <SectionLabel>Deine Spiele</SectionLabel>
+              <SectionLabel>{t('me.your_games')}</SectionLabel>
               <Link to="/profile" className="text-xs text-zinc-500 hover:text-violet-400 transition-colors">
-                Bearbeiten →
+                {t('me.edit_games_cta')}
               </Link>
             </div>
             {me.games.length === 0 ? (
               <div className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-6 text-center space-y-2">
-                <p className="text-sm text-zinc-500">Noch keine Spiele eingetragen.</p>
+                <p className="text-sm text-zinc-500">{t('me.no_games')}</p>
                 <Link to="/profile" className="text-sm text-violet-400 hover:text-violet-300 transition-colors">
-                  Spiele hinzufügen →
+                  {t('me.add_games_cta')}
                 </Link>
               </div>
             ) : (
