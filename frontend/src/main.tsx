@@ -32,7 +32,7 @@ if (window.location.pathname.startsWith('/join/')) {
   );
 } else {
   keycloak
-    .init({ onLoad: 'login-required' })
+    .init({ onLoad: 'login-required', checkLoginIframe: false })
     .then(() => {
       keycloak.onTokenExpired = () => {
         keycloak.updateToken(30).catch(() => keycloak.login());
