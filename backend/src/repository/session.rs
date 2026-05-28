@@ -159,16 +159,17 @@ impl SessionRepo for SessionRepository {
         let mut res = self
             .db
             .query(format!(
-                "UPDATE type::thing('session', $id)
+                "UPDATE type::thing('session', $id) SET participants -= $user_id WHERE user_id != $user_id;
+                 UPDATE type::thing('session', $id)
                  SET
                    rsvps = array::push(
-                     array::filter(rsvps ?? [], |r| r.user_id != $user_id),
+                     (SELECT * FROM (SELECT VALUE rsvps FROM type::thing('session', $id) LIMIT 1)[0] ?? [] WHERE user_id != $user_id),
                      {{ user_id: $user_id, username: $username, status: $status }}
                    ),
-                   participants = array::union(
-                     array::filter(participants ?? [], |p| p != $user_id),
-                     IF $status = 'accepted' THEN [$user_id] ELSE [] END
-                   )
+                   participants = IF $status = 'accepted'
+                     THEN array::union(participants ?? [], [$user_id])
+                     ELSE participants
+                     END
                  WHERE user_id != $user_id
                  RETURN {SELECT_FIELDS}"
             ))
@@ -177,7 +178,7 @@ impl SessionRepo for SessionRepository {
             .bind(("username", username))
             .bind(("status", status))
             .await?;
-        res.take(0)
+        res.take(1)
     }
 
     async fn remove_rsvp(
@@ -188,17 +189,16 @@ impl SessionRepo for SessionRepository {
         let mut res = self
             .db
             .query(format!(
-                "UPDATE type::thing('session', $id)
-                 SET
-                   rsvps = array::filter(rsvps ?? [], |r| r.user_id != $user_id),
-                   participants = array::filter(participants ?? [], |p| p != $user_id)
+                "UPDATE type::thing('session', $id) SET participants -= $user_id WHERE user_id != $user_id;
+                 UPDATE type::thing('session', $id)
+                 SET rsvps = (SELECT * FROM (SELECT VALUE rsvps FROM type::thing('session', $id) LIMIT 1)[0] ?? [] WHERE user_id != $user_id)
                  WHERE user_id != $user_id
                  RETURN {SELECT_FIELDS}"
             ))
             .bind(("id", session_id))
             .bind(("user_id", user_id))
             .await?;
-        res.take(0)
+        res.take(1)
     }
 
     async fn delete_as_admin(&self, session_id: String) -> Result<Vec<String>, surrealdb::Error> {

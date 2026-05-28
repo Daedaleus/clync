@@ -515,4 +515,167 @@ mod tests {
             .is_ok()
         );
     }
+
+    // ── set_rsvp ──────────────────────────────────────────────────────────────
+
+    struct RsvpFakeSessionRepo {
+        result: Option<Session>,
+    }
+
+    #[async_trait]
+    impl SessionRepo for RsvpFakeSessionRepo {
+        async fn create(
+            &self,
+            _: String,
+            _: String,
+            _: String,
+            _: String,
+            _: String,
+            _: Vec<String>,
+            _: Option<String>,
+        ) -> Result<Option<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_feed(&self, _: Vec<String>) -> Result<Vec<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_mine(&self, _: String) -> Result<Vec<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_for_group(&self, _: String) -> Result<Vec<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_by_id(&self, _: String) -> Result<Option<SessionDetail>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn join(&self, _: String, _: String) -> Result<Option<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn leave(&self, _: String, _: String) -> Result<(), surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn set_rsvp(
+            &self,
+            _: String,
+            _: String,
+            _: String,
+            _: String,
+        ) -> Result<Option<Session>, surrealdb::Error> {
+            Ok(self.result.clone())
+        }
+        async fn remove_rsvp(
+            &self,
+            _: String,
+            _: String,
+        ) -> Result<Option<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn delete(&self, _: String, _: String) -> Result<Vec<String>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn delete_as_admin(&self, _: String) -> Result<Vec<String>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_sessions_to_notify(
+            &self,
+        ) -> Result<Vec<crate::model::session::SessionStartReminder>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn mark_start_notified(&self, _: String) -> Result<(), surrealdb::Error> {
+            unimplemented!()
+        }
+    }
+
+    fn rsvp_svc(result: Option<Session>) -> SessionService {
+        SessionService::with_repos(
+            Box::new(RsvpFakeSessionRepo { result }),
+            Box::new(FakeGroupRepo),
+        )
+    }
+
+    fn bob() -> AuthUser {
+        AuthUser {
+            keycloak_id: "u2".into(),
+            username: "Bob".into(),
+            is_admin: false,
+        }
+    }
+
+    fn session_with_participant(participant_id: &str) -> Session {
+        Session {
+            id: "s1".into(),
+            user_id: "u1".into(),
+            username: "Alice".into(),
+            game: "CS2".into(),
+            scheduled_at: "2099-05-17T20:00:00Z".into(),
+            scope: "global".into(),
+            group_ids: vec![],
+            participants: vec![participant_id.into()],
+            group_names: vec![],
+            game_has_thumbnail: false,
+            notes: None,
+            rsvps: vec![],
+        }
+    }
+
+    #[tokio::test]
+    async fn rsvp_invalid_status_is_rejected() {
+        let svc = rsvp_svc(None);
+        let err = svc
+            .set_rsvp("s1", &bob(), "pending".into())
+            .await
+            .unwrap_err();
+        assert!(matches!(err, AppError::Validation(_)));
+    }
+
+    #[tokio::test]
+    async fn rsvp_creator_gets_none() {
+        // Repo returns None when WHERE user_id != $user_id is not satisfied
+        let svc = rsvp_svc(None);
+        let result = svc
+            .set_rsvp("s1", &alice(), "accepted".into())
+            .await
+            .unwrap();
+        assert!(
+            result.is_none(),
+            "creator must not be able to RSVP their own session"
+        );
+    }
+
+    #[tokio::test]
+    async fn rsvp_accepted_returns_session_response() {
+        let svc = rsvp_svc(Some(session_with_participant("u2")));
+        let result = svc.set_rsvp("s1", &bob(), "accepted".into()).await.unwrap();
+        assert!(result.is_some());
+        let resp = result.unwrap();
+        // participant_count = 1 (creator) + participants.len()
+        assert_eq!(resp.participant_count, 2);
+        assert!(
+            resp.is_participant,
+            "bob must be flagged as participant after accepting"
+        );
+    }
+
+    #[tokio::test]
+    async fn rsvp_maybe_does_not_add_to_participants() {
+        // Repo returns session without bob in participants (he only RSVPd maybe)
+        let svc = rsvp_svc(Some(session_at("2099-05-17T20:00:00Z", "global")));
+        let result = svc.set_rsvp("s1", &bob(), "maybe".into()).await.unwrap();
+        assert!(result.is_some());
+        let resp = result.unwrap();
+        assert!(
+            !resp.is_participant,
+            "maybe RSVP must not mark user as participant"
+        );
+        assert_eq!(resp.participant_count, 1); // creator only
+    }
+
+    #[tokio::test]
+    async fn rsvp_declined_does_not_add_to_participants() {
+        let svc = rsvp_svc(Some(session_at("2099-05-17T20:00:00Z", "global")));
+        let result = svc.set_rsvp("s1", &bob(), "declined".into()).await.unwrap();
+        assert!(result.is_some());
+        let resp = result.unwrap();
+        assert!(!resp.is_participant);
+    }
 }
