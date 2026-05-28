@@ -99,7 +99,9 @@ async fn upload_thumbnail_handler(
 
         const MAX_BYTES: usize = 5 * 1024 * 1024; // 5 MB
         if bytes.len() > MAX_BYTES {
-            return Err(AppError::Validation("Bild zu groß (max. 5 MB)".into()));
+            return Err(AppError::Validation(
+                "error.game.thumbnail_too_large".into(),
+            ));
         }
 
         state

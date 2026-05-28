@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Button from '../atoms/Button';
 import SectionLabel from '../atoms/SectionLabel';
 import GamePicker from '../molecules/GamePicker';
@@ -49,6 +50,7 @@ function firstAvailableMinutes(): number {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function SessionCreateForm({ groups, onCreate, onError, onCancel }: Props) {
+  const { t } = useTranslation();
   const defaults = nextSlot();
   const [game, setGame] = useState('');
   const [date, setDate] = useState(defaults.date);
@@ -99,13 +101,13 @@ export default function SessionCreateForm({ groups, onCreate, onError, onCancel 
     setValidationError(null);
 
     if (!game.trim()) {
-      setValidationError('Bitte ein Spiel aus der Bibliothek wählen.');
+      setValidationError(t('session_form.error_no_game'));
       return;
     }
 
     const scheduledAt = new Date(`${date}T${effectiveTime}:00`).toISOString();
     if (new Date(scheduledAt) <= new Date()) {
-      setValidationError('Der Zeitpunkt muss in der Zukunft liegen.');
+      setValidationError(t('session_form.error_past_time'));
       return;
     }
 
@@ -119,7 +121,7 @@ export default function SessionCreateForm({ groups, onCreate, onError, onCancel 
       });
       onCreate(session);
     } catch (err) {
-      onError(err instanceof Error ? err.message : 'Fehler beim Erstellen');
+      onError(err instanceof Error ? err.message : t('session_form.create_error'));
     }
   };
 
@@ -132,14 +134,14 @@ export default function SessionCreateForm({ groups, onCreate, onError, onCancel 
 
       {/* Game */}
       <div className="space-y-1.5">
-        <SectionLabel>Spiel</SectionLabel>
+        <SectionLabel>{t('session_form.game_label')}</SectionLabel>
         <GamePicker value={game} onChange={setGame} required />
       </div>
 
       {/* Date + Time — stacked on mobile, side-by-side on sm+ */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <SectionLabel>Datum</SectionLabel>
+          <SectionLabel>{t('session_form.date_label')}</SectionLabel>
           <input
             type="date"
             value={date}
@@ -150,7 +152,7 @@ export default function SessionCreateForm({ groups, onCreate, onError, onCancel 
           />
         </div>
         <div className="space-y-1.5">
-          <SectionLabel>Uhrzeit</SectionLabel>
+          <SectionLabel>{t('session_form.time_label')}</SectionLabel>
           <div className="relative">
             <select
               value={effectiveTime}
@@ -158,10 +160,10 @@ export default function SessionCreateForm({ groups, onCreate, onError, onCancel 
               className={`${fieldClass} appearance-none pr-9`}
             >
               {availableSlots.map((slot) => (
-                <option key={slot} value={slot}>{slot} Uhr</option>
+                <option key={slot} value={slot}>{t('session_form.time_unit', { time: slot })}</option>
               ))}
               {availableSlots.length === 0 && (
-                <option disabled>Kein Slot verfügbar</option>
+                <option disabled>{t('session_form.no_slot')}</option>
               )}
             </select>
             <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -177,7 +179,7 @@ export default function SessionCreateForm({ groups, onCreate, onError, onCancel 
 
       {/* Scope */}
       <div className="space-y-2">
-        <SectionLabel>Sichtbarkeit</SectionLabel>
+        <SectionLabel>{t('session_form.scope_label')}</SectionLabel>
         <div className="flex gap-4">
           {(['global', 'groups'] as const).map((s) => (
             <label key={s} className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer">
@@ -188,7 +190,7 @@ export default function SessionCreateForm({ groups, onCreate, onError, onCancel 
                 disabled={s === 'groups' && groups.length === 0}
                 className="accent-violet-500"
               />
-              {s === 'global' ? 'Global' : 'Bestimmte Gruppen'}
+              {s === 'global' ? t('session_form.scope_global') : t('session_form.scope_groups')}
             </label>
           ))}
         </div>
@@ -214,23 +216,26 @@ export default function SessionCreateForm({ groups, onCreate, onError, onCancel 
 
       {/* Notes */}
       <div className="space-y-1.5">
-        <SectionLabel>Notizen <span className="normal-case font-normal text-zinc-600">(optional)</span></SectionLabel>
+        <SectionLabel>
+          {t('session_form.notes_label')}{' '}
+          <span className="normal-case font-normal text-zinc-600">{t('session_form.notes_optional')}</span>
+        </SectionLabel>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           maxLength={500}
           rows={3}
-          placeholder="z.B. Serveradresse, Passwort, Discord-Link…"
+          placeholder={t('session_form.notes_placeholder')}
           className="w-full bg-zinc-800 border border-zinc-700 text-sm text-zinc-200 placeholder:text-zinc-600 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-violet-500"
         />
         {notes.length > 400 && (
-          <p className="text-xs text-zinc-500 text-right">{notes.length}/500</p>
+          <p className="text-xs text-zinc-500 text-right">{t('session_form.notes_counter', { count: notes.length })}</p>
         )}
       </div>
 
       <div className="flex gap-2">
-        <Button type="submit" disabled={availableSlots.length === 0}>Eintragen</Button>
-        <Button type="button" variant="secondary" onClick={onCancel}>Abbrechen</Button>
+        <Button type="submit" disabled={availableSlots.length === 0}>{t('session_form.submit')}</Button>
+        <Button type="button" variant="secondary" onClick={onCancel}>{t('session_form.cancel')}</Button>
       </div>
     </form>
   );

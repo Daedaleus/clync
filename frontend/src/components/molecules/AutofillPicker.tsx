@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import Button from '../atoms/Button';
 
 export interface AutofillCandidate {
@@ -15,10 +16,12 @@ interface Props {
 }
 
 export default function AutofillPicker({ candidates, loading, onSelect, onCancel }: Props) {
+  const { t } = useTranslation();
+
   if (loading) {
     return (
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center text-sm text-zinc-500">
-        Suche auf RAWG…
+        {t('autofill.searching')}
       </div>
     );
   }
@@ -26,8 +29,8 @@ export default function AutofillPicker({ candidates, loading, onSelect, onCancel
   if (candidates.length === 0) {
     return (
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex items-center justify-between gap-3">
-        <p className="text-sm text-zinc-500">Kein Spiel auf RAWG gefunden.</p>
-        <Button size="sm" variant="secondary" onClick={onCancel}>Schließen</Button>
+        <p className="text-sm text-zinc-500">{t('autofill.no_results')}</p>
+        <Button size="sm" variant="secondary" onClick={onCancel}>{t('autofill.close')}</Button>
       </div>
     );
   }
@@ -35,9 +38,9 @@ export default function AutofillPicker({ candidates, loading, onSelect, onCancel
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-zinc-300">Welches Spiel meinst du?</p>
+        <p className="text-sm font-medium text-zinc-300">{t('autofill.which_game')}</p>
         <button onClick={onCancel} className="text-zinc-600 hover:text-zinc-400 text-xs transition-colors">
-          ✕ Abbrechen
+          {t('autofill.cancel')}
         </button>
       </div>
 

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import Badge from '../atoms/Badge';
 import Button from '../atoms/Button';
@@ -16,31 +17,33 @@ function thumbnailSrc(session: { thumbnail_url?: string | null; game: string }) 
   return `${config.apiUrl}/api/v1/library/${encodeURIComponent(session.game)}/thumbnail`;
 }
 
-const RSVP_BUTTONS: { status: RsvpStatus; icon: string; ariaLabel: string; active: string; inactive: string }[] = [
-  {
-    status: 'accepted',
-    icon: '✓',
-    ariaLabel: 'Zusagen',
-    active: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40',
-    inactive: 'text-zinc-500 border-zinc-700 hover:text-emerald-400 hover:border-emerald-500/40',
-  },
-  {
-    status: 'maybe',
-    icon: '?',
-    ariaLabel: 'Vielleicht',
-    active: 'bg-amber-500/20 text-amber-400 border-amber-500/40',
-    inactive: 'text-zinc-500 border-zinc-700 hover:text-amber-400 hover:border-amber-500/40',
-  },
-  {
-    status: 'declined',
-    icon: '✕',
-    ariaLabel: 'Absagen',
-    active: 'bg-red-500/20 text-red-400 border-red-500/40',
-    inactive: 'text-zinc-500 border-zinc-700 hover:text-red-400 hover:border-red-500/40',
-  },
-];
-
 export default function SessionRow({ session: s, onRsvp, onDelete }: Props) {
+  const { t } = useTranslation();
+
+  const RSVP_BUTTONS: { status: RsvpStatus; icon: string; ariaLabel: string; active: string; inactive: string }[] = [
+    {
+      status: 'accepted',
+      icon: '✓',
+      ariaLabel: t('session_row.rsvp_accept'),
+      active: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40',
+      inactive: 'text-zinc-500 border-zinc-700 hover:text-emerald-400 hover:border-emerald-500/40',
+    },
+    {
+      status: 'maybe',
+      icon: '?',
+      ariaLabel: t('session_row.rsvp_maybe'),
+      active: 'bg-amber-500/20 text-amber-400 border-amber-500/40',
+      inactive: 'text-zinc-500 border-zinc-700 hover:text-amber-400 hover:border-amber-500/40',
+    },
+    {
+      status: 'declined',
+      icon: '✕',
+      ariaLabel: t('session_row.rsvp_decline'),
+      active: 'bg-red-500/20 text-red-400 border-red-500/40',
+      inactive: 'text-zinc-500 border-zinc-700 hover:text-red-400 hover:border-red-500/40',
+    },
+  ];
+
   const lateJoinable = isLateJoinable(s.scheduled_at);
   const past = isPast(s.scheduled_at) && !lateJoinable;
   const src = thumbnailSrc(s);
@@ -76,15 +79,15 @@ export default function SessionRow({ session: s, onRsvp, onDelete }: Props) {
           <Badge variant={s.scope === 'global' ? 'global' : 'groups'} />
           {lateJoinable && (
             <span className="text-xs font-medium text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded-full">
-              läuft gerade
+              {t('session_row.late_joinable')}
             </span>
           )}
-          {past && <span className="text-xs text-zinc-600">vergangen</span>}
+          {past && <span className="text-xs text-zinc-600">{t('session_row.past')}</span>}
         </div>
         <p className="text-xs text-zinc-500">
           {fmtDateTime(s.scheduled_at)}
           <span className="mx-1.5 text-zinc-700">·</span>
-          {s.participant_count} {s.participant_count === 1 ? 'Person' : 'Personen'}
+          {t('session_row.participant_count', { count: s.participant_count })}
         </p>
         <p className="text-xs text-zinc-600 truncate">
           {s.username}
@@ -113,7 +116,7 @@ export default function SessionRow({ session: s, onRsvp, onDelete }: Props) {
           </div>
         )}
         {s.is_mine && onDelete && (
-          <Button variant="danger" size="sm" onClick={() => onDelete(s.id)}>Löschen</Button>
+          <Button variant="danger" size="sm" onClick={() => onDelete(s.id)}>{t('session_row.delete')}</Button>
         )}
       </div>
     </li>

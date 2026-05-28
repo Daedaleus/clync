@@ -77,7 +77,7 @@ async fn delete_handler(
 ) -> Result<StatusCode, AppError> {
     if !user.is_admin {
         return Err(AppError::Unauthorized(
-            "Nur Admins können Gruppen löschen".into(),
+            "error.group.delete_unauthorized".into(),
         ));
     }
     state.group_svc.delete(&id).await?;

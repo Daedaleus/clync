@@ -1,0 +1,380 @@
+{
+  "nav": {
+    "sessions": "Sessions",
+    "groups": "Gruppen",
+    "library": "Bibliothek",
+    "friends": "Freunde"
+  },
+  "common": {
+    "save": "Speichern",
+    "saving": "Speichern…",
+    "saved": "Gespeichert ✓",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "create": "Erstellen",
+    "search": "Suchen",
+    "accept": "Annehmen",
+    "decline": "Ablehnen",
+    "join": "Beitreten",
+    "loading": "Lade…",
+    "edit": "Bearbeiten",
+    "close": "Schließen",
+    "back": "Zurück",
+    "error": "Fehler",
+    "view_all": "Alle ansehen →"
+  },
+  "me": {
+    "greeting_night": "Gute Nacht, {{name}}",
+    "greeting_morning": "Guten Morgen, {{name}}",
+    "greeting_day": "Guten Tag, {{name}}",
+    "greeting_evening": "Guten Abend, {{name}}",
+    "loading": "Lade…",
+    "load_error": "Profil konnte nicht geladen werden",
+    "pending_invitations": "Offene Einladungen",
+    "invited_by": "Eingeladen von {{name}}",
+    "session_invitations": "Session-Einladungen",
+    "session_invitation_meta": "{{datetime}} · von {{name}}",
+    "friend_requests": "Freundschaftsanfragen",
+    "friend_request_subtitle": "möchte dein Freund sein",
+    "upcoming_sessions": "Nächste Sessions",
+    "no_upcoming_sessions": "Keine anstehenden Sessions.",
+    "create_session_cta": "Jetzt eine erstellen →",
+    "your_groups": "Deine Gruppen",
+    "no_groups": "Noch keiner Gruppe beigetreten.",
+    "discover_groups_cta": "Gruppen entdecken →",
+    "your_games": "Deine Spiele",
+    "no_games": "Noch keine Spiele eingetragen.",
+    "add_games_cta": "Spiele hinzufügen →",
+    "edit_games_cta": "Bearbeiten →"
+  },
+  "sessions": {
+    "title": "Sessions",
+    "new_session": "+ Neue Zeit",
+    "groups_section": "Gruppen",
+    "global_section": "Global",
+    "no_group_sessions": "Keine bevorstehenden Gruppen-Sessions.",
+    "no_global_sessions": "Keine bevorstehenden globalen Sessions.",
+    "participant_count_one": "{{count}} Person",
+    "participant_count_other": "{{count}} Personen"
+  },
+  "session_detail": {
+    "loading": "Lade Session…",
+    "not_found": "Session nicht gefunden",
+    "past_label": "Vergangen",
+    "created_by": "von",
+    "with_groups": "mit",
+    "delete": "Löschen",
+    "rsvp_accept": "Zusagen",
+    "rsvp_maybe": "Vielleicht",
+    "rsvp_decline": "Absagen",
+    "invite_toggle_open": "+ Einladen",
+    "invite_toggle_close": "Schließen",
+    "your_rsvp": "Deine Antwort:",
+    "participants": "Teilnehmer",
+    "creator_role": "Ersteller",
+    "no_other_participants": "Noch keine weiteren Teilnehmer.",
+    "notes_label": "Notizen",
+    "invite_friends": "Freunde einladen",
+    "invite_loading": "Lade…",
+    "no_invitable_friends": "Keine weiteren Freunde verfügbar.",
+    "invited_check": "Eingeladen ✓",
+    "invite_button": "Einladen"
+  },
+  "groups": {
+    "my_groups": "Meine Gruppen",
+    "create": "+ Erstellen",
+    "group_name_placeholder": "Gruppenname",
+    "is_public_label": "Öffentlich",
+    "no_groups": "Noch keiner Gruppe beigetreten.",
+    "search_title_admin": "Alle Gruppen",
+    "search_title": "Öffentliche Gruppen suchen",
+    "search_placeholder": "Gruppenname…",
+    "no_results": "Keine Gruppen gefunden.",
+    "member_count_one": "{{count}} Mitglied",
+    "member_count_other": "{{count}} Mitglieder"
+  },
+  "group_detail": {
+    "loading": "Lade Gruppe…",
+    "not_found": "Gruppe nicht gefunden",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "delete_confirm": "Gruppe \"{{name}}\" wirklich löschen?",
+    "discord_join": "Discord beitreten",
+    "week_sessions": "Spielzeiten diese Woche",
+    "members": "Mitglieder",
+    "invite_toggle_open": "+ Einladen",
+    "invite_toggle_close": "Schließen",
+    "no_invitable_friends": "Keine einladbaren Freunde verfügbar.",
+    "invited_check": "Eingeladen ✓",
+    "invite_button": "Einladen",
+    "no_members": "Keine Mitglieder.",
+    "show_more": "▼ {{count}} weitere anzeigen",
+    "show_less": "▲ Weniger anzeigen",
+    "possible_games": "Mögliche Spiele",
+    "no_games_too_few_members": "Noch zu wenige Mitglieder.",
+    "no_games": "Keine Spiele eingetragen."
+  },
+  "group_edit": {
+    "loading": "Lade Gruppe…",
+    "not_found": "Gruppe nicht gefunden",
+    "back_to_group": "← Zurück zur Gruppe",
+    "title": "{{name}} — Bearbeiten",
+    "saved": "Änderungen gespeichert.",
+    "save_error": "Fehler beim Speichern",
+    "discord_section": "Discord",
+    "discord_invite_label": "Einladungslink (leer lassen zum Entfernen)",
+    "discord_invite_placeholder": "https://discord.gg/...",
+    "discord_invite_hint": "Erlaubt: discord.gg/… oder discord.com/invite/…",
+    "save": "Speichern",
+    "saving": "Speichern…",
+    "cancel": "Abbrechen"
+  },
+  "library": {
+    "title": "Bibliothek",
+    "new_game": "+ Neues Spiel",
+    "new_game_section": "Neues Spiel",
+    "name_placeholder": "Name *",
+    "autofill_button": "✨ Auto-Ausfüllen",
+    "autofill_loading": "Laden…",
+    "autofill_error": "Autofill fehlgeschlagen",
+    "genre_placeholder": "Genre",
+    "description_placeholder": "Kurzbeschreibung",
+    "thumbnail_label": "Thumbnail",
+    "search_placeholder": "Spiele suchen…",
+    "empty_library": "Noch keine Spiele in der Bibliothek.",
+    "no_results": "Keine Spiele gefunden.",
+    "save_error": "Fehler beim Speichern"
+  },
+  "game_detail": {
+    "loading": "Lade Spiel…",
+    "not_found": "Spiel nicht gefunden",
+    "remove_from_list": "Aus Liste entfernen",
+    "add_to_list": "+ Zur Liste",
+    "autofill_button": "✨ Auto-Ausfüllen",
+    "autofill_loading": "Laden…",
+    "autofill_error": "Autofill fehlgeschlagen",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "delete_confirm": "\"{{name}}\" aus der Bibliothek löschen?",
+    "delete_error": "Löschen fehlgeschlagen",
+    "no_details": "Noch keine Details hinterlegt.",
+    "edit_section": "Details bearbeiten",
+    "genre_label": "Genre",
+    "genre_placeholder": "z.B. Shooter, RPG, Strategy",
+    "description_label": "Kurzbeschreibung",
+    "description_placeholder": "Kurze Beschreibung des Spiels…",
+    "thumbnail_label": "Thumbnail",
+    "save": "Speichern",
+    "saving": "Speichern…",
+    "cancel": "Abbrechen",
+    "save_error": "Fehler"
+  },
+  "friends": {
+    "incoming_requests": "Freundschaftsanfragen",
+    "my_friends": "Meine Freunde",
+    "no_friends": "Noch keine Freunde hinzugefügt.",
+    "remove": "Entfernen",
+    "search_title": "Benutzer suchen",
+    "search_placeholder": "Benutzername…",
+    "no_results": "Keine Benutzer gefunden.",
+    "request_sent": "Anfrage gesendet",
+    "send_request": "+ Anfrage senden"
+  },
+  "profile": {
+    "loading": "Lade Profil…",
+    "load_error": "Profil konnte nicht geladen werden",
+    "account_settings": "Konto-Einstellungen",
+    "account_settings_subtitle": "Passwort, E-Mail und weitere Einstellungen bei Keycloak ändern",
+    "my_games": "Meine Spiele",
+    "game_add_error": "Spiel konnte nicht hinzugefügt werden",
+    "game_remove_error": "Spiel konnte nicht entfernt werden",
+    "social_accounts": "Social Accounts",
+    "steam_placeholder": "Steam-Nutzername oder Profil-URL",
+    "discord_placeholder": "Discord-Username (z. B. username#0000)",
+    "save": "Speichern",
+    "saving": "Speichern…",
+    "saved": "Gespeichert ✓",
+    "save_error": "Speichern fehlgeschlagen"
+  },
+  "user": {
+    "loading": "Lade Profil…",
+    "not_found": "Benutzer nicht gefunden",
+    "is_friend": "Freund",
+    "edit_profile": "Profil bearbeiten",
+    "add_friend": "+ Freund hinzufügen",
+    "remove_friend": "Freundschaft entfernen",
+    "social_section": "Social",
+    "common_games": "Gemeinsame Spiele",
+    "common_badge": "✓ Gemeinsam",
+    "public_groups": "Öffentliche Gruppen",
+    "more_games": "Weitere Spiele",
+    "games": "Spiele"
+  },
+  "join": {
+    "checking": "Überprüfe Einladungslink…",
+    "invalid_title": "Link ungültig",
+    "invalid_subtitle": "Dieser Einladungslink ist abgelaufen oder wurde bereits verwendet.",
+    "done_title": "Konto erstellt!",
+    "done_subtitle": "Du kannst dich jetzt mit deinen Zugangsdaten anmelden.",
+    "done_cta": "Zur Anmeldung",
+    "welcome_title": "Du wurdest eingeladen!",
+    "welcome_subtitle": "Wähle einen Nutzernamen und Passwort um loszulegen.",
+    "username_placeholder": "Nutzername",
+    "password_placeholder": "Passwort (min. 6 Zeichen)",
+    "confirm_placeholder": "Passwort wiederholen",
+    "submit": "Konto erstellen",
+    "submitting": "Konto wird erstellt…",
+    "error_password_mismatch": "Passwörter stimmen nicht überein.",
+    "error_password_short": "Passwort muss mindestens 6 Zeichen haben.",
+    "error_registration_failed": "Registrierung fehlgeschlagen.",
+    "error_network": "Netzwerkfehler. Bitte versuche es erneut."
+  },
+  "header": {
+    "notifications_enable": "Benachrichtigungen aktivieren",
+    "notifications_disable": "Benachrichtigungen deaktivieren",
+    "notifications_on": "Benachrichtigungen an",
+    "notifications_off": "Benachrichtigungen aus",
+    "profile": "Profil",
+    "invite_friend": "Freund einladen",
+    "logout": "Abmelden"
+  },
+  "session_form": {
+    "game_label": "Spiel",
+    "date_label": "Datum",
+    "time_label": "Uhrzeit",
+    "time_unit": "{{time}} Uhr",
+    "no_slot": "Kein Slot verfügbar",
+    "scope_label": "Sichtbarkeit",
+    "scope_global": "Global",
+    "scope_groups": "Bestimmte Gruppen",
+    "notes_label": "Notizen",
+    "notes_optional": "(optional)",
+    "notes_placeholder": "z.B. Serveradresse, Passwort, Discord-Link…",
+    "notes_counter": "{{count}}/500",
+    "submit": "Eintragen",
+    "cancel": "Abbrechen",
+    "error_no_game": "Bitte ein Spiel aus der Bibliothek wählen.",
+    "error_past_time": "Der Zeitpunkt muss in der Zukunft liegen.",
+    "create_error": "Fehler beim Erstellen"
+  },
+  "week_calendar": {
+    "later_section": "Weitere Termine",
+    "show_more": "▼ {{count}} weitere anzeigen",
+    "show_less": "▲ Weniger anzeigen",
+    "no_sessions": "Keine geplanten Spielzeiten."
+  },
+  "session_row": {
+    "rsvp_accept": "Zusagen",
+    "rsvp_maybe": "Vielleicht",
+    "rsvp_decline": "Absagen",
+    "late_joinable": "läuft gerade",
+    "past": "vergangen",
+    "participant_count_one": "{{count}} Person",
+    "participant_count_other": "{{count}} Personen",
+    "delete": "Löschen"
+  },
+  "invite_modal": {
+    "title": "Freund einladen",
+    "validity_hint": "Link ist 7 Tage gültig und kann nur einmal benutzt werden.",
+    "copy": "Kopieren",
+    "copied": "✓ Kopiert",
+    "instructions": "Schick diesen Link an die Person, die du einladen möchtest. Sie werden nach Nutzername und Passwort gefragt."
+  },
+  "autofill": {
+    "searching": "Suche auf RAWG…",
+    "no_results": "Kein Spiel auf RAWG gefunden.",
+    "close": "Schließen",
+    "which_game": "Welches Spiel meinst du?",
+    "cancel": "✕ Abbrechen"
+  },
+  "game_card": {
+    "in_list": "✓ In meiner Liste",
+    "add_to_list": "+ Zur Liste"
+  },
+  "game_picker": {
+    "placeholder": "Spiel aus Bibliothek wählen…",
+    "no_results": "Kein Spiel gefunden."
+  },
+  "search_bar": {
+    "placeholder": "Suchen…",
+    "button": "Suchen"
+  },
+  "badge": {
+    "public": "Öffentlich",
+    "private": "Privat",
+    "friend": "Freund",
+    "global": "Global",
+    "groups": "Gruppen",
+    "joined": "Beigetreten"
+  },
+  "visibility": {
+    "public": "Öffentlich",
+    "group": "In Gruppe",
+    "friends": "Nur Freunde"
+  },
+  "error_boundary": {
+    "title": "Etwas ist schiefgelaufen",
+    "message": "Ein unerwarteter Fehler ist aufgetreten. Du kannst die Seite neu laden oder es später erneut versuchen.",
+    "details_summary": "Fehlerdetails",
+    "reload": "Seite neu laden"
+  },
+  "error": {
+    "game": {
+      "name_required": "Spielname darf nicht leer sein",
+      "rawg_not_configured": "RAWG API-Key ist nicht konfiguriert",
+      "not_found": "Spiel nicht gefunden",
+      "thumbnail_too_large": "Bild zu groß (max. 5 MB)"
+    },
+    "session": {
+      "invalid_rsvp": "Ungültiger RSVP-Status (accepted, maybe oder declined)",
+      "date_required": "Datum darf nicht leer sein",
+      "invalid_date": "Ungültiges Datumsformat",
+      "date_in_past": "Session kann nicht in der Vergangenheit liegen",
+      "invalid_scope": "Ungültiger Scope (global oder groups)",
+      "groups_required": "Mindestens eine Gruppe auswählen",
+      "notes_too_long": "Notizen dürfen maximal 500 Zeichen lang sein",
+      "not_found": "Session nicht gefunden",
+      "no_longer_available": "Session nicht mehr verfügbar"
+    },
+    "group": {
+      "name_required": "Gruppenname darf nicht leer sein",
+      "not_found": "Gruppe nicht gefunden",
+      "invalid_discord_url": "Ungültiger Discord-Einladungslink. Erlaubt: discord.gg/… oder discord.com/invite/…",
+      "discord_url_too_long": "Link zu lang (max. 200 Zeichen)",
+      "discord_url_unauthorized": "Nur der Ersteller oder Admins können den Discord-Link bearbeiten",
+      "delete_unauthorized": "Nur Admins können Gruppen löschen"
+    },
+    "invitation": {
+      "only_members_can_invite": "Nur Gruppenmitglieder können einladen",
+      "already_member": "Benutzer ist bereits Mitglied",
+      "not_mutual_friends": "Nur gegenseitige Freunde können eingeladen werden",
+      "already_sent": "Einladung bereits versandt",
+      "not_found": "Einladung nicht gefunden",
+      "only_members_see_list": "Nur Gruppenmitglieder sehen die Einladeliste"
+    },
+    "session_invitation": {
+      "only_participants_can_invite": "Nur Teilnehmer können zur Session einladen",
+      "already_participant": "Benutzer nimmt bereits an der Session teil",
+      "not_mutual_friends": "Nur gegenseitige Freunde können eingeladen werden",
+      "only_participants_see_list": "Nur Teilnehmer sehen die Einladeliste"
+    },
+    "friend_request": {
+      "self_request": "Du kannst dir selbst keine Freundschaftsanfrage schicken",
+      "already_friends": "Ihr seid bereits befreundet",
+      "already_pending": "Es gibt bereits eine offene Freundschaftsanfrage zwischen euch",
+      "not_found": "Freundschaftsanfrage nicht gefunden"
+    },
+    "invite": {
+      "invalid_or_expired": "Einladungslink ungültig oder abgelaufen"
+    },
+    "registration": {
+      "invalid_credentials": "Nutzername und Passwort (min. 6 Zeichen) erforderlich",
+      "username_taken": "Dieser Nutzername ist bereits vergeben"
+    },
+    "internal": {
+      "database": "Ein Datenbankfehler ist aufgetreten",
+      "unknown": "Ein interner Fehler ist aufgetreten"
+    },
+    "http": "HTTP-Fehler {{status}}"
+  }
+}
