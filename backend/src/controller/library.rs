@@ -8,7 +8,7 @@ use axum::{
 
 use crate::config::app_state::AppState;
 use crate::dto::game::{UpdateGameRequest, UpsertGameRequest};
-use crate::error::AppError;
+use crate::error::{AppError, codes};
 use crate::middleware::auth::AuthUser;
 
 pub fn routes() -> Router<AppState> {
@@ -52,7 +52,7 @@ async fn detail_handler(
         .get_by_name(&name)
         .await?
         .map(Json)
-        .ok_or_else(|| AppError::Internal("Spiel nicht gefunden".into()))
+        .ok_or_else(|| AppError::Validation(codes::game::NOT_FOUND.into()))
 }
 
 async fn create_handler(
@@ -100,7 +100,7 @@ async fn upload_thumbnail_handler(
         const MAX_BYTES: usize = 5 * 1024 * 1024; // 5 MB
         if bytes.len() > MAX_BYTES {
             return Err(AppError::Validation(
-                "error.game.thumbnail_too_large".into(),
+                codes::game::THUMBNAIL_TOO_LARGE.into(),
             ));
         }
 
@@ -113,7 +113,7 @@ async fn upload_thumbnail_handler(
         return Ok(Json(serde_json::json!({ "url": url })));
     }
 
-    Err(AppError::Internal("Kein Datei-Feld gefunden".into()))
+    Err(AppError::Internal("no file field in multipart body".into()))
 }
 
 async fn delete_handler(

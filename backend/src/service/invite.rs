@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use surrealdb::{Surreal, engine::remote::ws::Client};
 use uuid::Uuid;
 
-use crate::error::AppError;
+use crate::error::{AppError, codes};
 use crate::repository::{invite::InviteRepository, traits::InviteRepo};
 
 pub struct InviteService {
@@ -72,7 +72,7 @@ impl InviteService {
     ) -> Result<(), AppError> {
         if username.trim().is_empty() || password.len() < 6 {
             return Err(AppError::Validation(
-                "error.registration.invalid_credentials".into(),
+                codes::registration::INVALID_CREDENTIALS.into(),
             ));
         }
 
@@ -80,7 +80,7 @@ impl InviteService {
             .repo
             .find_valid(code.to_owned())
             .await?
-            .ok_or_else(|| AppError::Validation("error.invite.invalid_or_expired".into()))?;
+            .ok_or_else(|| AppError::Validation(codes::invite::INVALID_OR_EXPIRED.into()))?;
 
         let admin_token = self.get_admin_token().await?;
         self.create_keycloak_user(&admin_token, username, password)
@@ -167,7 +167,7 @@ impl InviteService {
         match resp.status().as_u16() {
             201 => Ok(()),
             409 => Err(AppError::Validation(
-                "error.registration.username_taken".into(),
+                codes::registration::USERNAME_TAKEN.into(),
             )),
             status => Err(AppError::Internal(format!("Keycloak error: HTTP {status}"))),
         }

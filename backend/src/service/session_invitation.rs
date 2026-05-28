@@ -2,8 +2,9 @@ use std::sync::Arc;
 
 use surrealdb::{Surreal, engine::remote::ws::Client};
 
-use crate::error::AppError;
+use crate::error::{AppError, codes};
 use crate::middleware::auth::AuthUser;
+use crate::model::session::RsvpStatus;
 use crate::model::session_invitation::SessionInvitationRecord;
 use crate::model::user::UserSummary;
 use crate::repository::{
@@ -63,7 +64,7 @@ impl SessionInvitationService {
             .session_repo
             .find_by_id(session_id.to_owned())
             .await?
-            .ok_or_else(|| AppError::Validation("error.session.not_found".into()))?;
+            .ok_or_else(|| AppError::Validation(codes::session::NOT_FOUND.into()))?;
 
         let is_creator = session.user_id == inviter.keycloak_id;
         let is_participant = session
@@ -73,7 +74,7 @@ impl SessionInvitationService {
 
         if !is_creator && !is_participant {
             return Err(AppError::Validation(
-                "error.session_invitation.only_participants_can_invite".into(),
+                codes::session_invitation::ONLY_PARTICIPANTS_CAN_INVITE.into(),
             ));
         }
 
@@ -83,7 +84,7 @@ impl SessionInvitationService {
 
         if all_participant_ids.contains(&invitee_id.to_owned()) {
             return Err(AppError::Validation(
-                "error.session_invitation.already_participant".into(),
+                codes::session_invitation::ALREADY_PARTICIPANT.into(),
             ));
         }
 
@@ -93,7 +94,7 @@ impl SessionInvitationService {
             .await?;
         if !inviter_friends.contains(&invitee_id.to_owned()) {
             return Err(AppError::Validation(
-                "error.session_invitation.not_mutual_friends".into(),
+                codes::session_invitation::NOT_MUTUAL_FRIENDS.into(),
             ));
         }
         let mutual = self
@@ -102,7 +103,7 @@ impl SessionInvitationService {
             .await?;
         if mutual.is_empty() {
             return Err(AppError::Validation(
-                "error.session_invitation.not_mutual_friends".into(),
+                codes::session_invitation::NOT_MUTUAL_FRIENDS.into(),
             ));
         }
 
@@ -111,7 +112,7 @@ impl SessionInvitationService {
             .exists_for_session_and_invitee(session_id.to_owned(), invitee_id.to_owned())
             .await?
         {
-            return Err(AppError::Validation("error.invitation.already_sent".into()));
+            return Err(AppError::Validation(codes::invitation::ALREADY_SENT.into()));
         }
 
         self.inv_repo
@@ -142,17 +143,17 @@ impl SessionInvitationService {
             .inv_repo
             .find_by_id_for_invitee(inv_id.to_owned(), user.keycloak_id.clone())
             .await?
-            .ok_or_else(|| AppError::Validation("error.invitation.not_found".into()))?;
+            .ok_or_else(|| AppError::Validation(codes::invitation::NOT_FOUND.into()))?;
 
         self.session_repo
             .set_rsvp(
                 inv.session_id,
                 user.keycloak_id.clone(),
                 user.username.clone(),
-                "accepted".to_owned(),
+                RsvpStatus::Accepted.to_string(),
             )
             .await?
-            .ok_or_else(|| AppError::Validation("error.session.no_longer_available".into()))?;
+            .ok_or_else(|| AppError::Validation(codes::session::NO_LONGER_AVAILABLE.into()))?;
 
         self.inv_repo
             .delete(inv_id.to_owned(), user.keycloak_id.clone())
@@ -178,7 +179,7 @@ impl SessionInvitationService {
             .session_repo
             .find_by_id(session_id.to_owned())
             .await?
-            .ok_or_else(|| AppError::Validation("error.session.not_found".into()))?;
+            .ok_or_else(|| AppError::Validation(codes::session::NOT_FOUND.into()))?;
 
         let is_creator = session.user_id == requester.keycloak_id;
         let is_participant = session
@@ -188,7 +189,7 @@ impl SessionInvitationService {
 
         if !is_creator && !is_participant {
             return Err(AppError::Validation(
-                "error.session_invitation.only_participants_see_list".into(),
+                codes::session_invitation::ONLY_PARTICIPANTS_SEE_LIST.into(),
             ));
         }
 

@@ -9,7 +9,7 @@ use serde_json::json;
 use crate::{
     config::app_state::{AppState, GroupEvent},
     dto::session::{CreateSessionRequest, RsvpRequest},
-    error::AppError,
+    error::{AppError, codes},
     middleware::auth::AuthUser,
 };
 
@@ -38,7 +38,7 @@ async fn detail_handler(
         .get_detail(&id, &user.keycloak_id)
         .await?
         .map(Json)
-        .ok_or_else(|| AppError::Internal("Session nicht gefunden".into()))
+        .ok_or_else(|| AppError::Validation(codes::session::NOT_FOUND.into()))
 }
 
 async fn mine_handler(

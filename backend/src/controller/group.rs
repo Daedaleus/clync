@@ -14,7 +14,7 @@ use tokio_stream::wrappers::BroadcastStream;
 use crate::{
     config::app_state::AppState,
     dto::group::{CreateGroupRequest, SetDiscordInviteRequest},
-    error::AppError,
+    error::{AppError, codes},
     middleware::auth::{AuthUser, validate_query_token},
 };
 
@@ -77,7 +77,7 @@ async fn delete_handler(
 ) -> Result<StatusCode, AppError> {
     if !user.is_admin {
         return Err(AppError::Unauthorized(
-            "error.group.delete_unauthorized".into(),
+            codes::group::DELETE_UNAUTHORIZED.into(),
         ));
     }
     state.group_svc.delete(&id).await?;
@@ -101,7 +101,7 @@ async fn detail_handler(
         .get_detail(&id, &user.keycloak_id)
         .await?
         .map(Json)
-        .ok_or_else(|| AppError::Internal("Gruppe nicht gefunden".into()))
+        .ok_or_else(|| AppError::Validation(codes::group::NOT_FOUND.into()))
 }
 
 async fn group_sessions_handler(
