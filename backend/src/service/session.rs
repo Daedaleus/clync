@@ -666,4 +666,151 @@ mod tests {
         let resp = result.unwrap();
         assert!(!resp.is_participant);
     }
+
+    // ── delete admin bypass ───────────────────────────────────────────────────
+
+    struct AdminDeleteRepo;
+    struct OwnerDeleteRepo;
+
+    #[async_trait]
+    impl SessionRepo for AdminDeleteRepo {
+        async fn delete_as_admin(&self, _: String) -> Result<Vec<String>, surrealdb::Error> {
+            Ok(vec!["g1".into()])
+        }
+        async fn delete(&self, _: String, _: String) -> Result<Vec<String>, surrealdb::Error> {
+            panic!("delete called instead of delete_as_admin")
+        }
+        async fn create(
+            &self,
+            _: String,
+            _: String,
+            _: String,
+            _: String,
+            _: String,
+            _: Vec<String>,
+            _: Option<String>,
+        ) -> Result<Option<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_feed(&self, _: Vec<String>) -> Result<Vec<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_mine(&self, _: String) -> Result<Vec<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_for_group(&self, _: String) -> Result<Vec<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_by_id(&self, _: String) -> Result<Option<SessionDetail>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn join(&self, _: String, _: String) -> Result<Option<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn leave(&self, _: String, _: String) -> Result<(), surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn set_rsvp(
+            &self,
+            _: String,
+            _: String,
+            _: String,
+            _: String,
+        ) -> Result<Option<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn remove_rsvp(
+            &self,
+            _: String,
+            _: String,
+        ) -> Result<Option<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_sessions_to_notify(
+            &self,
+        ) -> Result<Vec<crate::model::session::SessionStartReminder>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn mark_start_notified(&self, _: String) -> Result<(), surrealdb::Error> {
+            unimplemented!()
+        }
+    }
+
+    #[async_trait]
+    impl SessionRepo for OwnerDeleteRepo {
+        async fn delete(&self, _: String, _: String) -> Result<Vec<String>, surrealdb::Error> {
+            Ok(vec!["g1".into()])
+        }
+        async fn delete_as_admin(&self, _: String) -> Result<Vec<String>, surrealdb::Error> {
+            panic!("delete_as_admin called instead of delete")
+        }
+        async fn create(
+            &self,
+            _: String,
+            _: String,
+            _: String,
+            _: String,
+            _: String,
+            _: Vec<String>,
+            _: Option<String>,
+        ) -> Result<Option<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_feed(&self, _: Vec<String>) -> Result<Vec<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_mine(&self, _: String) -> Result<Vec<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_for_group(&self, _: String) -> Result<Vec<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_by_id(&self, _: String) -> Result<Option<SessionDetail>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn join(&self, _: String, _: String) -> Result<Option<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn leave(&self, _: String, _: String) -> Result<(), surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn set_rsvp(
+            &self,
+            _: String,
+            _: String,
+            _: String,
+            _: String,
+        ) -> Result<Option<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn remove_rsvp(
+            &self,
+            _: String,
+            _: String,
+        ) -> Result<Option<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_sessions_to_notify(
+            &self,
+        ) -> Result<Vec<crate::model::session::SessionStartReminder>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn mark_start_notified(&self, _: String) -> Result<(), surrealdb::Error> {
+            unimplemented!()
+        }
+    }
+
+    #[tokio::test]
+    async fn delete_with_admin_flag_calls_delete_as_admin() {
+        let svc = SessionService::with_repos(Box::new(AdminDeleteRepo), Box::new(FakeGroupRepo));
+        let group_ids = svc.delete("s1", "some_other_user", true).await.unwrap();
+        assert_eq!(group_ids, vec!["g1"]);
+    }
+
+    #[tokio::test]
+    async fn delete_without_admin_flag_calls_owner_delete() {
+        let svc = SessionService::with_repos(Box::new(OwnerDeleteRepo), Box::new(FakeGroupRepo));
+        let group_ids = svc.delete("s1", "u1", false).await.unwrap();
+        assert_eq!(group_ids, vec!["g1"]);
+    }
 }
