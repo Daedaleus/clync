@@ -312,6 +312,25 @@
     "group": "In group",
     "friends": "Friends only"
   },
+  "footer": {
+    "version": "v{{version}} · alpha",
+    "about": "About WhatsUp"
+  },
+  "about": {
+    "title": "About WhatsUp",
+    "tagline": "Coordinate your gaming nights — without the hassle.",
+    "section_what": "What is WhatsUp?",
+    "what": "WhatsUp is a private app for gaming groups. Add your games, find out which ones everyone has, and plan game nights together — with set times, RSVPs, and live updates.",
+    "section_features": "What can it do?",
+    "feature_sessions": "Schedule gaming sessions and RSVP accept or decline",
+    "feature_library": "Build a shared game library",
+    "feature_groups": "Manage private and public groups",
+    "feature_friends": "Add friends and discover games you have in common",
+    "feature_notifications": "Push notifications for invitations and new sessions",
+    "section_status": "Status",
+    "status": "The app is currently in alpha. Features may still change.",
+    "back": "← Back"
+  },
   "error_boundary": {
     "title": "Something went wrong",
     "message": "An unexpected error occurred. You can reload the page or try again later.",
