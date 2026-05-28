@@ -127,6 +127,7 @@ export default function MePage() {
     try {
       await api.post(`/api/v1/session-invitations/${id}/accept`);
       setSessionInvitations((p) => p.filter((inv) => inv.id !== id));
+      api.get<Session[]>('/api/v1/sessions/mine').then(setSessions).catch(() => {});
     } catch { /* silently ignore */ }
   };
 
