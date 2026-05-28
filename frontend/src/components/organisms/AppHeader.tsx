@@ -151,9 +151,9 @@ export default function AppHeader() {
                 <hr className="border-zinc-800 my-1" />
                 <button
                   className={dropdownItem}
-                  onClick={() => { i18n.changeLanguage(i18n.language.startsWith('de') ? 'en' : 'de'); close(); }}
+                  onClick={() => { i18n.changeLanguage((i18n.resolvedLanguage ?? i18n.language).startsWith('de') ? 'en' : 'de'); close(); }}
                 >
-                  {i18n.language.startsWith('de') ? '🇬🇧 English' : '🇩🇪 Deutsch'}
+                  {(i18n.resolvedLanguage ?? i18n.language).startsWith('de') ? '🇬🇧 English' : '🇩🇪 Deutsch'}
                 </button>
                 <hr className="border-zinc-800 my-1" />
                 <button

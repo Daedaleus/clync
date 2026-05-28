@@ -287,6 +287,10 @@
     "which_game": "Which game did you mean?",
     "cancel": "✕ Cancel"
   },
+  "game_card": {
+    "in_list": "✓ In my list",
+    "add_to_list": "+ Add to list"
+  },
   "game_picker": {
     "placeholder": "Choose game from library…",
     "no_results": "No game found."
