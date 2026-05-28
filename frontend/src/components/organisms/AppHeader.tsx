@@ -148,6 +148,7 @@ export default function AppHeader() {
                 <button className={dropdownItem} onClick={handleInvite}>
                   {t('header.invite_friend')}
                 </button>
+                <Link to="/about" className={dropdownItem} onClick={close}>{t('footer.about')}</Link>
                 <hr className="border-zinc-800 my-1" />
                 <button
                   className={dropdownItem}
