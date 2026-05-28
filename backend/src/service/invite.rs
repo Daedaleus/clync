@@ -37,6 +37,18 @@ impl InviteService {
         }
     }
 
+    #[cfg(test)]
+    pub(crate) fn with_repo(repo: Box<dyn crate::repository::traits::InviteRepo>) -> Self {
+        Self {
+            repo,
+            client: reqwest::Client::new(),
+            admin_url: String::new(),
+            realm: String::new(),
+            admin_user: String::new(),
+            admin_password: String::new(),
+        }
+    }
+
     /// Creates a single-use invite token valid for 7 days.
     pub async fn create_invite(&self, creator_id: &str) -> Result<String, AppError> {
         let code = Uuid::new_v4().to_string().replace('-', "");
@@ -159,5 +171,85 @@ impl InviteService {
             )),
             status => Err(AppError::Internal(format!("Keycloak error: HTTP {status}"))),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use async_trait::async_trait;
+
+    use super::*;
+    use crate::{model::invite::InviteRecord, repository::traits::InviteRepo};
+
+    struct PanicRepo;
+
+    #[async_trait]
+    impl InviteRepo for PanicRepo {
+        async fn create(&self, _: String, _: String, _: String) -> Result<(), surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_valid(&self, _: String) -> Result<Option<InviteRecord>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn mark_used(&self, _: String) -> Result<(), surrealdb::Error> {
+            unimplemented!()
+        }
+    }
+
+    struct NoCodeRepo;
+
+    #[async_trait]
+    impl InviteRepo for NoCodeRepo {
+        async fn create(&self, _: String, _: String, _: String) -> Result<(), surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_valid(&self, _: String) -> Result<Option<InviteRecord>, surrealdb::Error> {
+            Ok(None)
+        }
+        async fn mark_used(&self, _: String) -> Result<(), surrealdb::Error> {
+            unimplemented!()
+        }
+    }
+
+    #[tokio::test]
+    async fn register_empty_username_is_rejected() {
+        let err = InviteService::with_repo(Box::new(PanicRepo))
+            .register("code", "", "password123")
+            .await
+            .unwrap_err();
+        assert!(
+            matches!(err, AppError::Validation(ref msg) if msg.contains("invalid_credentials"))
+        );
+    }
+
+    #[tokio::test]
+    async fn register_whitespace_username_is_rejected() {
+        let err = InviteService::with_repo(Box::new(PanicRepo))
+            .register("code", "   ", "password123")
+            .await
+            .unwrap_err();
+        assert!(
+            matches!(err, AppError::Validation(ref msg) if msg.contains("invalid_credentials"))
+        );
+    }
+
+    #[tokio::test]
+    async fn register_short_password_is_rejected() {
+        let err = InviteService::with_repo(Box::new(PanicRepo))
+            .register("code", "alice", "pass")
+            .await
+            .unwrap_err();
+        assert!(
+            matches!(err, AppError::Validation(ref msg) if msg.contains("invalid_credentials"))
+        );
+    }
+
+    #[tokio::test]
+    async fn register_invalid_or_expired_code_is_rejected() {
+        let err = InviteService::with_repo(Box::new(NoCodeRepo))
+            .register("bad_code", "alice", "password123")
+            .await
+            .unwrap_err();
+        assert!(matches!(err, AppError::Validation(ref msg) if msg.contains("invalid_or_expired")));
     }
 }

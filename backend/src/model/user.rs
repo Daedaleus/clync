@@ -16,7 +16,7 @@ pub struct User {
     pub email: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserSummary {
     pub keycloak_id: String,
     pub username: String,

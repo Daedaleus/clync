@@ -39,7 +39,7 @@ pub struct SessionStartReminder {
 }
 
 /// Session with participant names resolved — used for the detail endpoint.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct SessionDetail {
     pub id: String,
     pub user_id: String,
@@ -60,7 +60,7 @@ pub struct SessionDetail {
     pub rsvps: Vec<RsvpRecord>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct ParticipantRecord {
     pub keycloak_id: String,
     pub username: String,
