@@ -13,6 +13,7 @@ const MePage = lazy(() => import('./pages/MePage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const SessionDetailPage = lazy(() => import('./pages/SessionDetailPage'));
 const UserPage = lazy(() => import('./pages/UserPage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
 
 export default function App() {
   return (
@@ -31,6 +32,7 @@ export default function App() {
           <Route path="/sessions/:id" element={<SessionDetailPage />} />
           <Route path="/library" element={<LibraryPage />} />
           <Route path="/library/:name" element={<GameDetailPage />} />
+          <Route path="/about" element={<AboutPage />} />
         </Routes>
       </Suspense>
     </BrowserRouter>
