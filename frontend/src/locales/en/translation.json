@@ -342,7 +342,8 @@
       "name_required": "Game name must not be empty",
       "rawg_not_configured": "RAWG API key is not configured",
       "not_found": "Game not found",
-      "thumbnail_too_large": "Image too large (max. 5 MB)"
+      "thumbnail_too_large": "Image too large (max. 5 MB)",
+      "in_wishlist": "This game is still on users' wishlists"
     },
     "session": {
       "invalid_rsvp": "Invalid RSVP status (accepted, maybe, or declined)",
