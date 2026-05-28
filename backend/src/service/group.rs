@@ -6,7 +6,7 @@ use crate::dto::group::{
     CreateGroupRequest, GroupDetailResponse, GroupResponse, GroupSummary, MemberResponse,
     PossibleGame,
 };
-use crate::error::AppError;
+use crate::error::{AppError, codes};
 use crate::model::group::MemberWithGames;
 use crate::repository::{
     group::GroupRepository,
@@ -39,7 +39,7 @@ impl GroupService {
     ) -> Result<GroupResponse, AppError> {
         let name = req.name.trim().to_owned();
         if name.is_empty() {
-            return Err(AppError::Validation("error.group.name_required".into()));
+            return Err(AppError::Validation(codes::group::NAME_REQUIRED.into()));
         }
         let group = self
             .repo
@@ -146,12 +146,12 @@ impl GroupService {
                 || u.starts_with("https://discord.com/invite/");
             if !valid {
                 return Err(AppError::Validation(
-                    "error.group.invalid_discord_url".into(),
+                    codes::group::INVALID_DISCORD_URL.into(),
                 ));
             }
             if u.len() > 200 {
                 return Err(AppError::Validation(
-                    "error.group.discord_url_too_long".into(),
+                    codes::group::DISCORD_URL_TOO_LONG.into(),
                 ));
             }
         }
@@ -160,12 +160,12 @@ impl GroupService {
             .repo
             .find_by_id(group_id.to_owned())
             .await?
-            .ok_or_else(|| AppError::Validation("error.group.not_found".into()))?;
+            .ok_or_else(|| AppError::Validation(codes::group::NOT_FOUND.into()))?;
 
         let is_creator = group.creator_id.as_deref() == Some(requester_id);
         if !is_creator && !is_admin {
             return Err(AppError::Unauthorized(
-                "error.group.discord_url_unauthorized".into(),
+                codes::group::DISCORD_URL_UNAUTHORIZED.into(),
             ));
         }
 
