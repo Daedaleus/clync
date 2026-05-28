@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 import Avatar from '../components/atoms/Avatar';
 import Badge from '../components/atoms/Badge';
@@ -47,37 +48,8 @@ interface SessionDetail {
   notes?: string | null;
 }
 
-const RSVP_OPTIONS: { status: RsvpStatus; label: string; icon: string; active: string; hover: string }[] = [
-  {
-    status: 'accepted',
-    label: 'Zusagen',
-    icon: '✓',
-    active: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/40',
-    hover: 'hover:bg-emerald-500/10 hover:text-emerald-400 hover:border-emerald-500/30',
-  },
-  {
-    status: 'maybe',
-    label: 'Vielleicht',
-    icon: '?',
-    active: 'bg-amber-500/15 text-amber-400 border-amber-500/40',
-    hover: 'hover:bg-amber-500/10 hover:text-amber-400 hover:border-amber-500/30',
-  },
-  {
-    status: 'declined',
-    label: 'Absagen',
-    icon: '✕',
-    active: 'bg-red-500/15 text-red-400 border-red-500/40',
-    hover: 'hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30',
-  },
-];
-
-const RSVP_STATUS_LABEL: Record<RsvpStatus, string> = {
-  accepted: 'Zusagen',
-  maybe: 'Vielleicht',
-  declined: 'Absagen',
-};
-
 export default function SessionDetailPage() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const [session, setSession] = useState<SessionDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -87,14 +59,44 @@ export default function SessionDetailPage() {
   const [invitedIds, setInvitedIds] = useState<Set<string>>(new Set());
   const invitePanelRef = useRef<HTMLDivElement>(null);
 
+  const RSVP_OPTIONS: { status: RsvpStatus; label: string; icon: string; active: string; hover: string }[] = [
+    {
+      status: 'accepted',
+      label: t('session_detail.rsvp_accept'),
+      icon: '✓',
+      active: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/40',
+      hover: 'hover:bg-emerald-500/10 hover:text-emerald-400 hover:border-emerald-500/30',
+    },
+    {
+      status: 'maybe',
+      label: t('session_detail.rsvp_maybe'),
+      icon: '?',
+      active: 'bg-amber-500/15 text-amber-400 border-amber-500/40',
+      hover: 'hover:bg-amber-500/10 hover:text-amber-400 hover:border-amber-500/30',
+    },
+    {
+      status: 'declined',
+      label: t('session_detail.rsvp_decline'),
+      icon: '✕',
+      active: 'bg-red-500/15 text-red-400 border-red-500/40',
+      hover: 'hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30',
+    },
+  ];
+
+  const RSVP_STATUS_LABEL: Record<RsvpStatus, string> = {
+    accepted: t('session_detail.rsvp_accept'),
+    maybe: t('session_detail.rsvp_maybe'),
+    declined: t('session_detail.rsvp_decline'),
+  };
+
   useEffect(() => {
     if (!id) return;
     const controller = new AbortController();
     api.get<SessionDetail>(`/api/v1/sessions/${id}`, controller.signal)
       .then(setSession)
-      .catch((err: unknown) => { if (!isAbortError(err)) setError('Session nicht gefunden'); });
+      .catch((err: unknown) => { if (!isAbortError(err)) setError(t('session_detail.not_found')); });
     return () => controller.abort();
-  }, [id]);
+  }, [id, t]);
 
   const refresh = () => id
     ? api.get<SessionDetail>(`/api/v1/sessions/${id}`).then(setSession)
@@ -112,7 +114,7 @@ export default function SessionDetailPage() {
         await api.put(`/api/v1/sessions/${id}/rsvp`, { status });
         await refresh();
       }
-    } catch (err) { setError(err instanceof Error ? err.message : 'Fehler'); }
+    } catch (err) { setError(err instanceof Error ? err.message : t('common.error')); }
     finally { setLoading(false); }
   };
 
@@ -139,12 +141,12 @@ export default function SessionDetailPage() {
   const handleDelete = async () => {
     setLoading(true); setError(null);
     try { await api.delete(`/api/v1/sessions/${id}`); window.history.back(); }
-    catch (err) { setError(err instanceof Error ? err.message : 'Fehler'); }
+    catch (err) { setError(err instanceof Error ? err.message : t('common.error')); }
     finally { setLoading(false); }
   };
 
   if (!session && !error) return (
-    <PageLayout><p className="text-zinc-500 text-sm">Lade Session…</p></PageLayout>
+    <PageLayout><p className="text-zinc-500 text-sm">{t('session_detail.loading')}</p></PageLayout>
   );
 
   if (!session) return (
@@ -189,7 +191,7 @@ export default function SessionDetailPage() {
         <div className={`${thumbSrc ? 'absolute bottom-0 left-0 right-0' : ''} p-5 space-y-1`}>
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant={session.scope === 'global' ? 'global' : 'groups'} />
-            {past && <Badge variant="private" label="Vergangen" />}
+            {past && <Badge variant="private" label={t('session_detail.past_label')} />}
           </div>
           <h1 className={`text-2xl font-bold leading-tight ${thumbSrc ? 'text-white' : 'text-zinc-100'}`}>
             {session.game}
@@ -204,7 +206,7 @@ export default function SessionDetailPage() {
           <p className="text-lg font-medium text-zinc-100">{fmtDateTime(session.scheduled_at)}</p>
           {/* Creator */}
           <p className="text-sm text-zinc-500">
-            von{' '}
+            {t('session_detail.created_by')}{' '}
             <Link to={`/users/${session.user_id}`} className="text-zinc-300 hover:text-violet-400 transition-colors">
               {session.username}
             </Link>
@@ -212,7 +214,7 @@ export default function SessionDetailPage() {
           {/* Groups */}
           {session.scope === 'groups' && (session.group_names ?? []).length > 0 && (
             <p className="text-sm text-zinc-500">
-              mit{' '}
+              {t('session_detail.with_groups')}{' '}
               <span className="text-zinc-300">{(session.group_names ?? []).join(', ')}</span>
             </p>
           )}
@@ -223,7 +225,7 @@ export default function SessionDetailPage() {
           <div className="flex gap-2 flex-wrap">
             {(session.is_mine || isAdmin()) && (
               <Button variant="danger" size="sm" disabled={loading} onClick={handleDelete}>
-                Löschen
+                {t('session_detail.delete')}
               </Button>
             )}
             {!session.is_mine && (
@@ -247,7 +249,7 @@ export default function SessionDetailPage() {
             )}
             {(session.is_mine || session.is_participant) && (
               <Button variant="secondary" size="sm" onClick={handleToggleInvite}>
-                {showInvite ? 'Schließen' : '+ Einladen'}
+                {showInvite ? t('session_detail.invite_toggle_close') : t('session_detail.invite_toggle_open')}
               </Button>
             )}
           </div>
@@ -257,7 +259,7 @@ export default function SessionDetailPage() {
       {/* RSVP breakdown */}
       {!session.is_mine && session.my_rsvp && (
         <p className="text-sm text-zinc-500">
-          Deine Antwort:{' '}
+          {t('session_detail.your_rsvp')}{' '}
           <span className={
             session.my_rsvp === 'accepted' ? 'text-emerald-400 font-medium'
             : session.my_rsvp === 'maybe' ? 'text-amber-400 font-medium'
@@ -271,7 +273,7 @@ export default function SessionDetailPage() {
       {/* Participants */}
       <section className="space-y-3">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-zinc-400">Teilnehmer</span>
+          <span className="text-sm font-medium text-zinc-400">{t('session_detail.participants')}</span>
           <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400">
             {session.participant_count}
           </span>
@@ -288,7 +290,7 @@ export default function SessionDetailPage() {
               <p className="text-sm text-zinc-200 truncate group-hover:text-violet-300 transition-colors">
                 {session.username}
               </p>
-              <p className="text-[10px] text-zinc-600">Ersteller</p>
+              <p className="text-[10px] text-zinc-600">{t('session_detail.creator_role')}</p>
             </div>
           </Link>
 
@@ -307,7 +309,7 @@ export default function SessionDetailPage() {
         </div>
 
         {session.participants.length === 0 && !session.is_mine && (
-          <p className="text-sm text-zinc-600">Noch keine weiteren Teilnehmer.</p>
+          <p className="text-sm text-zinc-600">{t('session_detail.no_other_participants')}</p>
         )}
 
         {/* RSVP breakdown: maybe + declined */}
@@ -332,7 +334,7 @@ export default function SessionDetailPage() {
       {/* Notes */}
       {session.notes && (
         <section className="space-y-1.5">
-          <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Notizen</span>
+          <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">{t('session_detail.notes_label')}</span>
           <p className="text-sm text-zinc-300 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 whitespace-pre-wrap">
             {session.notes}
           </p>
@@ -342,12 +344,12 @@ export default function SessionDetailPage() {
       {/* Invite panel */}
       {showInvite && (
         <section ref={invitePanelRef} className="space-y-2">
-          <span className="text-sm font-medium text-zinc-400">Freunde einladen</span>
+          <span className="text-sm font-medium text-zinc-400">{t('session_detail.invite_friends')}</span>
           {invitableUsers === null && (
-            <p className="text-sm text-zinc-500">Lade…</p>
+            <p className="text-sm text-zinc-500">{t('session_detail.invite_loading')}</p>
           )}
           {invitableUsers !== null && invitableUsers.length === 0 && (
-            <p className="text-sm text-zinc-500">Keine weiteren Freunde verfügbar.</p>
+            <p className="text-sm text-zinc-500">{t('session_detail.no_invitable_friends')}</p>
           )}
           {invitableUsers !== null && invitableUsers.length > 0 && (
             <ul className="space-y-2">
@@ -360,7 +362,7 @@ export default function SessionDetailPage() {
                     disabled={invitedIds.has(u.keycloak_id)}
                     onClick={() => handleInvite(u.keycloak_id)}
                   >
-                    {invitedIds.has(u.keycloak_id) ? 'Eingeladen ✓' : 'Einladen'}
+                    {invitedIds.has(u.keycloak_id) ? t('session_detail.invited_check') : t('session_detail.invite_button')}
                   </Button>
                 </li>
               ))}

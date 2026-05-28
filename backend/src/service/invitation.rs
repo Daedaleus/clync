@@ -40,15 +40,17 @@ impl InvitationService {
             .group_repo
             .find_by_id(group_id.to_owned())
             .await?
-            .ok_or_else(|| AppError::Validation("Gruppe nicht gefunden".into()))?;
+            .ok_or_else(|| AppError::Validation("error.group.not_found".into()))?;
 
         if !group.members.contains(&inviter.keycloak_id) {
             return Err(AppError::Validation(
-                "Nur Gruppenmitglieder können einladen".into(),
+                "error.invitation.only_members_can_invite".into(),
             ));
         }
         if group.members.contains(&invitee_id.to_owned()) {
-            return Err(AppError::Validation("Benutzer ist bereits Mitglied".into()));
+            return Err(AppError::Validation(
+                "error.invitation.already_member".into(),
+            ));
         }
 
         // Mutual friendship check: inviter has added invitee AND invitee has added inviter
@@ -58,7 +60,7 @@ impl InvitationService {
             .await?;
         if !inviter_friends.contains(&invitee_id.to_owned()) {
             return Err(AppError::Validation(
-                "Nur gegenseitige Freunde können eingeladen werden".into(),
+                "error.invitation.not_mutual_friends".into(),
             ));
         }
         let mutual = self
@@ -67,7 +69,7 @@ impl InvitationService {
             .await?;
         if mutual.is_empty() {
             return Err(AppError::Validation(
-                "Nur gegenseitige Freunde können eingeladen werden".into(),
+                "error.invitation.not_mutual_friends".into(),
             ));
         }
 
@@ -76,7 +78,7 @@ impl InvitationService {
             .exists_for_group_and_invitee(group_id.to_owned(), invitee_id.to_owned())
             .await?
         {
-            return Err(AppError::Validation("Einladung bereits versandt".into()));
+            return Err(AppError::Validation("error.invitation.already_sent".into()));
         }
 
         self.inv_repo
@@ -103,7 +105,7 @@ impl InvitationService {
             .inv_repo
             .find_by_id_for_invitee(inv_id.to_owned(), user.keycloak_id.clone())
             .await?
-            .ok_or_else(|| AppError::Validation("Einladung nicht gefunden".into()))?;
+            .ok_or_else(|| AppError::Validation("error.invitation.not_found".into()))?;
 
         self.group_repo
             .join(inv.group_id, user.keycloak_id.clone())
@@ -141,11 +143,11 @@ impl InvitationService {
             .group_repo
             .find_by_id(group_id.to_owned())
             .await?
-            .ok_or_else(|| AppError::Validation("Gruppe nicht gefunden".into()))?;
+            .ok_or_else(|| AppError::Validation("error.group.not_found".into()))?;
 
         if !group.members.contains(&requester.keycloak_id) {
             return Err(AppError::Validation(
-                "Nur Gruppenmitglieder sehen die Einladeliste".into(),
+                "error.invitation.only_members_see_list".into(),
             ));
         }
 

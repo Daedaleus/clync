@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import Button from '../atoms/Button';
 import Input from '../atoms/Input';
 
@@ -11,18 +12,19 @@ interface Props {
 
 export default function SearchBar({
   value, onChange, onSubmit,
-  placeholder = 'Suchen…',
-  buttonLabel = 'Suchen',
+  placeholder,
+  buttonLabel,
 }: Props) {
+  const { t } = useTranslation();
   return (
     <form onSubmit={onSubmit} className="flex gap-2">
       <Input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
+        placeholder={placeholder ?? t('search_bar.placeholder')}
         className="flex-1"
       />
-      <Button type="submit">{buttonLabel}</Button>
+      <Button type="submit">{buttonLabel ?? t('search_bar.button')}</Button>
     </form>
   );
 }

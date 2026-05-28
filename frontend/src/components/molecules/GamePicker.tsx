@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { config } from '../../config';
 import type { Game } from '../../types';
 import { api } from '../../services/api';
@@ -16,6 +17,7 @@ function thumbnailSrc(name: string, url: string | null | undefined) {
 }
 
 export default function GamePicker({ value, onChange, required }: Props) {
+  const { t } = useTranslation();
   const [games, setGames] = useState<Game[]>([]);
   const [localQuery, setLocalQuery] = useState('');
   const [open, setOpen] = useState(false);
@@ -56,7 +58,7 @@ export default function GamePicker({ value, onChange, required }: Props) {
         type="text"
         value={open ? localQuery : value}
         required={required}
-        placeholder="Spiel aus Bibliothek wählen…"
+        placeholder={t('game_picker.placeholder')}
         className={inputClass}
         onChange={(e) => { setLocalQuery(e.target.value); setOpen(true); onChange(''); }}
         onFocus={() => { setLocalQuery(value); setOpen(true); }}
@@ -94,7 +96,7 @@ export default function GamePicker({ value, onChange, required }: Props) {
 
       {open && localQuery.trim().length > 0 && filtered.length === 0 && (
         <div className="absolute z-20 mt-1 w-full bg-zinc-900 border border-zinc-700 rounded-xl shadow-xl px-3 py-2 text-sm text-zinc-500">
-          Kein Spiel gefunden.
+          {t('game_picker.no_results')}
         </div>
       )}
     </div>

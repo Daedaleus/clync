@@ -43,9 +43,7 @@ impl GameService {
     pub async fn add(&self, keycloak_id: &str, name: &str) -> Result<(), AppError> {
         let name = name.trim().to_owned();
         if name.is_empty() {
-            return Err(AppError::Validation(
-                "Spielname darf nicht leer sein".into(),
-            ));
+            return Err(AppError::Validation("error.game.name_required".into()));
         }
         self.game_repo.ensure_exists(name.clone()).await?;
         self.user_repo
@@ -87,9 +85,7 @@ impl GameService {
     pub async fn create(&self, req: UpsertGameRequest, creator_id: &str) -> Result<(), AppError> {
         let name = req.name.trim().to_owned();
         if name.is_empty() {
-            return Err(AppError::Validation(
-                "Spielname darf nicht leer sein".into(),
-            ));
+            return Err(AppError::Validation("error.game.name_required".into()));
         }
         self.game_repo
             .upsert_with_details(name.clone(), req.description, req.genre)
@@ -122,7 +118,7 @@ impl GameService {
     ) -> Result<Vec<AutofillCandidate>, AppError> {
         if rawg_api_key.is_empty() {
             return Err(AppError::Validation(
-                "RAWG API-Key ist nicht konfiguriert".into(),
+                "error.game.rawg_not_configured".into(),
             ));
         }
         RawgClient::new(rawg_api_key.to_owned())
@@ -142,7 +138,7 @@ impl GameService {
     ) -> Result<Game, AppError> {
         if rawg_api_key.is_empty() {
             return Err(AppError::Validation(
-                "RAWG API-Key ist nicht konfiguriert".into(),
+                "error.game.rawg_not_configured".into(),
             ));
         }
 
@@ -175,7 +171,7 @@ impl GameService {
             .game_repo
             .find_by_name(name.to_owned())
             .await?
-            .ok_or_else(|| AppError::Validation("Spiel nicht gefunden".into()))?;
+            .ok_or_else(|| AppError::Validation("error.game.not_found".into()))?;
         self.game_repo
             .upsert_with_details(existing.name, req.description, req.genre)
             .await?;

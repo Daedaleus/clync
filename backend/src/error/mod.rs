@@ -46,7 +46,7 @@ impl IntoResponse for AppError {
                 tracing::error!("Database error: {e}");
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(json!({ "error": "Ein Datenbankfehler ist aufgetreten" })),
+                    Json(json!({ "error": "error.internal.database" })),
                 )
                     .into_response()
             }
@@ -55,7 +55,7 @@ impl IntoResponse for AppError {
                 tracing::error!("Internal error: {msg}");
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(json!({ "error": "Ein interner Fehler ist aufgetreten" })),
+                    Json(json!({ "error": "error.internal.unknown" })),
                 )
                     .into_response()
             }

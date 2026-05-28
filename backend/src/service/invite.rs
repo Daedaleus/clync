@@ -60,7 +60,7 @@ impl InviteService {
     ) -> Result<(), AppError> {
         if username.trim().is_empty() || password.len() < 6 {
             return Err(AppError::Validation(
-                "Nutzername und Passwort (min. 6 Zeichen) erforderlich".into(),
+                "error.registration.invalid_credentials".into(),
             ));
         }
 
@@ -68,9 +68,7 @@ impl InviteService {
             .repo
             .find_valid(code.to_owned())
             .await?
-            .ok_or_else(|| {
-                AppError::Validation("Einladungslink ungültig oder abgelaufen".into())
-            })?;
+            .ok_or_else(|| AppError::Validation("error.invite.invalid_or_expired".into()))?;
 
         let admin_token = self.get_admin_token().await?;
         self.create_keycloak_user(&admin_token, username, password)
@@ -157,7 +155,7 @@ impl InviteService {
         match resp.status().as_u16() {
             201 => Ok(()),
             409 => Err(AppError::Validation(
-                "Dieser Nutzername ist bereits vergeben".into(),
+                "error.registration.username_taken".into(),
             )),
             status => Err(AppError::Internal(format!("Keycloak error: HTTP {status}"))),
         }
