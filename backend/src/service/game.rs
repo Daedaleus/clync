@@ -3,7 +3,7 @@ use std::sync::Arc;
 use surrealdb::{Surreal, engine::remote::ws::Client};
 
 use crate::dto::game::{UpdateGameRequest, UpsertGameRequest};
-use crate::error::AppError;
+use crate::error::{AppError, codes};
 use crate::model::game::Game;
 use crate::repository::{
     game::GameRepository,
@@ -43,7 +43,7 @@ impl GameService {
     pub async fn add(&self, keycloak_id: &str, name: &str) -> Result<(), AppError> {
         let name = name.trim().to_owned();
         if name.is_empty() {
-            return Err(AppError::Validation("error.game.name_required".into()));
+            return Err(AppError::Validation(codes::game::NAME_REQUIRED.into()));
         }
         self.game_repo.ensure_exists(name.clone()).await?;
         self.user_repo
@@ -66,9 +66,7 @@ impl GameService {
     /// Deletes a game. Admin can always delete; others get an error if the game is in use.
     pub async fn delete_game(&self, name: &str, is_admin: bool) -> Result<(), AppError> {
         if !is_admin && self.game_repo.is_in_any_wishlist(name.to_owned()).await? {
-            return Err(AppError::Internal(
-                "Dieses Spiel ist noch in der Wunschliste von Benutzern und kann nicht gelöscht werden.".into(),
-            ));
+            return Err(AppError::Validation(codes::game::IN_WISHLIST.into()));
         }
         self.game_repo.delete(name.to_owned()).await?;
         Ok(())
@@ -85,7 +83,7 @@ impl GameService {
     pub async fn create(&self, req: UpsertGameRequest, creator_id: &str) -> Result<(), AppError> {
         let name = req.name.trim().to_owned();
         if name.is_empty() {
-            return Err(AppError::Validation("error.game.name_required".into()));
+            return Err(AppError::Validation(codes::game::NAME_REQUIRED.into()));
         }
         self.game_repo
             .upsert_with_details(name.clone(), req.description, req.genre)
@@ -118,7 +116,7 @@ impl GameService {
     ) -> Result<Vec<AutofillCandidate>, AppError> {
         if rawg_api_key.is_empty() {
             return Err(AppError::Validation(
-                "error.game.rawg_not_configured".into(),
+                codes::game::RAWG_NOT_CONFIGURED.into(),
             ));
         }
         RawgClient::new(rawg_api_key.to_owned())
@@ -138,7 +136,7 @@ impl GameService {
     ) -> Result<Game, AppError> {
         if rawg_api_key.is_empty() {
             return Err(AppError::Validation(
-                "error.game.rawg_not_configured".into(),
+                codes::game::RAWG_NOT_CONFIGURED.into(),
             ));
         }
 
@@ -163,7 +161,7 @@ impl GameService {
         self.game_repo
             .find_by_name(name.to_owned())
             .await?
-            .ok_or_else(|| AppError::Internal("Spiel nach Autofill nicht gefunden".into()))
+            .ok_or_else(|| AppError::Internal("game not found after autofill".into()))
     }
 
     pub async fn update(&self, name: &str, req: UpdateGameRequest) -> Result<(), AppError> {
@@ -171,7 +169,7 @@ impl GameService {
             .game_repo
             .find_by_name(name.to_owned())
             .await?
-            .ok_or_else(|| AppError::Validation("error.game.not_found".into()))?;
+            .ok_or_else(|| AppError::Validation(codes::game::NOT_FOUND.into()))?;
         self.game_repo
             .upsert_with_details(existing.name, req.description, req.genre)
             .await?;

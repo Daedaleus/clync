@@ -1,14 +1,13 @@
 use serde::{Deserialize, Serialize};
 
-use crate::model::session::{Session, SessionDetail};
+use crate::model::session::{RsvpStatus, Session, SessionDetail, SessionScope};
 
 #[derive(Debug, Deserialize)]
 pub struct CreateSessionRequest {
     pub game: String,
     /// ISO 8601 UTC string from frontend (e.g. "2026-05-20T18:00:00.000Z")
     pub scheduled_at: String,
-    /// "global" or "groups"
-    pub scope: String,
+    pub scope: SessionScope,
     #[serde(default)]
     pub group_ids: Vec<String>,
     pub notes: Option<String>,
@@ -16,8 +15,7 @@ pub struct CreateSessionRequest {
 
 #[derive(Debug, Deserialize)]
 pub struct RsvpRequest {
-    /// "accepted" | "maybe" | "declined"
-    pub status: String,
+    pub status: RsvpStatus,
 }
 
 #[derive(Debug, Clone, Serialize)]

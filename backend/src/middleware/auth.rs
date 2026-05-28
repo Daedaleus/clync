@@ -43,6 +43,12 @@ struct KeycloakClaims {
     realm_access: Option<RealmAccess>,
 }
 
+fn is_admin_from_realm_access(realm_access: Option<&RealmAccess>) -> bool {
+    realm_access
+        .map(|ra| ra.roles.iter().any(|r| r == "admin"))
+        .unwrap_or(false)
+}
+
 pub async fn auth_middleware(
     State(state): State<AppState>,
     mut request: Request,
@@ -61,16 +67,10 @@ pub async fn auth_middleware(
         .upsert(user)
         .await?;
 
-    let is_admin = claims
-        .realm_access
-        .as_ref()
-        .map(|ra| ra.roles.iter().any(|r| r == "admin"))
-        .unwrap_or(false);
-
     let auth_user = AuthUser {
         keycloak_id: claims.sub,
         username: claims.preferred_username,
-        is_admin,
+        is_admin: is_admin_from_realm_access(claims.realm_access.as_ref()),
     };
 
     tracing::debug!(
@@ -105,15 +105,10 @@ pub(crate) async fn validate_query_token(
     token: &str,
 ) -> Result<AuthUser, AppError> {
     let claims = validate_token(state, token).await?;
-    let is_admin = claims
-        .realm_access
-        .as_ref()
-        .map(|ra| ra.roles.iter().any(|r| r == "admin"))
-        .unwrap_or(false);
     Ok(AuthUser {
         keycloak_id: claims.sub,
         username: claims.preferred_username,
-        is_admin,
+        is_admin: is_admin_from_realm_access(claims.realm_access.as_ref()),
     })
 }
 
@@ -168,4 +163,77 @@ async fn fetch_jwks(state: &AppState) -> Result<JwkSet, AppError> {
     *state.jwks_cache.write().await = Some((jwks.clone(), Instant::now()));
 
     Ok(jwks)
+}
+
+#[cfg(test)]
+mod tests {
+    use axum::{body::Body, http::Request};
+
+    use super::*;
+
+    fn req_with_auth(value: &str) -> Request<Body> {
+        Request::builder()
+            .uri("/")
+            .header("authorization", value)
+            .body(Body::empty())
+            .unwrap()
+    }
+
+    fn req_without_auth() -> Request<Body> {
+        Request::builder().uri("/").body(Body::empty()).unwrap()
+    }
+
+    // ── extract_bearer_token ──────────────────────────────────────────────────
+
+    #[test]
+    fn missing_auth_header_returns_unauthorized() {
+        assert!(matches!(
+            extract_bearer_token(&req_without_auth()),
+            Err(AppError::Unauthorized(_))
+        ));
+    }
+
+    #[test]
+    fn non_bearer_scheme_returns_unauthorized() {
+        let req = req_with_auth("Basic dXNlcjpwYXNz");
+        assert!(matches!(
+            extract_bearer_token(&req),
+            Err(AppError::Unauthorized(_))
+        ));
+    }
+
+    #[test]
+    fn bearer_token_is_extracted() {
+        let req = req_with_auth("Bearer my_secret_token");
+        assert_eq!(extract_bearer_token(&req).unwrap(), "my_secret_token");
+    }
+
+    // ── is_admin_from_realm_access ────────────────────────────────────────────
+
+    #[test]
+    fn admin_role_is_detected() {
+        let ra = RealmAccess {
+            roles: vec!["user".into(), "admin".into()],
+        };
+        assert!(is_admin_from_realm_access(Some(&ra)));
+    }
+
+    #[test]
+    fn non_admin_role_is_not_flagged() {
+        let ra = RealmAccess {
+            roles: vec!["user".into()],
+        };
+        assert!(!is_admin_from_realm_access(Some(&ra)));
+    }
+
+    #[test]
+    fn empty_roles_is_not_admin() {
+        let ra = RealmAccess { roles: vec![] };
+        assert!(!is_admin_from_realm_access(Some(&ra)));
+    }
+
+    #[test]
+    fn no_realm_access_is_not_admin() {
+        assert!(!is_admin_from_realm_access(None));
+    }
 }
