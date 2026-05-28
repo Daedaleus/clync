@@ -48,7 +48,7 @@ export default function GamePicker({ value, onChange, required }: Props) {
   };
 
   const inputClass =
-    'w-full bg-zinc-800 border border-zinc-700 text-sm text-zinc-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-violet-500 placeholder-zinc-600';
+    'w-full h-10 bg-zinc-800 border border-zinc-700 text-sm text-zinc-200 rounded-lg px-3 focus:outline-none focus:ring-1 focus:ring-violet-500 placeholder-zinc-600';
 
   return (
     <div ref={ref} className="relative">
