@@ -10,6 +10,7 @@ import type { Game } from '../types';
 import { api } from '../services/api';
 import { isAbortError } from '../utils/abort';
 import { config } from '../config';
+import { isAdmin } from '../utils/auth';
 
 interface MeGames { games: string[] }
 
@@ -140,7 +141,7 @@ export default function GameDetailPage() {
             </div>
           )}
 
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
             <div className="min-w-0">
               <h1 className="text-2xl font-bold text-zinc-100">{game.name}</h1>
               {game.genre && (
@@ -149,7 +150,7 @@ export default function GameDetailPage() {
                 </span>
               )}
             </div>
-            <div className="shrink-0 flex gap-2">
+            <div className="flex flex-wrap gap-2 sm:shrink-0">
               <Button
                 variant={inWishlist ? 'secondary' : 'primary'}
                 onClick={handleToggleWishlist}
@@ -157,19 +158,23 @@ export default function GameDetailPage() {
               >
                 {inWishlist ? 'Aus Liste entfernen' : '+ Zur Liste'}
               </Button>
-              <Button variant="secondary" disabled={autofilling} onClick={handleAutofill}>
-                {autofilling ? 'Laden…' : '✨ Auto-Ausfüllen'}
-              </Button>
-              <Button variant="secondary" onClick={() => setEditing((v) => !v)}>
-                {editing ? 'Abbrechen' : 'Bearbeiten'}
-              </Button>
-              <Button
-                variant="danger"
-                onClick={handleDelete}
-                title="Aus Bibliothek löschen (nur wenn niemand das Spiel hat)"
-              >
-                Löschen
-              </Button>
+              {isAdmin() && (
+                <>
+                  <Button variant="secondary" disabled={autofilling} onClick={handleAutofill}>
+                    {autofilling ? 'Laden…' : '✨ Auto-Ausfüllen'}
+                  </Button>
+                  <Button variant="secondary" onClick={() => setEditing((v) => !v)}>
+                    {editing ? 'Abbrechen' : 'Bearbeiten'}
+                  </Button>
+                  <Button
+                    variant="danger"
+                    onClick={handleDelete}
+                    title="Aus Bibliothek löschen (nur wenn niemand das Spiel hat)"
+                  >
+                    Löschen
+                  </Button>
+                </>
+              )}
             </div>
           </div>
 
