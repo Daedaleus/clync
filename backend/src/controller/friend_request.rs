@@ -69,7 +69,7 @@ async fn send_handler(
 ) -> Result<StatusCode, AppError> {
     if user.keycloak_id == to_id {
         return Err(AppError::Validation(
-            "Du kannst dir selbst keine Freundschaftsanfrage schicken".into(),
+            "error.friend_request.self_request".into(),
         ));
     }
 
@@ -79,7 +79,9 @@ async fn send_handler(
     // Already friends?
     let friend_ids = user_repo.get_friend_ids(user.keycloak_id.clone()).await?;
     if friend_ids.contains(&to_id) {
-        return Err(AppError::Validation("Ihr seid bereits befreundet".into()));
+        return Err(AppError::Validation(
+            "error.friend_request.already_friends".into(),
+        ));
     }
 
     // Request already pending in either direction?
@@ -88,7 +90,7 @@ async fn send_handler(
         .await?
     {
         return Err(AppError::Validation(
-            "Es gibt bereits eine offene Freundschaftsanfrage zwischen euch".into(),
+            "error.friend_request.already_pending".into(),
         ));
     }
 
@@ -128,7 +130,7 @@ async fn accept_handler(
     let request = req_repo
         .find_by_id_for_receiver(req_id.clone(), user.keycloak_id.clone())
         .await?
-        .ok_or_else(|| AppError::Validation("Freundschaftsanfrage nicht gefunden".into()))?;
+        .ok_or_else(|| AppError::Validation("error.friend_request.not_found".into()))?;
 
     // Add both as friends (mutual)
     tokio::try_join!(
@@ -151,7 +153,7 @@ async fn decline_handler(
         .await?;
     if !deleted {
         return Err(AppError::Validation(
-            "Freundschaftsanfrage nicht gefunden".into(),
+            "error.friend_request.not_found".into(),
         ));
     }
     Ok(StatusCode::NO_CONTENT)

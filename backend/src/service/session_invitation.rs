@@ -50,7 +50,7 @@ impl SessionInvitationService {
             .session_repo
             .find_by_id(session_id.to_owned())
             .await?
-            .ok_or_else(|| AppError::Validation("Session nicht gefunden".into()))?;
+            .ok_or_else(|| AppError::Validation("error.session.not_found".into()))?;
 
         let is_creator = session.user_id == inviter.keycloak_id;
         let is_participant = session
@@ -60,7 +60,7 @@ impl SessionInvitationService {
 
         if !is_creator && !is_participant {
             return Err(AppError::Validation(
-                "Nur Teilnehmer können zur Session einladen".into(),
+                "error.session_invitation.only_participants_can_invite".into(),
             ));
         }
 
@@ -70,7 +70,7 @@ impl SessionInvitationService {
 
         if all_participant_ids.contains(&invitee_id.to_owned()) {
             return Err(AppError::Validation(
-                "Benutzer nimmt bereits an der Session teil".into(),
+                "error.session_invitation.already_participant".into(),
             ));
         }
 
@@ -80,7 +80,7 @@ impl SessionInvitationService {
             .await?;
         if !inviter_friends.contains(&invitee_id.to_owned()) {
             return Err(AppError::Validation(
-                "Nur gegenseitige Freunde können eingeladen werden".into(),
+                "error.session_invitation.not_mutual_friends".into(),
             ));
         }
         let mutual = self
@@ -89,7 +89,7 @@ impl SessionInvitationService {
             .await?;
         if mutual.is_empty() {
             return Err(AppError::Validation(
-                "Nur gegenseitige Freunde können eingeladen werden".into(),
+                "error.session_invitation.not_mutual_friends".into(),
             ));
         }
 
@@ -98,7 +98,7 @@ impl SessionInvitationService {
             .exists_for_session_and_invitee(session_id.to_owned(), invitee_id.to_owned())
             .await?
         {
-            return Err(AppError::Validation("Einladung bereits versandt".into()));
+            return Err(AppError::Validation("error.invitation.already_sent".into()));
         }
 
         self.inv_repo
@@ -129,7 +129,7 @@ impl SessionInvitationService {
             .inv_repo
             .find_by_id_for_invitee(inv_id.to_owned(), user.keycloak_id.clone())
             .await?
-            .ok_or_else(|| AppError::Validation("Einladung nicht gefunden".into()))?;
+            .ok_or_else(|| AppError::Validation("error.invitation.not_found".into()))?;
 
         self.session_repo
             .set_rsvp(
@@ -139,7 +139,7 @@ impl SessionInvitationService {
                 "accepted".to_owned(),
             )
             .await?
-            .ok_or_else(|| AppError::Validation("Session nicht mehr verfügbar".into()))?;
+            .ok_or_else(|| AppError::Validation("error.session.no_longer_available".into()))?;
 
         self.inv_repo
             .delete(inv_id.to_owned(), user.keycloak_id.clone())
@@ -165,7 +165,7 @@ impl SessionInvitationService {
             .session_repo
             .find_by_id(session_id.to_owned())
             .await?
-            .ok_or_else(|| AppError::Validation("Session nicht gefunden".into()))?;
+            .ok_or_else(|| AppError::Validation("error.session.not_found".into()))?;
 
         let is_creator = session.user_id == requester.keycloak_id;
         let is_participant = session
@@ -175,7 +175,7 @@ impl SessionInvitationService {
 
         if !is_creator && !is_participant {
             return Err(AppError::Validation(
-                "Nur Teilnehmer sehen die Einladeliste".into(),
+                "error.session_invitation.only_participants_see_list".into(),
             ));
         }
 

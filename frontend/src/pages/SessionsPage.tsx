@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Button from '../components/atoms/Button';
 import SectionLabel from '../components/atoms/SectionLabel';
 import ErrorBanner from '../components/molecules/ErrorBanner';
@@ -11,6 +12,7 @@ import { isAbortError } from '../utils/abort';
 import { isPast, isLateJoinable } from '../utils/date';
 
 export default function SessionsPage() {
+  const { t } = useTranslation();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [myGroups, setMyGroups] = useState<GroupSummary[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -57,14 +59,14 @@ export default function SessionsPage() {
             }
           : s));
       }
-    } catch (err) { setError(err instanceof Error ? err.message : 'Fehler'); }
+    } catch (err) { setError(err instanceof Error ? err.message : t('common.error')); }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await api.delete(`/api/v1/sessions/${id}`);
       setSessions((p) => p.filter((s) => s.id !== id));
-    } catch (err) { setError(err instanceof Error ? err.message : 'Fehler'); }
+    } catch (err) { setError(err instanceof Error ? err.message : t('common.error')); }
   };
 
   const handleSessionCreated = (session: Session) => {
@@ -75,9 +77,9 @@ export default function SessionsPage() {
   return (
     <PageLayout>
       <div className="flex items-center justify-between">
-        <SectionLabel>Sessions</SectionLabel>
+        <SectionLabel>{t('sessions.title')}</SectionLabel>
         <Button variant="secondary" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? 'Abbrechen' : '+ Neue Zeit'}
+          {showForm ? t('common.cancel') : t('sessions.new_session')}
         </Button>
       </div>
 
@@ -93,22 +95,22 @@ export default function SessionsPage() {
       )}
 
       <section className="space-y-2">
-        <SectionLabel>Gruppen</SectionLabel>
+        <SectionLabel>{t('sessions.groups_section')}</SectionLabel>
         <SessionList
           sessions={groupSessions}
           onRsvp={handleRsvp}
           onDelete={handleDelete}
-          emptyMessage="Keine bevorstehenden Gruppen-Sessions."
+          emptyMessage={t('sessions.no_group_sessions')}
         />
       </section>
 
       <section className="space-y-2">
-        <SectionLabel>Global</SectionLabel>
+        <SectionLabel>{t('sessions.global_section')}</SectionLabel>
         <SessionList
           sessions={globalSessions}
           onRsvp={handleRsvp}
           onDelete={handleDelete}
-          emptyMessage="Keine bevorstehenden globalen Sessions."
+          emptyMessage={t('sessions.no_global_sessions')}
         />
       </section>
     </PageLayout>
