@@ -84,6 +84,7 @@ export default function GroupsPage() {
       await api.post(`/api/v1/groups/${group.id}/join`);
       setJoined((p) => new Set(p).add(group.id));
       setMyGroups((p) => [...p, { id: group.id, name: group.name, is_public: group.is_public }]);
+      setSearchResults((p) => p.map((g) => g.id === group.id ? { ...g, member_count: g.member_count + 1 } : g));
     } catch (err) { setError(err instanceof Error ? err.message : 'Fehler'); }
   };
 
