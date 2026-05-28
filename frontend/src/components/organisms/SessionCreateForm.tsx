@@ -151,18 +151,23 @@ export default function SessionCreateForm({ groups, onCreate, onError, onCancel 
         </div>
         <div className="space-y-1.5">
           <SectionLabel>Uhrzeit</SectionLabel>
-          <select
-            value={effectiveTime}
-            onChange={(e) => { setTime(e.target.value); setValidationError(null); }}
-            className={fieldClass}
-          >
-            {availableSlots.map((slot) => (
-              <option key={slot} value={slot}>{slot} Uhr</option>
-            ))}
-            {availableSlots.length === 0 && (
-              <option disabled>Kein Slot verfügbar</option>
-            )}
-          </select>
+          <div className="relative">
+            <select
+              value={effectiveTime}
+              onChange={(e) => { setTime(e.target.value); setValidationError(null); }}
+              className={`${fieldClass} appearance-none pr-9`}
+            >
+              {availableSlots.map((slot) => (
+                <option key={slot} value={slot}>{slot} Uhr</option>
+              ))}
+              {availableSlots.length === 0 && (
+                <option disabled>Kein Slot verfügbar</option>
+              )}
+            </select>
+            <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </div>
         </div>
       </div>
 
