@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Button from '../atoms/Button';
 import type { Game } from '../../types';
 import { config } from '../../config';
@@ -17,6 +18,7 @@ function thumbnailSrc(name: string, url: string | null | undefined): string | un
 }
 
 export default function GameCard({ game, inWishlist, onToggle, className = '' }: Props) {
+  const { t } = useTranslation();
   const src = thumbnailSrc(game.name, game.thumbnail_url);
   return (
     <div className={`bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden hover:border-zinc-700 transition-colors flex flex-col ${className}`}>
@@ -60,7 +62,7 @@ export default function GameCard({ game, inWishlist, onToggle, className = '' }:
             onClick={onToggle}
             className="w-full"
           >
-            {inWishlist ? '✓ In meiner Liste' : '+ Zur Liste'}
+            {inWishlist ? t('game_card.in_list') : t('game_card.add_to_list')}
           </Button>
         )}
       </div>
