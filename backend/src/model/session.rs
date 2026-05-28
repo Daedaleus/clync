@@ -1,4 +1,44 @@
+use std::fmt;
+
 use serde::{Deserialize, Serialize};
+
+/// Type-safe RSVP status for session responses.
+/// Used in DTOs and services; the DB layer stores the plain lowercase string.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum RsvpStatus {
+    Accepted,
+    Maybe,
+    Declined,
+}
+
+impl fmt::Display for RsvpStatus {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            RsvpStatus::Accepted => write!(f, "accepted"),
+            RsvpStatus::Maybe => write!(f, "maybe"),
+            RsvpStatus::Declined => write!(f, "declined"),
+        }
+    }
+}
+
+/// Type-safe session scope.
+/// Used in DTOs and services; the DB layer stores the plain lowercase string.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SessionScope {
+    Global,
+    Groups,
+}
+
+impl fmt::Display for SessionScope {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            SessionScope::Global => write!(f, "global"),
+            SessionScope::Groups => write!(f, "groups"),
+        }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RsvpRecord {

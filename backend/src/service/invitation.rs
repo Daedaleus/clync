@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use surrealdb::{Surreal, engine::remote::ws::Client};
 
-use crate::error::AppError;
+use crate::error::{AppError, codes};
 use crate::middleware::auth::AuthUser;
 use crate::model::invitation::InvitationRecord;
 use crate::model::user::UserSummary;
@@ -53,16 +53,16 @@ impl InvitationService {
             .group_repo
             .find_by_id(group_id.to_owned())
             .await?
-            .ok_or_else(|| AppError::Validation("error.group.not_found".into()))?;
+            .ok_or_else(|| AppError::Validation(codes::group::NOT_FOUND.into()))?;
 
         if !group.members.contains(&inviter.keycloak_id) {
             return Err(AppError::Validation(
-                "error.invitation.only_members_can_invite".into(),
+                codes::invitation::ONLY_MEMBERS_CAN_INVITE.into(),
             ));
         }
         if group.members.contains(&invitee_id.to_owned()) {
             return Err(AppError::Validation(
-                "error.invitation.already_member".into(),
+                codes::invitation::ALREADY_MEMBER.into(),
             ));
         }
 
@@ -73,7 +73,7 @@ impl InvitationService {
             .await?;
         if !inviter_friends.contains(&invitee_id.to_owned()) {
             return Err(AppError::Validation(
-                "error.invitation.not_mutual_friends".into(),
+                codes::invitation::NOT_MUTUAL_FRIENDS.into(),
             ));
         }
         let mutual = self
@@ -82,7 +82,7 @@ impl InvitationService {
             .await?;
         if mutual.is_empty() {
             return Err(AppError::Validation(
-                "error.invitation.not_mutual_friends".into(),
+                codes::invitation::NOT_MUTUAL_FRIENDS.into(),
             ));
         }
 
@@ -91,7 +91,7 @@ impl InvitationService {
             .exists_for_group_and_invitee(group_id.to_owned(), invitee_id.to_owned())
             .await?
         {
-            return Err(AppError::Validation("error.invitation.already_sent".into()));
+            return Err(AppError::Validation(codes::invitation::ALREADY_SENT.into()));
         }
 
         self.inv_repo
@@ -118,7 +118,7 @@ impl InvitationService {
             .inv_repo
             .find_by_id_for_invitee(inv_id.to_owned(), user.keycloak_id.clone())
             .await?
-            .ok_or_else(|| AppError::Validation("error.invitation.not_found".into()))?;
+            .ok_or_else(|| AppError::Validation(codes::invitation::NOT_FOUND.into()))?;
 
         self.group_repo
             .join(inv.group_id, user.keycloak_id.clone())
@@ -156,11 +156,11 @@ impl InvitationService {
             .group_repo
             .find_by_id(group_id.to_owned())
             .await?
-            .ok_or_else(|| AppError::Validation("error.group.not_found".into()))?;
+            .ok_or_else(|| AppError::Validation(codes::group::NOT_FOUND.into()))?;
 
         if !group.members.contains(&requester.keycloak_id) {
             return Err(AppError::Validation(
-                "error.invitation.only_members_see_list".into(),
+                codes::invitation::ONLY_MEMBERS_SEE_LIST.into(),
             ));
         }
 
