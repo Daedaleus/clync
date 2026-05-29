@@ -165,7 +165,7 @@ export default function MePage() {
         <>
           {/* Greeting */}
           <div className="py-1">
-            <h1 className="text-2xl font-bold text-zinc-100">{greeting(me.username)}</h1>
+            <h1 className="text-2xl font-bold text-zinc-100" data-testid="greeting">{greeting(me.username)}</h1>
           </div>
 
           {/* Pending invitations */}
@@ -248,7 +248,7 @@ export default function MePage() {
           {/* Upcoming sessions */}
           <section className="space-y-2">
             <div className="flex items-center justify-between">
-              <SectionLabel>{t('me.upcoming_sessions')}</SectionLabel>
+              <SectionLabel data-testid="section-upcoming-sessions">{t('me.upcoming_sessions')}</SectionLabel>
               <Link to="/sessions" className="text-xs text-zinc-500 hover:text-violet-400 transition-colors">
                 {t('common.view_all')}
               </Link>
@@ -268,7 +268,7 @@ export default function MePage() {
           {/* Groups */}
           <section className="space-y-2">
             <div className="flex items-center justify-between">
-              <SectionLabel>{t('me.your_groups')}</SectionLabel>
+              <SectionLabel data-testid="section-your-groups">{t('me.your_groups')}</SectionLabel>
               <Link to="/groups" className="text-xs text-zinc-500 hover:text-violet-400 transition-colors">
                 {t('common.view_all')}
               </Link>
@@ -300,7 +300,7 @@ export default function MePage() {
           {/* Games */}
           <section className="space-y-2">
             <div className="flex items-center justify-between">
-              <SectionLabel>{t('me.your_games')}</SectionLabel>
+              <SectionLabel data-testid="section-your-games">{t('me.your_games')}</SectionLabel>
               <Link to="/profile" className="text-xs text-zinc-500 hover:text-violet-400 transition-colors">
                 {t('me.edit_games_cta')}
               </Link>
