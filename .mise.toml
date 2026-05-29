@@ -21,6 +21,14 @@ description = "Start SurrealDB + Keycloak via Docker Compose"
 run = "docker compose -f docker-compose.local.yml up"
 dir = "{{config_root}}/infrastructure"
 
+[tasks.test]
+description = "Run all tests: backend unit, frontend unit, frontend e2e (requires full stack)"
+dir = "{{config_root}}"
+run = """
+cd backend && cargo test
+cd ../frontend && npm run test:run && npm run test:e2e
+"""
+
 [tasks.check]
 description = "Run all quality checks (fmt, clippy, tests, lint)"
 dir = "{{config_root}}"
