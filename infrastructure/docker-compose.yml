@@ -30,7 +30,7 @@ services:
       - proxy
     healthcheck:
       # nginx-unprivileged has busybox wget; listens on 8080 (non-root)
-      test: ["CMD", "wget", "-qO-", "http://localhost:8080/"]
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -56,7 +56,7 @@ services:
       surrealdb:
         condition: service_healthy
       keycloak:
-        condition: service_healthy
+        condition: service_started
     networks:
       - proxy
       - internal
