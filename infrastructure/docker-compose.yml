@@ -120,12 +120,6 @@ services:
       KC_HTTP_ENABLED: "true"
       KC_PROXY_HEADERS: xforwarded
       KC_HEALTH_ENABLED: "true"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:9000/health/ready | grep -q '\"status\": \"UP\"'"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 90s
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.clync-keycloak.rule=Host(`${KEYCLOAK_HOST}`)"
