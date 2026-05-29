@@ -71,7 +71,7 @@ mise run test
 mise run check
 
 # Storybook component library
-cd frontend && npm run storybook
+mise run storybook
 ```
 
 ## Deployment

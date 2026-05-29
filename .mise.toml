@@ -29,6 +29,11 @@ cd backend && cargo test
 cd ../frontend && npm run test:run && npm run test:e2e
 """
 
+[tasks.storybook]
+description = "Start Storybook component library"
+run = "npm run storybook"
+dir = "{{config_root}}/frontend"
+
 [tasks.check]
 description = "Run all quality checks (fmt, clippy, tests, lint)"
 dir = "{{config_root}}"
