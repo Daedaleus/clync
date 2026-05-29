@@ -1,6 +1,6 @@
 {
-  "realm": "WhatsUp",
-  "displayName": "WhatsUp",
+  "realm": "Clync",
+  "displayName": "Clync",
   "enabled": true,
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,
@@ -10,8 +10,8 @@
   "bruteForceProtected": true,
   "clients": [
     {
-      "clientId": "whatsup",
-      "name": "WhatsUp App",
+      "clientId": "clync",
+      "name": "Clync App",
       "enabled": true,
       "publicClient": true,
       "clientAuthenticatorType": "client-secret",

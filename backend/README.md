@@ -46,18 +46,18 @@ server:
   port: 3000
 database:
   url: "127.0.0.1:8000"
-  namespace: whatsup
-  name: whatsup
+  namespace: clync
+  name: clync
 keycloak:
-  jwks_uri: "http://localhost:8080/realms/WhatsUp/protocol/openid-connect/certs"
+  jwks_uri: "http://localhost:8080/realms/Clync/protocol/openid-connect/certs"
   admin_url: "http://localhost:8080"
-  realm: "WhatsUp"
+  realm: "Clync"
 cors:
   frontend_url: "http://localhost:5173"
 vapid:
   public_key: ""   # required for push notifications
   private_key: ""  # set in app.local.yaml
-  subject: "mailto:dev@whatsup.local"
+  subject: "mailto:dev@clync.local"
 rawg:
   api_key: ""      # optional — get a free key at https://rawg.io/apidocs
 ```
@@ -213,17 +213,17 @@ Repositories are abstracted behind traits (`async-trait`) so services are unit-t
 
 ```sh
 # Build (from repo root)
-docker build -t whatsup-backend backend/
+docker build -t clync-backend backend/
 
 # Override config at runtime via environment variables
 docker run \
   -e APP__DATABASE__URL=surrealdb:8000 \
   -e APP__DATABASE__PASSWORD=secret \
   -e APP__VAPID__PRIVATE_KEY=... \
-  whatsup-backend
+  clync-backend
 
 # Or mount a config override file
-docker run -v ./prod.yaml:/app/config/app.local.yaml:ro whatsup-backend
+docker run -v ./prod.yaml:/app/config/app.local.yaml:ro clync-backend
 ```
 
 Multi-stage build:

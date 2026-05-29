@@ -104,7 +104,7 @@ async fn send_handler(
             if let Err(e) = push
                 .notify_user(
                     &to_id,
-                    "WhatsUp – Freundschaftsanfrage",
+                    "Clync – Freundschaftsanfrage",
                     &format!("{from_username} möchte dein Freund sein"),
                     "/me",
                 )

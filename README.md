@@ -1,7 +1,7 @@
-# WhatsUp
+# Clync
 
-[![Backend CI](https://github.com/Daedaleus/whatsup/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/Daedaleus/whatsup/actions/workflows/backend-ci.yml)
-[![Frontend CI](https://github.com/Daedaleus/whatsup/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/Daedaleus/whatsup/actions/workflows/frontend-ci.yml)
+[![Backend CI](https://github.com/Daedaleus/clync/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/Daedaleus/clync/actions/workflows/backend-ci.yml)
+[![Frontend CI](https://github.com/Daedaleus/clync/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/Daedaleus/clync/actions/workflows/frontend-ci.yml)
 [![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](LICENSE)
 
 Group gaming coordination app. Users form groups, list games they want to play, and arrange sessions — with live updates and push notifications.
@@ -42,7 +42,7 @@ Login at `http://localhost:5173` — Keycloak runs on `http://localhost:8080` (a
 ## Project structure
 
 ```
-whatsup/
+clync/
 ├── backend/          # Rust API — see backend/README.md
 ├── frontend/         # React SPA — see frontend/README.md
 ├── infrastructure/   # Docker Compose configs — see infrastructure/README.md
@@ -90,8 +90,8 @@ cd infrastructure
 Then on the server:
 
 ```sh
-git -C ~/whatsup pull   # if infrastructure/ changed
-cd ~/whatsup/infrastructure
+git -C ~/clync pull   # if infrastructure/ changed
+cd ~/clync/infrastructure
 docker compose -f docker-compose.paths.yml --env-file .env-paths up -d --no-build
 ```
 

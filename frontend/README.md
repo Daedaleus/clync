@@ -41,8 +41,8 @@ All environment variables are centralised in `src/config.ts`. Never read `import
 |---|---|---|
 | `VITE_API_URL` | `http://localhost:3000` | Backend base URL |
 | `VITE_KEYCLOAK_URL` | `http://localhost:8080` | Keycloak base URL |
-| `VITE_KEYCLOAK_REALM` | `WhatsUp` | Keycloak realm |
-| `VITE_KEYCLOAK_CLIENT_ID` | `whatsup` | Keycloak client ID |
+| `VITE_KEYCLOAK_REALM` | `Clync` | Keycloak realm |
+| `VITE_KEYCLOAK_CLIENT_ID` | `clync` | Keycloak client ID |
 
 Defaults are committed in `.env`. For local overrides create `.env.local` (gitignored):
 
@@ -129,7 +129,7 @@ Vite bakes environment variables at build time, so pass them as build args:
 docker build \
   --build-arg VITE_API_URL=https://api.example.com \
   --build-arg VITE_KEYCLOAK_URL=https://auth.example.com \
-  -t whatsup-frontend frontend/
+  -t clync-frontend frontend/
 ```
 
 Multi-stage build:

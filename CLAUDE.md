@@ -25,7 +25,7 @@
 
 # Project Overview
 
-**WhatsUp** is a fullstack group gaming coordination app.
+**Clync** is a fullstack group gaming coordination app.
 
 - **Backend**: Rust — REST API, business logic, real-time events
 - **Frontend**: React SPA — UI, API integration, PWA

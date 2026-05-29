@@ -87,7 +87,7 @@ export default function GroupDetailPage() {
       });
       if (session.user_id !== keycloak.tokenParsed?.sub) {
         notify(
-          `WhatsUp – ${session.game}`,
+          `Clync – ${session.game}`,
           `${session.username} möchte ${session.game} spielen`,
           `/groups/${id}`,
         );

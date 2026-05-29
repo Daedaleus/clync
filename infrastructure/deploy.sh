@@ -30,11 +30,11 @@ set +a
 
 : "${VITE_API_URL:?}"
 : "${VITE_KEYCLOAK_URL:?}"
-: "${VITE_KEYCLOAK_REALM:=WhatsUp}"
-: "${VITE_KEYCLOAK_CLIENT_ID:=whatsup}"
+: "${VITE_KEYCLOAK_REALM:=Clync}"
+: "${VITE_KEYCLOAK_CLIENT_ID:=clync}"
 
 echo "==> Building backend …"
-podman build -t whatsup-backend "$ROOT_DIR/backend"
+podman build -t clync-backend "$ROOT_DIR/backend"
 
 echo "==> Building frontend …"
 podman build \
@@ -42,23 +42,23 @@ podman build \
   --build-arg "VITE_KEYCLOAK_URL=${VITE_KEYCLOAK_URL}" \
   --build-arg "VITE_KEYCLOAK_REALM=${VITE_KEYCLOAK_REALM}" \
   --build-arg "VITE_KEYCLOAK_CLIENT_ID=${VITE_KEYCLOAK_CLIENT_ID}" \
-  -t whatsup-frontend \
+  -t clync-frontend \
   "$ROOT_DIR/frontend"
 
 echo "==> Streaming backend to ${SERVER} …"
-podman save whatsup-backend | ssh "$SERVER" docker load
+podman save clync-backend | ssh "$SERVER" docker load
 # Ensure the image is reachable under the short name used in docker-compose.paths.yml
-ssh "$SERVER" "docker tag localhost/whatsup-backend:latest whatsup-backend:latest 2>/dev/null || true"
+ssh "$SERVER" "docker tag localhost/clync-backend:latest clync-backend:latest 2>/dev/null || true"
 
 echo "==> Streaming frontend to ${SERVER} …"
-podman save whatsup-frontend | ssh "$SERVER" docker load
-ssh "$SERVER" "docker tag localhost/whatsup-frontend:latest whatsup-frontend:latest 2>/dev/null || true"
+podman save clync-frontend | ssh "$SERVER" docker load
+ssh "$SERVER" "docker tag localhost/clync-frontend:latest clync-frontend:latest 2>/dev/null || true"
 
 echo ""
 echo "Done. On the server run:"
 echo ""
 echo "  # Pull latest compose/config changes first if infrastructure/ changed:"
-echo "  git -C ~/whatsup pull"
+echo "  git -C ~/clync pull"
 echo ""
-echo "  cd ~/whatsup/infrastructure"
+echo "  cd ~/clync/infrastructure"
 echo "  docker compose -f docker-compose.paths.yml --env-file .env-paths up -d --no-build"

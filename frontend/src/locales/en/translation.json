@@ -314,13 +314,13 @@
   },
   "footer": {
     "version": "v{{version}} · alpha",
-    "about": "About WhatsUp"
+    "about": "About Clync"
   },
   "about": {
-    "title": "About WhatsUp",
+    "title": "About Clync",
     "tagline": "Coordinate your gaming nights — without the hassle.",
-    "section_what": "What is WhatsUp?",
-    "what": "WhatsUp is a private app for gaming groups. Add your games, find out which ones everyone has, and plan game nights together — with set times, RSVPs, and live updates.",
+    "section_what": "What is Clync?",
+    "what": "Clync is a private app for gaming groups. Add your games, find out which ones everyone has, and plan game nights together — with set times, RSVPs, and live updates.",
     "section_features": "What can it do?",
     "feature_sessions": "Schedule gaming sessions and RSVP accept or decline",
     "feature_library": "Build a shared game library",

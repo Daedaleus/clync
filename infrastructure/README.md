@@ -10,7 +10,7 @@ Docker Compose configurations for local development and production deployment.
 | `docker-compose.yml` | Production — Traefik-ready, no exposed ports, healthchecks |
 | `docker-compose.paths.yml` | Optional override to mount local source paths |
 | `.env.example` | Template for production environment variables |
-| `keycloak/WhatsUp-realm.json` | Keycloak realm export (auto-imported in local dev) |
+| `keycloak/Clync-realm.json` | Keycloak realm export (auto-imported in local dev) |
 
 ## Local development
 
@@ -35,7 +35,7 @@ cd ../backend && cargo run
 cd ../frontend && npm run dev
 ```
 
-The Keycloak realm `WhatsUp` is imported automatically on first start from `keycloak/WhatsUp-realm.json`.
+The Keycloak realm `Clync` is imported automatically on first start from `keycloak/Clync-realm.json`.
 
 > **First user:** create an invite link via the app's user menu, visit the link to register, then optionally assign the `admin` role in Keycloak.
 
@@ -71,7 +71,7 @@ docker compose build
 docker compose up -d
 ```
 
-> **Keycloak note:** Production mode (`start`) does not auto-import the realm. Configure the `WhatsUp` realm manually via the Keycloak admin UI after first startup, or use `kcadm.sh` / the REST API to import `keycloak/WhatsUp-realm.json`.
+> **Keycloak note:** Production mode (`start`) does not auto-import the realm. Configure the `Clync` realm manually via the Keycloak admin UI after first startup, or use `kcadm.sh` / the REST API to import `keycloak/Clync-realm.json`.
 
 ### Subsequent deploys
 
@@ -86,24 +86,24 @@ Copy `.env.example` to `.env` and fill in every value. The file is gitignored.
 
 ```sh
 # Hostnames — Traefik uses these for routing rules
-FRONTEND_HOST=whatsup.example.com
-API_HOST=api.whatsup.example.com
-KEYCLOAK_HOST=auth.whatsup.example.com
+FRONTEND_HOST=clync.example.com
+API_HOST=api.clync.example.com
+KEYCLOAK_HOST=auth.clync.example.com
 
 # Frontend URLs — baked into the image at docker compose build time
-VITE_API_URL=https://api.whatsup.example.com
-VITE_KEYCLOAK_URL=https://auth.whatsup.example.com
-VITE_KEYCLOAK_REALM=WhatsUp
-VITE_KEYCLOAK_CLIENT_ID=whatsup
+VITE_API_URL=https://api.clync.example.com
+VITE_KEYCLOAK_URL=https://auth.clync.example.com
+VITE_KEYCLOAK_REALM=Clync
+VITE_KEYCLOAK_CLIENT_ID=clync
 
 # Backend CORS origin
-FRONTEND_URL=https://whatsup.example.com
+FRONTEND_URL=https://clync.example.com
 
 # VAPID keys for Web Push — generate fresh keys for production:
 #   npx web-push generate-vapid-keys
 VAPID_PUBLIC_KEY=
 VAPID_PRIVATE_KEY=
-VAPID_SUBJECT=mailto:admin@whatsup.example.com
+VAPID_SUBJECT=mailto:admin@clync.example.com
 
 # RAWG API key for game library autofill (optional, free at rawg.io/apidocs)
 RAWG_API_KEY=

@@ -36,7 +36,7 @@ pub struct Keycloak {
     pub jwks_uri: String,
     /// Base URL of the Keycloak server, e.g. http://localhost:8080
     pub admin_url: String,
-    /// Realm name, e.g. WhatsUp
+    /// Realm name, e.g. Clync
     pub realm: String,
     pub admin_user: String,
     pub admin_password: String,

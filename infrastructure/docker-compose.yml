@@ -1,4 +1,4 @@
-name: whatsup
+name: clync
 
 # proxy  — external; created and managed by Traefik.
 #           Services on this network are reachable via Traefik labels.
@@ -18,8 +18,8 @@ services:
       args:
         VITE_API_URL: ${VITE_API_URL}
         VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL}
-        VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-WhatsUp}
-        VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-whatsup}
+        VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-Clync}
+        VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-clync}
     restart: unless-stopped
     logging:
       driver: json-file
@@ -37,10 +37,10 @@ services:
       start_period: 10s
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.whatsup-frontend.rule=Host(`${FRONTEND_HOST}`)"
-      - "traefik.http.routers.whatsup-frontend.entrypoints=websecure"
-      - "traefik.http.routers.whatsup-frontend.tls=true"
-      - "traefik.http.services.whatsup-frontend.loadbalancer.server.port=8080"
+      - "traefik.http.routers.clync-frontend.rule=Host(`${FRONTEND_HOST}`)"
+      - "traefik.http.routers.clync-frontend.entrypoints=websecure"
+      - "traefik.http.routers.clync-frontend.tls=true"
+      - "traefik.http.services.clync-frontend.loadbalancer.server.port=8080"
 
   # ── Backend ─────────────────────────────────────────────────────────────────
   backend:
@@ -62,12 +62,12 @@ services:
       - internal
     environment:
       APP__DATABASE__URL: "surrealdb:8000"
-      APP__DATABASE__NAMESPACE: whatsup
-      APP__DATABASE__NAME: whatsup
+      APP__DATABASE__NAMESPACE: clync
+      APP__DATABASE__NAME: clync
       APP__DATABASE__USERNAME: "${SURREALDB_USER}"
       APP__DATABASE__PASSWORD: "${SURREALDB_PASS}"
       # Resolved via internal network — bypasses Traefik for JWKS refresh
-      APP__KEYCLOAK__JWKS_URI: "http://keycloak:8080/realms/${VITE_KEYCLOAK_REALM:-WhatsUp}/protocol/openid-connect/certs"
+      APP__KEYCLOAK__JWKS_URI: "http://keycloak:8080/realms/${VITE_KEYCLOAK_REALM:-Clync}/protocol/openid-connect/certs"
       APP__CORS__FRONTEND_URL: "${FRONTEND_URL}"
       APP__VAPID__PUBLIC_KEY: "${VAPID_PUBLIC_KEY}"
       APP__VAPID__PRIVATE_KEY: "${VAPID_PRIVATE_KEY}"
@@ -82,10 +82,10 @@ services:
       start_period: 15s
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.whatsup-backend.rule=Host(`${API_HOST}`)"
-      - "traefik.http.routers.whatsup-backend.entrypoints=websecure"
-      - "traefik.http.routers.whatsup-backend.tls=true"
-      - "traefik.http.services.whatsup-backend.loadbalancer.server.port=3000"
+      - "traefik.http.routers.clync-backend.rule=Host(`${API_HOST}`)"
+      - "traefik.http.routers.clync-backend.entrypoints=websecure"
+      - "traefik.http.routers.clync-backend.tls=true"
+      - "traefik.http.services.clync-backend.loadbalancer.server.port=3000"
 
   # ── Keycloak ────────────────────────────────────────────────────────────────
   keycloak:
@@ -124,15 +124,15 @@ services:
       start_period: 90s
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.whatsup-keycloak.rule=Host(`${KEYCLOAK_HOST}`)"
-      - "traefik.http.routers.whatsup-keycloak.entrypoints=websecure"
-      - "traefik.http.routers.whatsup-keycloak.tls=true"
-      - "traefik.http.services.whatsup-keycloak.loadbalancer.server.port=8080"
+      - "traefik.http.routers.clync-keycloak.rule=Host(`${KEYCLOAK_HOST}`)"
+      - "traefik.http.routers.clync-keycloak.entrypoints=websecure"
+      - "traefik.http.routers.clync-keycloak.tls=true"
+      - "traefik.http.services.clync-keycloak.loadbalancer.server.port=8080"
 
   # ── SurrealDB ───────────────────────────────────────────────────────────────
   surrealdb:
     image: docker.io/surrealdb/surrealdb:v2
-    command: "start --bind 0.0.0.0:8000 --user ${SURREALDB_USER} --pass ${SURREALDB_PASS} file:///data/whatsup.db"
+    command: "start --bind 0.0.0.0:8000 --user ${SURREALDB_USER} --pass ${SURREALDB_PASS} file:///data/clync.db"
     user: "0:0"
     restart: unless-stopped
     logging:

@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for your interest in WhatsUp!
+Thanks for your interest in Clync!
 
 ## Dev environment
 

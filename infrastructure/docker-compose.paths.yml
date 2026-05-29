@@ -1,4 +1,4 @@
-name: whatsup
+name: clync
 
 # Path-based routing — backend (/api) and Keycloak (/auth) share the
 # frontend domain. Use with a matching .env file:
@@ -16,14 +16,14 @@ services:
 
   # ── Frontend ────────────────────────────────────────────────────────────────
   frontend:
-    image: whatsup-frontend
+    image: clync-frontend
     build:
       context: ../frontend
       args:
         VITE_API_URL: ${VITE_API_URL}
         VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL}
-        VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-WhatsUp}
-        VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-whatsup}
+        VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-Clync}
+        VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-clync}
     restart: unless-stopped
     networks:
       - proxy
@@ -35,17 +35,17 @@ services:
       start_period: 10s
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.whatsup-frontend.rule=Host(`${FRONTEND_HOST}`)"
-      - "traefik.http.routers.whatsup-frontend.entrypoints=web-secure"
-      - "traefik.http.routers.whatsup-frontend.service=whatsup-frontend"
-      - "traefik.http.routers.whatsup-frontend.tls=true"
-      - "traefik.http.routers.whatsup-frontend.tls.certresolver=default"
-      - "traefik.http.services.whatsup-frontend.loadbalancer.server.port=8080"
+      - "traefik.http.routers.clync-frontend.rule=Host(`${FRONTEND_HOST}`)"
+      - "traefik.http.routers.clync-frontend.entrypoints=web-secure"
+      - "traefik.http.routers.clync-frontend.service=clync-frontend"
+      - "traefik.http.routers.clync-frontend.tls=true"
+      - "traefik.http.routers.clync-frontend.tls.certresolver=default"
+      - "traefik.http.services.clync-frontend.loadbalancer.server.port=8080"
       - "traefik.docker.network=traefik"
 
   # ── Backend ─────────────────────────────────────────────────────────────────
   backend:
-    image: whatsup-backend
+    image: clync-backend
     build:
       context: ../backend
     restart: unless-stopped
@@ -59,14 +59,14 @@ services:
       - internal
     environment:
       APP__DATABASE__URL: "surrealdb:8000"
-      APP__DATABASE__NAMESPACE: whatsup
-      APP__DATABASE__NAME: whatsup
+      APP__DATABASE__NAMESPACE: clync
+      APP__DATABASE__NAME: clync
       APP__DATABASE__USERNAME: "${SURREALDB_USER}"
       APP__DATABASE__PASSWORD: "${SURREALDB_PASS}"
       # KC_HTTP_RELATIVE_PATH=/auth shifts all Keycloak paths internally
-      APP__KEYCLOAK__JWKS_URI: "http://keycloak:8080/auth/realms/${VITE_KEYCLOAK_REALM:-WhatsUp}/protocol/openid-connect/certs"
+      APP__KEYCLOAK__JWKS_URI: "http://keycloak:8080/auth/realms/${VITE_KEYCLOAK_REALM:-Clync}/protocol/openid-connect/certs"
       APP__KEYCLOAK__ADMIN_URL: "http://keycloak:8080/auth"
-      APP__KEYCLOAK__REALM: "${VITE_KEYCLOAK_REALM:-WhatsUp}"
+      APP__KEYCLOAK__REALM: "${VITE_KEYCLOAK_REALM:-Clync}"
       APP__KEYCLOAK__ADMIN_USER: "${KC_ADMIN_USER}"
       APP__KEYCLOAK__ADMIN_PASSWORD: "${KC_ADMIN_PASS}"
       APP__CORS__FRONTEND_URL: "${FRONTEND_URL}"
@@ -82,12 +82,12 @@ services:
       start_period: 15s
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.whatsup-backend.rule=Host(`${API_HOST}`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.whatsup-backend.entrypoints=web-secure"
-      - "traefik.http.routers.whatsup-backend.service=whatsup-backend"
-      - "traefik.http.routers.whatsup-backend.tls=true"
-      - "traefik.http.routers.whatsup-backend.tls.certresolver=default"
-      - "traefik.http.services.whatsup-backend.loadbalancer.server.port=3000"
+      - "traefik.http.routers.clync-backend.rule=Host(`${API_HOST}`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.clync-backend.entrypoints=web-secure"
+      - "traefik.http.routers.clync-backend.service=clync-backend"
+      - "traefik.http.routers.clync-backend.tls=true"
+      - "traefik.http.routers.clync-backend.tls.certresolver=default"
+      - "traefik.http.services.clync-backend.loadbalancer.server.port=3000"
       - "traefik.docker.network=traefik"
 
   # ── Keycloak ────────────────────────────────────────────────────────────────
@@ -121,18 +121,18 @@ services:
       start_period: 90s
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.whatsup-keycloak.rule=Host(`${KEYCLOAK_HOST}`) && PathPrefix(`/auth`)"
-      - "traefik.http.routers.whatsup-keycloak.entrypoints=web-secure"
-      - "traefik.http.routers.whatsup-keycloak.service=whatsup-keycloak"
-      - "traefik.http.routers.whatsup-keycloak.tls=true"
-      - "traefik.http.routers.whatsup-keycloak.tls.certresolver=default"
-      - "traefik.http.services.whatsup-keycloak.loadbalancer.server.port=8080"
+      - "traefik.http.routers.clync-keycloak.rule=Host(`${KEYCLOAK_HOST}`) && PathPrefix(`/auth`)"
+      - "traefik.http.routers.clync-keycloak.entrypoints=web-secure"
+      - "traefik.http.routers.clync-keycloak.service=clync-keycloak"
+      - "traefik.http.routers.clync-keycloak.tls=true"
+      - "traefik.http.routers.clync-keycloak.tls.certresolver=default"
+      - "traefik.http.services.clync-keycloak.loadbalancer.server.port=8080"
       - "traefik.docker.network=traefik"
 
   # ── SurrealDB ───────────────────────────────────────────────────────────────
   surrealdb:
     image: docker.io/surrealdb/surrealdb:v2
-    command: "start --bind 0.0.0.0:8000 --user ${SURREALDB_USER} --pass ${SURREALDB_PASS} file:///data/whatsup.db"
+    command: "start --bind 0.0.0.0:8000 --user ${SURREALDB_USER} --pass ${SURREALDB_PASS} file:///data/clync.db"
     user: "0:0"
     restart: unless-stopped
     networks:

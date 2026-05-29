@@ -91,7 +91,7 @@ export default function AppHeader() {
         {/* Left: logo + desktop nav */}
         <div className="flex items-center gap-5 min-w-0">
           <Link to="/" className="shrink-0">
-            <img src={logo} alt="WhatsUp" className="h-7 w-auto" />
+            <img src={logo} alt="Clync" className="h-7 w-auto" />
           </Link>
           <nav className="hidden sm:flex items-center gap-4">
             <NavLink to="/sessions" className={navLink}>{t('nav.sessions')}</NavLink>

@@ -104,7 +104,7 @@ impl PushService {
             .unwrap_or_else(|| "/".into());
 
         let payload = serde_json::json!({
-            "title": format!("WhatsUp – {}", session.game),
+            "title": format!("Clync – {}", session.game),
             "body": format!("{} möchte {} spielen", session.username, session.game),
             "url": url,
         });
@@ -139,7 +139,7 @@ impl PushService {
             return Ok(());
         }
         let payload = serde_json::json!({
-            "title": "WhatsUp – Session beginnt",
+            "title": "Clync – Session beginnt",
             "body": format!("{game} beginnt gleich!"),
             "url": format!("/sessions/{session_id}"),
         });
