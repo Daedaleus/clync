@@ -2,6 +2,10 @@
 node = "26.1.0"
 rust = "1.95.0"
 
+[env]
+RUST_LOG = "info"
+RUST_BACKTRACE = "1"
+
 [tasks.frontend]
 description = "Start the Vite dev server"
 run = "npm run dev"
@@ -16,3 +20,11 @@ dir = "{{config_root}}/backend"
 description = "Start SurrealDB + Keycloak via Docker Compose"
 run = "docker compose -f docker-compose.local.yml up"
 dir = "{{config_root}}/infrastructure"
+
+[tasks.check]
+description = "Run all quality checks (fmt, clippy, tests, lint)"
+dir = "{{config_root}}"
+run = """
+cd backend && cargo fmt --check && cargo clippy -- -D warnings && cargo test
+cd ../frontend && npm run lint && npm run test:run
+"""
