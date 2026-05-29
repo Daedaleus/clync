@@ -55,7 +55,7 @@ export default function SessionRow({ session: s, onRsvp, onDelete }: Props) {
   };
 
   return (
-    <li className={`flex items-center gap-3 px-3 py-3 ${past ? 'opacity-40' : ''}`}>
+    <li data-testid={`session-${s.id}`} className={`flex items-center gap-3 px-3 py-3 ${past ? 'opacity-40' : ''}`}>
       {/* Thumbnail */}
       <Link to={`/sessions/${s.id}`} className="shrink-0">
         {src ? (
