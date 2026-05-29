@@ -39,6 +39,11 @@ description = "Lint Ansible playbook"
 run = "ansible-lint deploy.yml"
 dir = "{{config_root}}/ansible"
 
+[tasks.deploy]
+description = "Deploy to production via Ansible (requires ansible/vars.yml)"
+run = "ansible-playbook deploy.yml -e @vars.yml"
+dir = "{{config_root}}/ansible"
+
 [tasks.check]
 description = "Run all quality checks (fmt, clippy, tests, lint, ansible)"
 dir = "{{config_root}}"
