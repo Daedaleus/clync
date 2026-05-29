@@ -1,0 +1,162 @@
+---
+# Clync deploy playbook
+#
+# Usage:
+#   cp ansible/vars.yml.example ansible/vars.yml
+#   # fill in ansible/vars.yml
+#   ansible-playbook ansible/deploy.yml
+#
+# To skip service restart:
+#   ansible-playbook ansible/deploy.yml -e start_services=false
+
+- name: Build images locally
+  hosts: localhost
+  gather_facts: true
+  vars_files:
+    - vars.yml
+
+  vars:
+    root_dir: "{{ playbook_dir | dirname }}"
+    infra_dir: "{{ root_dir }}/infrastructure"
+    compose_src: "{{ infra_dir }}/{{ 'docker-compose.paths.yml' if routing == 'paths' else 'docker-compose.yml' }}"
+    vite_keycloak_url: "{{ 'https://' + domain + '/auth' if routing == 'paths' else 'https://' + keycloak_host }}"
+    vite_api_url: "https://{{ api_host }}"
+
+  tasks:
+    - name: Build backend image
+      ansible.builtin.command:
+        cmd: podman build -t clync-backend {{ root_dir }}/backend
+      changed_when: true
+
+    - name: Build frontend image
+      ansible.builtin.command:
+        cmd: >-
+          podman build
+          --build-arg VITE_API_URL={{ vite_api_url }}
+          --build-arg VITE_KEYCLOAK_URL={{ vite_keycloak_url }}
+          --build-arg VITE_KEYCLOAK_REALM=Clync
+          --build-arg VITE_KEYCLOAK_CLIENT_ID=clync
+          -t clync-frontend {{ root_dir }}/frontend
+      changed_when: true
+
+    - name: Save images to local temp files
+      ansible.builtin.command:
+        cmd: podman save -o /tmp/{{ item }}.tar {{ item }}
+      loop:
+        - clync-backend
+        - clync-frontend
+      changed_when: true
+
+    - name: Register deploy target
+      ansible.builtin.add_host:
+        name: "{{ server }}"
+        groups: deploy_target
+        ansible_user: "{{ ansible_user | default(omit) }}"
+
+
+- name: Transfer and deploy
+  hosts: deploy_target
+  gather_facts: true
+  vars_files:
+    - "{{ playbook_dir }}/vars.yml"
+
+  vars:
+    infra_dir: "{{ playbook_dir }}/../infrastructure"
+    compose_src: "{{ infra_dir }}/{{ 'docker-compose.paths.yml' if routing == 'paths' else 'docker-compose.yml' }}"
+
+  tasks:
+    - name: Create remote app directory
+      ansible.builtin.file:
+        path: "{{ remote_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Ensure Docker proxy network exists
+      ansible.builtin.command: docker network create proxy
+      changed_when: true
+      failed_when: false
+
+    - name: Upload docker-compose.yml
+      ansible.builtin.copy:
+        src: "{{ compose_src }}"
+        dest: "{{ remote_dir }}/docker-compose.yml"
+        mode: "0644"
+
+    - name: Generate and upload .env
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/templates/env.j2"
+        dest: "{{ remote_dir }}/.env"
+        mode: "0600"
+
+    - name: Create remote keycloak directory
+      ansible.builtin.file:
+        path: "{{ remote_dir }}/keycloak"
+        state: directory
+        mode: "0755"
+
+    - name: Upload Keycloak realm JSON
+      ansible.builtin.copy:
+        src: "{{ infra_dir }}/keycloak/Clync-realm.json"
+        dest: "{{ remote_dir }}/keycloak/Clync-realm.json"
+        mode: "0644"
+
+    - name: Copy backend image to server
+      ansible.builtin.copy:
+        src: /tmp/clync-backend.tar
+        dest: /tmp/clync-backend.tar
+        mode: "0644"
+
+    - name: Load backend image
+      ansible.builtin.command: docker load -i /tmp/clync-backend.tar
+      changed_when: true
+
+    - name: Tag backend image
+      ansible.builtin.command: docker tag localhost/clync-backend:latest clync-backend:latest
+      changed_when: true
+      failed_when: false
+
+    - name: Copy frontend image to server
+      ansible.builtin.copy:
+        src: /tmp/clync-frontend.tar
+        dest: /tmp/clync-frontend.tar
+        mode: "0644"
+
+    - name: Load frontend image
+      ansible.builtin.command: docker load -i /tmp/clync-frontend.tar
+      changed_when: true
+
+    - name: Tag frontend image
+      ansible.builtin.command: docker tag localhost/clync-frontend:latest clync-frontend:latest
+      changed_when: true
+      failed_when: false
+
+    - name: Remove remote temp files
+      ansible.builtin.file:
+        path: /tmp/{{ item }}.tar
+        state: absent
+      loop:
+        - clync-backend
+        - clync-frontend
+
+    - name: Start services
+      ansible.builtin.command: >-
+        docker compose
+        -f {{ remote_dir }}/docker-compose.yml
+        --env-file {{ remote_dir }}/.env
+        up -d --no-build
+      when: start_services | default(true) | bool
+      changed_when: true
+
+
+- name: Clean up local temp files
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Remove local image tars
+      ansible.builtin.file:
+        path: /tmp/{{ item }}.tar
+        state: absent
+      loop:
+        - clync-backend
+        - clync-frontend

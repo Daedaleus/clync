@@ -1,4 +1,4 @@
-name: whatsup-dev
+name: clync-dev
 
 services:
   postgres:
@@ -42,7 +42,7 @@ services:
 
   surrealdb:
     image: "docker.io/surrealdb/surrealdb:v2"
-    command: "start --bind 0.0.0.0:8000 --user root --pass root file:///data/whatsup.db"
+    command: "start --bind 0.0.0.0:8000 --user root --pass root file:///data/clync.db"
     restart: unless-stopped
     logging:
       driver: json-file
@@ -60,7 +60,7 @@ services:
 x-backend-env: &backend-env
   VAPID_PUBLIC_KEY: ""
   VAPID_PRIVATE_KEY: ""
-  VAPID_SUBJECT: "mailto:dev@whatsup.local"
+  VAPID_SUBJECT: "mailto:dev@clync.local"
 
 volumes:
   postgres_data:

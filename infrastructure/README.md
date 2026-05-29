@@ -10,7 +10,7 @@ Docker Compose configurations for local development and production deployment.
 | `docker-compose.yml` | Production — Traefik-ready, no exposed ports, healthchecks |
 | `docker-compose.paths.yml` | Optional override to mount local source paths |
 | `.env.example` | Template for production environment variables |
-| `keycloak/WhatsUp-realm.json` | Keycloak realm export (auto-imported in local dev) |
+| `keycloak/Clync-realm.json` | Keycloak realm export (auto-imported in local dev) |
 
 ## Local development
 
@@ -35,7 +35,7 @@ cd ../backend && cargo run
 cd ../frontend && npm run dev
 ```
 
-The Keycloak realm `WhatsUp` is imported automatically on first start from `keycloak/WhatsUp-realm.json`.
+The Keycloak realm `Clync` is imported automatically on first start from `keycloak/Clync-realm.json`.
 
 > **First user:** create an invite link via the app's user menu, visit the link to register, then optionally assign the `admin` role in Keycloak.
 
@@ -45,81 +45,40 @@ Designed for a server running Traefik as reverse proxy. Traefik handles TLS term
 
 ### Prerequisites
 
-- Docker / Podman with Compose
-- Traefik running and attached to an external network named `proxy`
-- DNS records pointing to the three hostnames
+- Podman (local) and Docker (server)
+- Traefik running on the server, attached to an external network named `proxy`
+- DNS records pointing to your domain(s)
 
-Create the proxy network once if it does not exist yet:
+Create the proxy network on the server once if it does not exist yet:
 
 ```sh
 docker network create proxy
 ```
 
-### First deployment
+### Deploying
+
+Use the interactive deploy script from your local machine — it handles everything:
 
 ```sh
-# 1. Create environment file
-cp .env.example .env
-
-# 2. Fill in all values (see Environment variables below)
-$EDITOR .env
-
-# 3. Build images (frontend bakes VITE_* URLs at this step)
-docker compose build
-
-# 4. Start
-docker compose up -d
+cd infrastructure
+./deploy.sh
 ```
 
-> **Keycloak note:** Production mode (`start`) does not auto-import the realm. Configure the `WhatsUp` realm manually via the Keycloak admin UI after first startup, or use `kcadm.sh` / the REST API to import `keycloak/WhatsUp-realm.json`.
+On first run it will ask for:
+- SSH target and remote path on the server
+- Routing mode: **subdomains** (frontend.de / api.frontend.de / auth.frontend.de) or **paths** (one domain, `/api` and `/auth` prefixes)
+- Domain name(s)
+- VAPID keys (can be generated automatically)
+- All passwords (can be generated automatically)
+- RAWG API key (optional)
 
-### Subsequent deploys
+It then builds images locally, uploads `docker-compose.yml` + `.env` to the server, streams the images via SSH and optionally restarts services. All answers are saved in `.deploy.conf` (gitignored) so subsequent runs only ask for confirmation.
 
-```sh
-docker compose build   # rebuild changed images
-docker compose up -d   # rolling restart
-```
+> **Keycloak note:** Production mode does not auto-import the realm. After first startup, configure the `Clync` realm manually via the Keycloak admin UI or import `keycloak/Clync-realm.json` via `kcadm.sh`.
 
-## Environment variables
+### Reference: environment variables
 
-Copy `.env.example` to `.env` and fill in every value. The file is gitignored.
-
-```sh
-# Hostnames — Traefik uses these for routing rules
-FRONTEND_HOST=whatsup.example.com
-API_HOST=api.whatsup.example.com
-KEYCLOAK_HOST=auth.whatsup.example.com
-
-# Frontend URLs — baked into the image at docker compose build time
-VITE_API_URL=https://api.whatsup.example.com
-VITE_KEYCLOAK_URL=https://auth.whatsup.example.com
-VITE_KEYCLOAK_REALM=WhatsUp
-VITE_KEYCLOAK_CLIENT_ID=whatsup
-
-# Backend CORS origin
-FRONTEND_URL=https://whatsup.example.com
-
-# VAPID keys for Web Push — generate fresh keys for production:
-#   npx web-push generate-vapid-keys
-VAPID_PUBLIC_KEY=
-VAPID_PRIVATE_KEY=
-VAPID_SUBJECT=mailto:admin@whatsup.example.com
-
-# RAWG API key for game library autofill (optional, free at rawg.io/apidocs)
-RAWG_API_KEY=
-
-# SurrealDB credentials
-SURREALDB_USER=surrealdb
-SURREALDB_PASS=<strong-password>
-
-# Keycloak bootstrap admin (used only on first start)
-KC_ADMIN_USER=admin
-KC_ADMIN_PASS=<strong-password>
-
-# PostgreSQL (Keycloak backend only)
-POSTGRES_USER=keycloak
-POSTGRES_PASS=<strong-password>
-```
+See `.env.example` (subdomains) or `.env-paths.example` (paths routing) for all available variables.
 
 ## Network architecture
 

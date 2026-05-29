@@ -1,4 +1,4 @@
-# WhatsUp Backend — Base Configuration
+# Clync Backend — Base Configuration
 # Override locally via config/app.local.yaml (gitignored).
 # Override in Docker via environment variables: APP__SECTION__KEY=value
 # Example: APP__DATABASE__URL=surrealdb:8000
@@ -8,15 +8,15 @@ server:
 
 database:
   url: "127.0.0.1:8000"
-  namespace: "whatsup"
-  name: "whatsup"
+  namespace: "clync"
+  name: "clync"
   username: "root"
   password: "root"
 
 keycloak:
-  jwks_uri: "http://localhost:8080/realms/WhatsUp/protocol/openid-connect/certs"
+  jwks_uri: "http://localhost:8080/realms/Clync/protocol/openid-connect/certs"
   admin_url: "http://localhost:8080"
-  realm: "WhatsUp"
+  realm: "Clync"
   admin_user: "admin"
   admin_password: "admin"
 
@@ -25,7 +25,7 @@ vapid:
   # Generate keys: npx web-push generate-vapid-keys
   public_key: ""
   private_key: ""
-  subject: "mailto:dev@whatsup.local"
+  subject: "mailto:dev@clync.local"
 
 cors:
   frontend_url: "http://localhost:5173"

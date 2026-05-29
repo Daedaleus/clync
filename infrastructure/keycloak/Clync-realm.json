@@ -1,6 +1,6 @@
 {
-  "realm": "WhatsUp",
-  "displayName": "WhatsUp",
+  "realm": "Clync",
+  "displayName": "Clync",
   "enabled": true,
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,
@@ -8,10 +8,18 @@
   "resetPasswordAllowed": true,
   "editUsernameAllowed": false,
   "bruteForceProtected": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "admin",
+        "description": "Application admin — can create invite links and perform destructive operations"
+      }
+    ]
+  },
   "clients": [
     {
-      "clientId": "whatsup",
-      "name": "WhatsUp App",
+      "clientId": "clync",
+      "name": "Clync App",
       "enabled": true,
       "publicClient": true,
       "clientAuthenticatorType": "client-secret",

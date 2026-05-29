@@ -75,7 +75,7 @@ async fn invite_handler(
             if let Err(e) = push
                 .notify_user(
                     &invitee_id,
-                    "WhatsUp – Gruppeneinladung",
+                    "Clync – Gruppeneinladung",
                     &format!("{inviter_username} hat dich zu \"{group_name}\" eingeladen"),
                     "/me",
                 )

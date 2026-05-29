@@ -79,7 +79,7 @@ async fn invite_handler(
             if let Err(e) = push
                 .notify_user(
                     &invitee_id,
-                    "WhatsUp – Session-Einladung",
+                    "Clync – Session-Einladung",
                     &format!("{inviter_username} lädt dich ein, {game} zu spielen"),
                     "/me",
                 )

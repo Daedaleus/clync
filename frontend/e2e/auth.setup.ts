@@ -14,7 +14,7 @@ setup('authenticate via Keycloak', async ({ page }) => {
   await page.goto(baseUrl);
 
   // Keycloak redirects the browser to the login page.
-  await page.waitForURL(/\/realms\/WhatsUp\//, { timeout: 10_000 });
+  await page.waitForURL(/\/realms\/Clync\//, { timeout: 10_000 });
 
   await page.fill('#username', username);
   await page.fill('#password', password);
