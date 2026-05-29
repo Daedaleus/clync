@@ -130,7 +130,7 @@ export default function SessionCreateForm({ groups, onCreate, onError, onCancel 
     'focus:outline-none focus:ring-1 focus:ring-violet-500 [color-scheme:dark]';
 
   return (
-    <form onSubmit={handleSubmit} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-4">
+    <form data-testid="session-create-form" onSubmit={handleSubmit} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-4">
 
       {/* Game */}
       <div className="space-y-1.5">

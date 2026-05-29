@@ -99,7 +99,7 @@ export default function GroupsPage() {
       {/* Meine Gruppen */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <SectionLabel count={myGroups.length}>{t('groups.my_groups')}</SectionLabel>
+          <SectionLabel data-testid="section-my-groups" count={myGroups.length}>{t('groups.my_groups')}</SectionLabel>
           <Button variant="secondary" onClick={() => setShowCreateForm((v) => !v)}>
             {showCreateForm ? t('common.cancel') : t('groups.create')}
           </Button>

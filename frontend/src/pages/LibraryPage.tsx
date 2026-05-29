@@ -111,7 +111,7 @@ export default function LibraryPage() {
   return (
     <PageLayout>
       <div className="flex items-center justify-between">
-        <SectionLabel>{t('library.title')}</SectionLabel>
+        <SectionLabel data-testid="section-library">{t('library.title')}</SectionLabel>
         <Button variant="secondary" onClick={() => setShowCreate((v) => !v)}>
           {showCreate ? t('common.cancel') : t('library.new_game')}
         </Button>
