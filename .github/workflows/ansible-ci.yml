@@ -1,0 +1,28 @@
+name: Ansible CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ansible/**'
+      - '.github/workflows/ansible-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'ansible/**'
+      - '.github/workflows/ansible-ci.yml'
+
+jobs:
+  lint:
+    name: Ansible (lint)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install ansible-lint
+        run: pip install ansible-lint
+
+      - name: Lint
+        run: ansible-lint ansible/deploy.yml
+        working-directory: ${{ github.workspace }}

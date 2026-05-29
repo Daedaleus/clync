@@ -1,0 +1,14 @@
+profile: production
+
+# Exclude generated or example files
+exclude_paths:
+  - vars.yml
+  - vars.yml.example
+
+# Warn only — do not fail — on these rules
+warn_list:
+  - experimental
+
+# Skip rules that don't apply to this project
+skip_list:
+  - no-changed-when   # covered selectively in playbook

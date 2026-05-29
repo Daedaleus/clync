@@ -34,10 +34,16 @@ description = "Start Storybook component library"
 run = "npm run storybook"
 dir = "{{config_root}}/frontend"
 
+[tasks.ansible-lint]
+description = "Lint Ansible playbook"
+run = "ansible-lint deploy.yml"
+dir = "{{config_root}}/ansible"
+
 [tasks.check]
-description = "Run all quality checks (fmt, clippy, tests, lint)"
+description = "Run all quality checks (fmt, clippy, tests, lint, ansible)"
 dir = "{{config_root}}"
 run = """
 cd backend && cargo fmt --check && cargo clippy -- -D warnings && cargo test
 cd ../frontend && npm run lint && npm run test:run
+cd ../ansible && ansible-lint deploy.yml
 """
