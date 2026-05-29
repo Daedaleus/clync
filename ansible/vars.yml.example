@@ -1,0 +1,46 @@
+# Copy to vars.yml and fill in all values.
+# vars.yml is gitignored — never commit it.
+
+# ── Server ─────────────────────────────────────────────────────────────────────
+server: pkeil.de           # SSH alias or user@host
+ansible_user: daedaleus    # SSH user (omit if SSH config handles it)
+remote_dir: ~/clync        # where to deploy on the server
+
+# ── Routing ────────────────────────────────────────────────────────────────────
+# paths      — one domain, /api and /auth path prefixes (e.g. pkeil.de)
+# subdomains — three separate hosts (e.g. pkeil.de, api.pkeil.de, auth.pkeil.de)
+routing: paths
+
+# ── Hostnames ──────────────────────────────────────────────────────────────────
+domain: pkeil.de
+
+# paths mode: all three are the same domain
+# subdomains mode: set them individually
+frontend_host: "{{ domain }}"
+api_host: "{{ domain }}"          # subdomains: api.{{ domain }}
+keycloak_host: "{{ domain }}"     # subdomains: auth.{{ domain }}
+
+# ── VAPID (Web Push) ───────────────────────────────────────────────────────────
+# Generate: npx web-push generate-vapid-keys
+vapid_public_key: ""
+vapid_private_key: ""
+vapid_subject: "mailto:admin@{{ domain }}"
+
+# ── RAWG (optional game autofill) ─────────────────────────────────────────────
+rawg_api_key: ""
+
+# ── Passwords ──────────────────────────────────────────────────────────────────
+surrealdb_user: surrealdb
+surrealdb_pass: ""
+
+kc_admin_user: admin
+kc_admin_pass: ""
+
+postgres_user: keycloak
+postgres_pass: ""
+
+# ── Deploy options ─────────────────────────────────────────────────────────────
+# Set to true to run docker compose up after image transfer.
+# Can also be passed on the command line:
+#   ansible-playbook ansible/deploy.yml -e @ansible/vars.yml -e start_services=true
+start_services: true
