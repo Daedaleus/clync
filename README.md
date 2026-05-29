@@ -1,5 +1,9 @@
 # WhatsUp
 
+[![Backend CI](https://github.com/Daedaleus/whatsup/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/Daedaleus/whatsup/actions/workflows/backend-ci.yml)
+[![Frontend CI](https://github.com/Daedaleus/whatsup/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/Daedaleus/whatsup/actions/workflows/frontend-ci.yml)
+[![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](LICENSE)
+
 Group gaming coordination app. Users form groups, list games they want to play, and arrange sessions — with live updates and push notifications.
 
 ## Stack
