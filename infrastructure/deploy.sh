@@ -325,12 +325,12 @@ ok "Realm JSON uploaded."
 # ── Build ──────────────────────────────────────────────────────────────────────
 echo ""
 info "Building backend …"
-podman build -t clync-backend "$ROOT_DIR/backend"
+podman build --format docker -t clync-backend "$ROOT_DIR/backend"
 ok "Backend image built."
 
 echo ""
 info "Building frontend …"
-podman build \
+podman build --format docker \
   --build-arg "VITE_API_URL=${VITE_API_URL}" \
   --build-arg "VITE_KEYCLOAK_URL=${VITE_KEYCLOAK_URL}" \
   --build-arg "VITE_KEYCLOAK_REALM=Clync" \

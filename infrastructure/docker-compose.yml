@@ -121,9 +121,7 @@ services:
       KC_PROXY_HEADERS: xforwarded
       KC_HEALTH_ENABLED: "true"
     healthcheck:
-      # Keycloak image has bash but no curl/wget. Use bash's built-in TCP
-      # client to query the management port's readiness endpoint (port 9000).
-      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/9000 && printf 'GET /health/ready HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && timeout 3 cat <&3 | grep -q '200'"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:9000/health/ready | grep -q '\"status\": \"UP\"'"]
       interval: 30s
       timeout: 10s
       retries: 5
