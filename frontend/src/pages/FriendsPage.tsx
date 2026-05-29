@@ -81,7 +81,7 @@ export default function FriendsPage() {
       {/* Incoming requests */}
       {incoming.length > 0 && (
         <section className="space-y-3">
-          <SectionLabel count={incoming.length}>{t('friends.incoming_requests')}</SectionLabel>
+          <SectionLabel data-testid="section-friend-requests" count={incoming.length}>{t('friends.incoming_requests')}</SectionLabel>
           <ul className="divide-y divide-zinc-800 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
             {incoming.map((req) => (
               <li key={req.id}>
@@ -103,7 +103,7 @@ export default function FriendsPage() {
 
       {/* Friend list */}
       <section className="space-y-3">
-        <SectionLabel count={friends.length}>{t('friends.my_friends')}</SectionLabel>
+        <SectionLabel data-testid="section-my-friends" count={friends.length}>{t('friends.my_friends')}</SectionLabel>
         {friends.length === 0 ? (
           <p className="text-zinc-500 text-sm">{t('friends.no_friends')}</p>
         ) : (
@@ -129,7 +129,7 @@ export default function FriendsPage() {
 
       {/* User search */}
       <section className="space-y-3">
-        <SectionLabel>{t('friends.search_title')}</SectionLabel>
+        <SectionLabel data-testid="section-search-users">{t('friends.search_title')}</SectionLabel>
         <SearchBar value={searchQuery} onChange={setSearchQuery} onSubmit={handleSearch} placeholder={t('friends.search_placeholder')} />
 
         {searchResults.length > 0 && (

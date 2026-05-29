@@ -77,7 +77,7 @@ export default function SessionsPage() {
   return (
     <PageLayout>
       <div className="flex items-center justify-between">
-        <SectionLabel>{t('sessions.title')}</SectionLabel>
+        <SectionLabel data-testid="section-sessions">{t('sessions.title')}</SectionLabel>
         <Button variant="secondary" onClick={() => setShowForm((v) => !v)}>
           {showForm ? t('common.cancel') : t('sessions.new_session')}
         </Button>
@@ -95,7 +95,7 @@ export default function SessionsPage() {
       )}
 
       <section className="space-y-2">
-        <SectionLabel>{t('sessions.groups_section')}</SectionLabel>
+        <SectionLabel data-testid="section-group-sessions">{t('sessions.groups_section')}</SectionLabel>
         <SessionList
           sessions={groupSessions}
           onRsvp={handleRsvp}
@@ -105,7 +105,7 @@ export default function SessionsPage() {
       </section>
 
       <section className="space-y-2">
-        <SectionLabel>{t('sessions.global_section')}</SectionLabel>
+        <SectionLabel data-testid="section-global-sessions">{t('sessions.global_section')}</SectionLabel>
         <SessionList
           sessions={globalSessions}
           onRsvp={handleRsvp}

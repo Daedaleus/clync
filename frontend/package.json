@@ -10,6 +10,7 @@
     "preview": "NODE_OPTIONS=--no-deprecation vite preview",
     "test": "NODE_OPTIONS=--no-deprecation vitest",
     "test:run": "NODE_OPTIONS=--no-deprecation vitest run --project=unit",
+    "test:e2e": "playwright test",
     "storybook": "NODE_OPTIONS=--no-deprecation storybook dev -p 6006",
     "build-storybook": "NODE_OPTIONS=--no-deprecation storybook build"
   },
