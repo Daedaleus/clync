@@ -71,6 +71,11 @@
         state: directory
         mode: "0755"
 
+    - name: Ensure Docker proxy network exists
+      ansible.builtin.command: docker network create proxy
+      changed_when: true
+      failed_when: false
+
     - name: Upload docker-compose.yml
       ansible.builtin.copy:
         src: "{{ compose_src }}"

@@ -304,6 +304,10 @@ ok ".env generated."
 info "Creating remote directory ${REMOTE_DIR} …"
 ssh "$SERVER" "mkdir -p ${REMOTE_DIR}"
 
+info "Ensuring Docker proxy network exists …"
+ssh "$SERVER" "docker network inspect proxy >/dev/null 2>&1 || docker network create proxy"
+ok "Proxy network ready."
+
 info "Uploading docker-compose.yml …"
 scp "$COMPOSE_SRC" "${SERVER}:${REMOTE_DIR}/docker-compose.yml"
 ok "docker-compose.yml uploaded."

@@ -10,8 +10,8 @@ RUN npm ci --ignore-scripts
 # Defaults match the committed .env values for local use.
 ARG VITE_API_URL=http://localhost:3000
 ARG VITE_KEYCLOAK_URL=http://localhost:8080
-ARG VITE_KEYCLOAK_REALM=WhatsUp
-ARG VITE_KEYCLOAK_CLIENT_ID=whatsup
+ARG VITE_KEYCLOAK_REALM=Clync
+ARG VITE_KEYCLOAK_CLIENT_ID=clync
 
 ENV VITE_API_URL=$VITE_API_URL \
     VITE_KEYCLOAK_URL=$VITE_KEYCLOAK_URL \
