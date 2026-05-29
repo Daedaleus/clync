@@ -65,22 +65,22 @@
     compose_src: "{{ infra_dir }}/{{ 'docker-compose.paths.yml' if routing == 'paths' else 'docker-compose.yml' }}"
 
   tasks:
-    - name: Create remote infrastructure directory
+    - name: Create remote app directory
       ansible.builtin.file:
-        path: "{{ remote_dir }}/infrastructure"
+        path: "{{ remote_dir }}"
         state: directory
         mode: "0755"
 
     - name: Upload docker-compose.yml
       ansible.builtin.copy:
         src: "{{ compose_src }}"
-        dest: "{{ remote_dir }}/infrastructure/docker-compose.yml"
+        dest: "{{ remote_dir }}/docker-compose.yml"
         mode: "0644"
 
     - name: Generate and upload .env
       ansible.builtin.template:
         src: "{{ playbook_dir }}/templates/env.j2"
-        dest: "{{ remote_dir }}/infrastructure/.env"
+        dest: "{{ remote_dir }}/.env"
         mode: "0600"
 
     - name: Copy backend image to server
@@ -124,8 +124,8 @@
     - name: Start services
       ansible.builtin.command: >-
         docker compose
-        -f {{ remote_dir }}/infrastructure/docker-compose.yml
-        --env-file {{ remote_dir }}/infrastructure/.env
+        -f {{ remote_dir }}/docker-compose.yml
+        --env-file {{ remote_dir }}/.env
         up -d --no-build
       when: start_services | default(true) | bool
       changed_when: true

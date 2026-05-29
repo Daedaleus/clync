@@ -132,7 +132,7 @@ if $RECONFIGURE; then
   echo -e "  ${BLD}── Server ─────────────────────────────${RST}"
   echo ""
   ask SERVER    "SSH target (alias or user@host)" "${CONF_SERVER:-}"
-  ask REMOTE_DIR "Remote path on server"          "${CONF_REMOTE_DIR:-~/clync}"
+  ask REMOTE_DIR "Remote app directory (docker-compose + .env live here)" "${CONF_REMOTE_DIR:-/opt/clync}"
 
   echo ""
   echo -e "  ${BLD}── Routing ────────────────────────────${RST}"
@@ -301,15 +301,15 @@ EOF
 ok ".env generated."
 
 # ── Upload .env and docker-compose.yml ────────────────────────────────────────
-info "Creating remote directory ${REMOTE_DIR}/infrastructure …"
-ssh "$SERVER" "mkdir -p ${REMOTE_DIR}/infrastructure"
+info "Creating remote directory ${REMOTE_DIR} …"
+ssh "$SERVER" "mkdir -p ${REMOTE_DIR}"
 
 info "Uploading docker-compose.yml …"
-scp "$COMPOSE_SRC" "${SERVER}:${REMOTE_DIR}/infrastructure/docker-compose.yml"
+scp "$COMPOSE_SRC" "${SERVER}:${REMOTE_DIR}/docker-compose.yml"
 ok "docker-compose.yml uploaded."
 
 info "Uploading .env …"
-scp "$ENV_TMP" "${SERVER}:${REMOTE_DIR}/infrastructure/.env"
+scp "$ENV_TMP" "${SERVER}:${REMOTE_DIR}/.env"
 rm -f "$ENV_TMP"
 ok ".env uploaded."
 
@@ -346,7 +346,7 @@ ok "Frontend transferred."
 # ── Optional: docker compose up ───────────────────────────────────────────────
 echo ""
 hr
-COMPOSE_CMD="docker compose -f ${REMOTE_DIR}/infrastructure/docker-compose.yml --env-file ${REMOTE_DIR}/infrastructure/.env up -d --no-build"
+COMPOSE_CMD="docker compose -f ${REMOTE_DIR}/docker-compose.yml --env-file ${REMOTE_DIR}/.env up -d --no-build"
 echo -e "  Will run: ${CYN}${COMPOSE_CMD}${RST}"
 echo ""
 

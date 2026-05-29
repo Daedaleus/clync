@@ -4,7 +4,7 @@
 # ── Server ─────────────────────────────────────────────────────────────────────
 server: pkeil.de           # SSH alias or user@host
 ansible_user: daedaleus    # SSH user (omit if SSH config handles it)
-remote_dir: ~/clync        # where to deploy on the server
+remote_dir: /opt/clync     # app directory on the server — docker-compose.yml and .env live here
 
 # ── Routing ────────────────────────────────────────────────────────────────────
 # paths      — one domain, /api and /auth path prefixes (e.g. pkeil.de)
