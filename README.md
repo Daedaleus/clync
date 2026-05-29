@@ -19,17 +19,20 @@ Group gaming coordination app. Users form groups, list games they want to play, 
 
 ## Quick start (local development)
 
-**Prerequisites:** Rust (stable), Node 26, Docker / Podman
+**Prerequisites:** [mise](https://mise.jdx.dev), Docker / Podman
 
 ```sh
-# 1 — Start backing services
-docker compose -f infrastructure/docker-compose.local.yml up -d
+# 1 — Install pinned Node and Rust versions
+mise install
 
-# 2 — Backend (http://localhost:3000)
-cd backend && cargo run
+# 2 — Start backing services (SurrealDB + Keycloak)
+mise run docker
 
-# 3 — Frontend (http://localhost:5173)
-cd frontend && npm install && npm run dev
+# 3 — Backend (http://localhost:3000)
+mise run backend
+
+# 4 — Frontend (http://localhost:5173)
+mise run frontend
 ```
 
 Login at `http://localhost:5173` — Keycloak runs on `http://localhost:8080` (admin: admin/admin).
@@ -65,14 +68,14 @@ whatsup/
 ## Development
 
 ```sh
-# Run backend tests
-cd backend && cargo test
+# Run all tests (backend unit + frontend unit + e2e — requires full stack)
+mise run test
 
-# Run frontend unit tests
-cd frontend && npm run test:run
+# Run all quality checks before committing (fmt, clippy, lint, unit tests)
+mise run check
 
 # Storybook component library
-cd frontend && npm run storybook
+mise run storybook
 ```
 
 ## Deployment
