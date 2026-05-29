@@ -5,6 +5,7 @@ infrastructure/.env.local
 infrastructure/.env-*
 !infrastructure/.env.example
 !infrastructure/.env-paths.example
+infrastructure/docker-compose.local.yml
 
 # ── Backend runtime ────────────────────────────────────────────────────────────
 backend/uploads/
