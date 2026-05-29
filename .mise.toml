@@ -1,3 +1,18 @@
 [tools]
 node = "26.1.0"
 rust = "1.95.0"
+
+[tasks.frontend]
+description = "Start the Vite dev server"
+run = "npm run dev"
+dir = "{{config_root}}/frontend"
+
+[tasks.backend]
+description = "Start the Rust backend"
+run = "cargo run"
+dir = "{{config_root}}/backend"
+
+[tasks.docker]
+description = "Start SurrealDB + Keycloak via Docker Compose"
+run = "docker compose -f docker-compose.local.yml up"
+dir = "{{config_root}}/infrastructure"
