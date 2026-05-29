@@ -83,6 +83,18 @@
         dest: "{{ remote_dir }}/.env"
         mode: "0600"
 
+    - name: Create remote keycloak directory
+      ansible.builtin.file:
+        path: "{{ remote_dir }}/keycloak"
+        state: directory
+        mode: "0755"
+
+    - name: Upload Keycloak realm JSON
+      ansible.builtin.copy:
+        src: "{{ infra_dir }}/keycloak/Clync-realm.json"
+        dest: "{{ remote_dir }}/keycloak/Clync-realm.json"
+        mode: "0644"
+
     - name: Copy backend image to server
       ansible.builtin.copy:
         src: /tmp/clync-backend.tar

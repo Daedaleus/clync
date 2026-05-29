@@ -313,6 +313,11 @@ scp "$ENV_TMP" "${SERVER}:${REMOTE_DIR}/.env"
 rm -f "$ENV_TMP"
 ok ".env uploaded."
 
+info "Uploading keycloak realm …"
+ssh "$SERVER" "mkdir -p ${REMOTE_DIR}/keycloak"
+scp "${SCRIPT_DIR}/keycloak/Clync-realm.json" "${SERVER}:${REMOTE_DIR}/keycloak/Clync-realm.json"
+ok "Realm JSON uploaded."
+
 # ── Build ──────────────────────────────────────────────────────────────────────
 echo ""
 info "Building backend …"

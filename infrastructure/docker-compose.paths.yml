@@ -93,7 +93,7 @@ services:
   # ── Keycloak ────────────────────────────────────────────────────────────────
   keycloak:
     image: quay.io/keycloak/keycloak:26.6.1
-    command: start
+    command: start --import-realm
     restart: unless-stopped
     depends_on:
       postgres:
@@ -101,6 +101,8 @@ services:
     networks:
       - proxy
       - internal
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import:ro
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: "${KC_ADMIN_USER}"
       KC_BOOTSTRAP_ADMIN_PASSWORD: "${KC_ADMIN_PASS}"

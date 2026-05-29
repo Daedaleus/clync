@@ -8,6 +8,14 @@
   "resetPasswordAllowed": true,
   "editUsernameAllowed": false,
   "bruteForceProtected": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "admin",
+        "description": "Application admin — can create invite links and perform destructive operations"
+      }
+    ]
+  },
   "clients": [
     {
       "clientId": "clync",
