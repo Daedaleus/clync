@@ -40,7 +40,8 @@ postgres_user: keycloak
 postgres_pass: ""
 
 # ── Deploy options ─────────────────────────────────────────────────────────────
-# Set to true to run docker compose up after image transfer.
-# Can also be passed on the command line:
-#   ansible-playbook ansible/deploy.yml -e @ansible/vars.yml -e start_services=true
+# Image tag to pull from GHCR. Use 'latest' or a specific version e.g. '0.6.0'
+# For rollback: set to the previous version tag.
+image_tag: "latest"
+
 start_services: true

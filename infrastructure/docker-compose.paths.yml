@@ -16,14 +16,7 @@ services:
 
   # ── Frontend ────────────────────────────────────────────────────────────────
   frontend:
-    image: clync-frontend
-    build:
-      context: ../frontend
-      args:
-        VITE_API_URL: ${VITE_API_URL}
-        VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL}
-        VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-Clync}
-        VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-clync}
+    image: ghcr.io/daedaleus/clync-frontend:${IMAGE_TAG:-latest}
     restart: unless-stopped
     networks:
       - proxy
@@ -45,9 +38,7 @@ services:
 
   # ── Backend ─────────────────────────────────────────────────────────────────
   backend:
-    image: clync-backend
-    build:
-      context: ../backend
+    image: ghcr.io/daedaleus/clync-backend:${IMAGE_TAG:-latest}
     restart: unless-stopped
     depends_on:
       surrealdb:
