@@ -13,7 +13,7 @@ jobs:
     name: Build and push Docker images
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
@@ -59,3 +59,12 @@ jobs:
           tags: |
             ${{ steps.images.outputs.frontend }}:${{ steps.version.outputs.version }}
             ${{ steps.images.outputs.frontend }}:latest
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --title "${{ github.ref_name }}" \
+            --generate-notes \
+            --latest
