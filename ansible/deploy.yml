@@ -18,11 +18,16 @@
   vars:
     root_dir: "{{ playbook_dir | dirname }}"
     infra_dir: "{{ root_dir }}/infrastructure"
+    playbook_version: "{{ (lookup('file', root_dir + '/frontend/package.json') | from_json).version }}"
     compose_src: "{{ infra_dir }}/{{ 'docker-compose.paths.yml' if routing == 'paths' else 'docker-compose.yml' }}"
     vite_keycloak_url: "{{ 'https://' + domain + '/auth' if routing == 'paths' else 'https://' + keycloak_host }}"
     vite_api_url: "https://{{ api_host }}"
 
   tasks:
+    - name: Show deploy info
+      ansible.builtin.debug:
+        msg: "Deploying Clync v{{ playbook_version }} to {{ server }}"
+
     - name: Build backend image
       ansible.builtin.command:
         cmd: podman build --format docker -t clync-backend {{ root_dir }}/backend
