@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import logo from '../../assets/logo.svg';
+import logo from '../../assets/logo.png';
 import { Link, NavLink } from 'react-router-dom';
 import keycloak from '../../services/auth';
 import { api } from '../../services/api';
