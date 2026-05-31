@@ -1,0 +1,132 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # Detect which parts of the repo changed so we only run what's needed.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed paths
+        id: filter
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+          else
+            BASE="HEAD~1"
+          fi
+          git diff --name-only "$BASE"...HEAD | grep -q '^backend/' \
+            && echo "backend=true" >> "$GITHUB_OUTPUT" \
+            || echo "backend=false" >> "$GITHUB_OUTPUT"
+          git diff --name-only "$BASE"...HEAD | grep -q '^frontend/' \
+            && echo "frontend=true" >> "$GITHUB_OUTPUT" \
+            || echo "frontend=false" >> "$GITHUB_OUTPUT"
+
+  backend:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    name: Backend (fmt · clippy · test · build)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache Cargo registry and build artefacts
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            backend/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('backend/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libssl-dev pkg-config
+
+      - name: Check formatting
+        working-directory: backend
+        run: cargo fmt --check
+
+      - name: Clippy (deny warnings)
+        working-directory: backend
+        run: cargo clippy -- -D warnings
+
+      - name: Tests
+        working-directory: backend
+        run: cargo test
+
+      - name: Release build
+        working-directory: backend
+        run: cargo build --release
+
+  frontend:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    name: Frontend (lint · test · build)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '26'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci --ignore-scripts
+
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Tests
+        working-directory: frontend
+        run: npm run test:run
+
+      - name: Build
+        working-directory: frontend
+        run: npm run build
+
+  # Aggregator — always runs, succeeds only if all triggered jobs passed.
+  # This is the single required status check in branch protection.
+  ci:
+    name: CI
+    needs: [backend, frontend]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: All checks passed
+        run: |
+          backend="${{ needs.backend.result }}"
+          frontend="${{ needs.frontend.result }}"
+          echo "backend: $backend  frontend: $frontend"
+          if [[ "$backend" == "failure" || "$backend" == "cancelled" ]]; then
+            echo "Backend checks failed or were cancelled"
+            exit 1
+          fi
+          if [[ "$frontend" == "failure" || "$frontend" == "cancelled" ]]; then
+            echo "Frontend checks failed or were cancelled"
+            exit 1
+          fi
+          echo "All checks passed"
