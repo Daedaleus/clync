@@ -29,7 +29,7 @@ export default function InviteModal({ url, onClose }: Props) {
       className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/80 p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-5 shadow-2xl">
+      <div className="w-full max-w-md bg-ui-surface border border-ui-border rounded-2xl p-6 space-y-5 shadow-2xl">
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -51,7 +51,7 @@ export default function InviteModal({ url, onClose }: Props) {
             readOnly
             value={url}
             onClick={(e) => (e.target as HTMLInputElement).select()}
-            className="flex-1 min-w-0 bg-zinc-800 border border-zinc-700 text-xs text-zinc-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-violet-500 cursor-text select-all"
+            className="flex-1 min-w-0 bg-ui-raised border border-ui-border text-xs text-zinc-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-violet-500 cursor-text select-all"
           />
           <Button onClick={copy} variant={copied ? 'secondary' : 'primary'}>
             {copied ? t('invite_modal.copied') : t('invite_modal.copy')}

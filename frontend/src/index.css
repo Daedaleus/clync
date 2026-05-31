@@ -1,12 +1,19 @@
 @import "tailwindcss";
 
+@theme {
+  --color-app:        oklch(0.21 0.02 255);
+  --color-ui-surface: oklch(0.25 0.02 255);
+  --color-ui-raised:  oklch(0.30 0.02 255);
+  --color-ui-border:  oklch(0.34 0.02 255);
+}
+
 @layer base {
   html {
     color-scheme: dark;
   }
 
   body {
-    @apply bg-zinc-950 text-zinc-100 antialiased;
+    @apply bg-app text-zinc-100 antialiased;
     min-height: 100dvh;
   }
 

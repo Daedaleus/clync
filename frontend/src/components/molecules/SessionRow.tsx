@@ -26,21 +26,21 @@ export default function SessionRow({ session: s, onRsvp, onDelete }: Props) {
       icon: '✓',
       ariaLabel: t('session_row.rsvp_accept'),
       active: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40',
-      inactive: 'text-zinc-500 border-zinc-700 hover:text-emerald-400 hover:border-emerald-500/40',
+      inactive: 'text-zinc-500 border-ui-border hover:text-emerald-400 hover:border-emerald-500/40',
     },
     {
       status: 'maybe',
       icon: '?',
       ariaLabel: t('session_row.rsvp_maybe'),
       active: 'bg-amber-500/20 text-amber-400 border-amber-500/40',
-      inactive: 'text-zinc-500 border-zinc-700 hover:text-amber-400 hover:border-amber-500/40',
+      inactive: 'text-zinc-500 border-ui-border hover:text-amber-400 hover:border-amber-500/40',
     },
     {
       status: 'declined',
       icon: '✕',
       ariaLabel: t('session_row.rsvp_decline'),
       active: 'bg-red-500/20 text-red-400 border-red-500/40',
-      inactive: 'text-zinc-500 border-zinc-700 hover:text-red-400 hover:border-red-500/40',
+      inactive: 'text-zinc-500 border-ui-border hover:text-red-400 hover:border-red-500/40',
     },
   ];
 
@@ -66,7 +66,7 @@ export default function SessionRow({ session: s, onRsvp, onDelete }: Props) {
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
           />
         ) : (
-          <div className="w-10 h-10 rounded-lg bg-zinc-800 flex items-center justify-center text-lg">🎮</div>
+          <div className="w-10 h-10 rounded-lg bg-ui-raised flex items-center justify-center text-lg">🎮</div>
         )}
       </Link>
 

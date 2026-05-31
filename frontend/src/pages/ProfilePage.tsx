@@ -90,7 +90,7 @@ export default function ProfilePage() {
             href={`${config.keycloakUrl}/realms/${config.keycloakRealm}/account/`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-between bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 hover:border-zinc-700 hover:bg-zinc-800/50 transition-colors group"
+            className="flex items-center justify-between bg-ui-surface border border-ui-border rounded-xl px-4 py-3 hover:border-ui-border hover:bg-ui-raised/50 transition-colors group"
           >
             <div>
               <p className="text-sm font-medium text-zinc-200">{t('profile.account_settings')}</p>
@@ -109,7 +109,7 @@ export default function ProfilePage() {
                     <button
                       onClick={() => handleRemoveGame(name)}
                       title={t('common.delete')}
-                      className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-zinc-900/80 text-zinc-400 hover:text-red-400 hover:bg-zinc-800 transition-colors text-xs flex items-center justify-center opacity-0 group-hover:opacity-100"
+                      className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-ui-surface/80 text-zinc-400 hover:text-red-400 hover:bg-ui-raised transition-colors text-xs flex items-center justify-center opacity-0 group-hover:opacity-100"
                     >
                       ✕
                     </button>
@@ -120,13 +120,13 @@ export default function ProfilePage() {
             <GameInput onAdd={handleAddGame} />
           </section>
 
-          <hr className="border-zinc-800" />
+          <hr className="border-ui-border" />
 
           <section className="space-y-4">
             <SectionLabel>{t('profile.social_accounts')}</SectionLabel>
 
             {/* Steam */}
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
+            <div className="bg-ui-surface border border-ui-border rounded-xl p-4 space-y-3">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-sm font-medium text-zinc-200">Steam</span>
                 <VisibilitySelect value={steamVis} onChange={setSteamVis} />
@@ -139,7 +139,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Discord */}
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
+            <div className="bg-ui-surface border border-ui-border rounded-xl p-4 space-y-3">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-sm font-medium text-zinc-200">Discord</span>
                 <VisibilitySelect value={discordVis} onChange={setDiscordVis} />

@@ -50,7 +50,7 @@ export default function GamePicker({ value, onChange, required }: Props) {
   };
 
   const inputClass =
-    'w-full h-10 bg-zinc-800 border border-zinc-700 text-sm text-zinc-200 rounded-lg px-3 focus:outline-none focus:ring-1 focus:ring-violet-500 placeholder-zinc-600';
+    'w-full h-10 bg-ui-raised border border-ui-border text-sm text-zinc-200 rounded-lg px-3 focus:outline-none focus:ring-1 focus:ring-violet-500 placeholder-zinc-600';
 
   return (
     <div ref={ref} className="relative">
@@ -68,20 +68,20 @@ export default function GamePicker({ value, onChange, required }: Props) {
       <input type="hidden" value={value} required={required} />
 
       {open && filtered.length > 0 && (
-        <ul className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto bg-zinc-900 border border-zinc-700 rounded-xl shadow-xl">
+        <ul className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto bg-ui-surface border border-ui-border rounded-xl shadow-xl">
           {filtered.map((g) => {
             const src = thumbnailSrc(g.name, g.thumbnail_url);
             return (
               <li key={g.name}>
                 <button
                   type="button"
-                  className="flex items-center gap-3 w-full px-3 py-2 text-left hover:bg-zinc-800 transition-colors"
+                  className="flex items-center gap-3 w-full px-3 py-2 text-left hover:bg-ui-raised transition-colors"
                   onClick={() => select(g.name)}
                 >
                   {src ? (
                     <img src={src} alt="" className="w-8 h-8 rounded object-cover shrink-0" />
                   ) : (
-                    <div className="w-8 h-8 rounded bg-zinc-700 flex items-center justify-center text-sm shrink-0">🎮</div>
+                    <div className="w-8 h-8 rounded bg-ui-raised flex items-center justify-center text-sm shrink-0">🎮</div>
                   )}
                   <div className="min-w-0">
                     <p className="text-sm text-zinc-100 truncate">{g.name}</p>
@@ -95,7 +95,7 @@ export default function GamePicker({ value, onChange, required }: Props) {
       )}
 
       {open && localQuery.trim().length > 0 && filtered.length === 0 && (
-        <div className="absolute z-20 mt-1 w-full bg-zinc-900 border border-zinc-700 rounded-xl shadow-xl px-3 py-2 text-sm text-zinc-500">
+        <div className="absolute z-20 mt-1 w-full bg-ui-surface border border-ui-border rounded-xl shadow-xl px-3 py-2 text-sm text-zinc-500">
           {t('game_picker.no_results')}
         </div>
       )}

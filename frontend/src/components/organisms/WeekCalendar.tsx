@@ -71,7 +71,7 @@ export default function WeekCalendar({ sessions, onRsvp }: Props) {
                       <Link
                         key={s.id}
                         to={`/sessions/${s.id}`}
-                        className="block bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden hover:border-zinc-700 transition-colors"
+                        className="block bg-ui-surface border border-ui-border rounded-lg overflow-hidden hover:border-ui-border transition-colors"
                       >
                         {thumbSrc && (
                           <img
@@ -105,7 +105,7 @@ export default function WeekCalendar({ sessions, onRsvp }: Props) {
                   )}
 
                   {daySessions.length === 0 && (
-                    <div className="h-8 rounded-lg border border-dashed border-zinc-800" />
+                    <div className="h-8 rounded-lg border border-dashed border-ui-border" />
                   )}
                 </div>
               </div>
@@ -117,7 +117,7 @@ export default function WeekCalendar({ sessions, onRsvp }: Props) {
       {later.length > 0 && (
         <div className="space-y-2">
           <p className="text-xs text-zinc-600 uppercase tracking-wider font-medium">{t('week_calendar.later_section')}</p>
-          <ul className="divide-y divide-zinc-800 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+          <ul className="divide-y divide-zinc-800 bg-ui-surface border border-ui-border rounded-xl overflow-hidden">
             {visibleLater.map((s) => (
               <SessionRow key={s.id} session={s} onRsvp={onRsvp} />
             ))}

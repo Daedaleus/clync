@@ -4,7 +4,7 @@ export type BadgeVariant = 'public' | 'private' | 'friend' | 'global' | 'groups'
 
 const styles: Record<BadgeVariant, string> = {
   public:  'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-  private: 'bg-zinc-800 text-zinc-400 border-zinc-700',
+  private: 'bg-ui-raised text-zinc-400 border-ui-border',
   friend:  'bg-violet-500/10 text-violet-400 border-violet-500/20',
   global:  'bg-blue-500/10 text-blue-400 border-blue-500/20',
   groups:  'bg-violet-500/10 text-violet-400 border-violet-500/20',
