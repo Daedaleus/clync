@@ -19,6 +19,10 @@ static MIGRATIONS: &[(&str, &str)] = &[
         "0002_schema",
         include_str!("../../migrations/0002_schema.surql"),
     ),
+    (
+        "0003_backfill_user_defaults",
+        include_str!("../../migrations/0003_backfill_user_defaults.surql"),
+    ),
 ];
 
 pub async fn run(db: &Db) -> Result<(), surrealdb::Error> {
