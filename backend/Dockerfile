@@ -19,6 +19,7 @@ RUN mkdir src && echo 'fn main() {}' > src/main.rs \
 FROM deps AS builder
 
 COPY src ./src
+COPY migrations ./migrations
 RUN cargo build --release
 
 # ── Stage 3: minimal runtime ───────────────────────────────────────────────────
