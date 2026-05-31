@@ -55,6 +55,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let db = config::db::connect(&settings.database).await?;
+    config::migrations::run(&db).await?;
     let (events_tx, _) = broadcast::channel(256);
 
     let push_svc = match PushService::new(
