@@ -23,6 +23,10 @@ static MIGRATIONS: &[(&str, &str)] = &[
         "0003_backfill_user_defaults",
         include_str!("../../migrations/0003_backfill_user_defaults.surql"),
     ),
+    (
+        "0004_fix_user_defaults",
+        include_str!("../../migrations/0004_fix_user_defaults.surql"),
+    ),
 ];
 
 pub async fn run(db: &Db) -> Result<(), surrealdb::Error> {
@@ -45,8 +49,20 @@ pub async fn run(db: &Db) -> Result<(), surrealdb::Error> {
         }
 
         tracing::info!(migration = name, "Applying migration");
-        db.query(*sql).await?;
-        // INSERT via query — avoids deserialising the datetime response
+
+        // Run each statement individually so per-statement errors propagate.
+        // Splitting on ';' and filtering blanks handles multi-statement files.
+        for stmt in sql.split(';') {
+            let stmt = stmt.trim();
+            if stmt.is_empty() {
+                continue;
+            }
+            db.query(stmt).await?.check().map_err(|e| {
+                tracing::error!(migration = name, stmt, "Migration statement failed: {e}");
+                e
+            })?;
+        }
+
         db.query(
             "INSERT INTO _migration { id: type::thing('_migration', $n), applied_at: time::now() }",
         )
