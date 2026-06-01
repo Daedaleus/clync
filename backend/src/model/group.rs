@@ -10,7 +10,7 @@ pub struct Group {
     pub discord_invite: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct MemberWithGames {
     pub keycloak_id: String,
     pub username: String,

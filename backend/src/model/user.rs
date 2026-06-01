@@ -23,7 +23,7 @@ pub struct UserSummary {
 }
 
 /// Full profile including social fields — used for own-profile reads.
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Clone, Deserialize, Default)]
 pub struct UserFullProfile {
     pub keycloak_id: String,
     pub username: String,

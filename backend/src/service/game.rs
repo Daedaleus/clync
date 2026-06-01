@@ -309,4 +309,607 @@ mod tests {
     async fn add_whitespace_only_name_returns_error() {
         assert!(svc().add("user1", "   ").await.is_err());
     }
+
+    // ── delete_game ────────────────────────────────────────────────────────────
+
+    struct InWishlistGameRepo;
+
+    #[async_trait]
+    impl GameRepo for InWishlistGameRepo {
+        async fn search(&self, _: String) -> Result<Vec<String>, surrealdb::Error> {
+            panic!()
+        }
+        async fn ensure_exists(&self, _: String) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+        async fn list_all(&self) -> Result<Vec<crate::model::game::Game>, surrealdb::Error> {
+            panic!()
+        }
+        async fn find_by_name(
+            &self,
+            _: String,
+        ) -> Result<Option<crate::model::game::Game>, surrealdb::Error> {
+            panic!()
+        }
+        async fn upsert_with_details(
+            &self,
+            _: String,
+            _: Option<String>,
+            _: Option<String>,
+        ) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+        async fn store_thumbnail(
+            &self,
+            _: String,
+            _: Vec<u8>,
+            _: String,
+        ) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+        async fn get_thumbnail(
+            &self,
+            _: String,
+        ) -> Result<Option<(Vec<u8>, String)>, surrealdb::Error> {
+            panic!()
+        }
+        async fn is_in_any_wishlist(&self, _: String) -> Result<bool, surrealdb::Error> {
+            Ok(true)
+        }
+        async fn delete(&self, _: String) -> Result<(), surrealdb::Error> {
+            Ok(())
+        }
+    }
+
+    struct NotInWishlistGameRepo;
+
+    #[async_trait]
+    impl GameRepo for NotInWishlistGameRepo {
+        async fn search(&self, _: String) -> Result<Vec<String>, surrealdb::Error> {
+            panic!()
+        }
+        async fn ensure_exists(&self, _: String) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+        async fn list_all(&self) -> Result<Vec<crate::model::game::Game>, surrealdb::Error> {
+            panic!()
+        }
+        async fn find_by_name(
+            &self,
+            name: String,
+        ) -> Result<Option<crate::model::game::Game>, surrealdb::Error> {
+            Ok(Some(crate::model::game::Game {
+                name,
+                description: None,
+                genre: None,
+                thumbnail_url: None,
+            }))
+        }
+        async fn upsert_with_details(
+            &self,
+            _: String,
+            _: Option<String>,
+            _: Option<String>,
+        ) -> Result<(), surrealdb::Error> {
+            Ok(())
+        }
+        async fn store_thumbnail(
+            &self,
+            _: String,
+            _: Vec<u8>,
+            _: String,
+        ) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+        async fn get_thumbnail(
+            &self,
+            _: String,
+        ) -> Result<Option<(Vec<u8>, String)>, surrealdb::Error> {
+            panic!()
+        }
+        async fn is_in_any_wishlist(&self, _: String) -> Result<bool, surrealdb::Error> {
+            Ok(false)
+        }
+        async fn delete(&self, _: String) -> Result<(), surrealdb::Error> {
+            Ok(())
+        }
+    }
+
+    struct NotFoundGameRepo;
+
+    #[async_trait]
+    impl GameRepo for NotFoundGameRepo {
+        async fn search(&self, _: String) -> Result<Vec<String>, surrealdb::Error> {
+            panic!()
+        }
+        async fn ensure_exists(&self, _: String) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+        async fn list_all(&self) -> Result<Vec<crate::model::game::Game>, surrealdb::Error> {
+            panic!()
+        }
+        async fn find_by_name(
+            &self,
+            _: String,
+        ) -> Result<Option<crate::model::game::Game>, surrealdb::Error> {
+            Ok(None)
+        }
+        async fn upsert_with_details(
+            &self,
+            _: String,
+            _: Option<String>,
+            _: Option<String>,
+        ) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+        async fn store_thumbnail(
+            &self,
+            _: String,
+            _: Vec<u8>,
+            _: String,
+        ) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+        async fn get_thumbnail(
+            &self,
+            _: String,
+        ) -> Result<Option<(Vec<u8>, String)>, surrealdb::Error> {
+            panic!()
+        }
+        async fn is_in_any_wishlist(&self, _: String) -> Result<bool, surrealdb::Error> {
+            panic!()
+        }
+        async fn delete(&self, _: String) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+    }
+
+    struct OkUserRepo;
+
+    #[async_trait]
+    impl UserRepo for OkUserRepo {
+        async fn upsert(&self, _: User) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+        async fn search(&self, _: String, _: String) -> Result<Vec<UserSummary>, surrealdb::Error> {
+            panic!()
+        }
+        async fn find_by_ids(&self, _: Vec<String>) -> Result<Vec<UserSummary>, surrealdb::Error> {
+            panic!()
+        }
+        async fn add_game(&self, _: String, _: String) -> Result<(), surrealdb::Error> {
+            Ok(())
+        }
+        async fn remove_game(&self, _: String, _: String) -> Result<(), surrealdb::Error> {
+            Ok(())
+        }
+        async fn get_friend_ids(&self, _: String) -> Result<Vec<String>, surrealdb::Error> {
+            panic!()
+        }
+        async fn add_friend(&self, _: String, _: String) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+        async fn remove_friend(&self, _: String, _: String) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+        async fn get_full_profile(
+            &self,
+            _: String,
+        ) -> Result<Option<crate::model::user::UserFullProfile>, surrealdb::Error> {
+            panic!()
+        }
+        async fn update_social_profile(
+            &self,
+            _: String,
+            _: Option<String>,
+            _: crate::model::user::Visibility,
+            _: Option<String>,
+            _: crate::model::user::Visibility,
+        ) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+        async fn find_who_added(
+            &self,
+            _: String,
+            _: Vec<String>,
+        ) -> Result<Vec<UserSummary>, surrealdb::Error> {
+            panic!()
+        }
+    }
+
+    #[tokio::test]
+    async fn delete_game_non_admin_in_wishlist_is_rejected() {
+        let svc = GameService::with_repos(Box::new(InWishlistGameRepo), Box::new(PanicUserRepo));
+        let err = svc.delete_game("CS2", false).await.unwrap_err();
+        assert!(matches!(err, AppError::Validation(_)));
+    }
+
+    #[tokio::test]
+    async fn delete_game_non_admin_not_in_wishlist_succeeds() {
+        let svc = GameService::with_repos(Box::new(NotInWishlistGameRepo), Box::new(PanicUserRepo));
+        svc.delete_game("CS2", false).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn delete_game_admin_bypasses_wishlist_check() {
+        // InWishlistGameRepo returns true, but admin skips the check
+        let svc = GameService::with_repos(Box::new(InWishlistGameRepo), Box::new(PanicUserRepo));
+        svc.delete_game("CS2", true).await.unwrap();
+    }
+
+    // ── create ─────────────────────────────────────────────────────────────────
+
+    #[tokio::test]
+    async fn create_empty_name_is_rejected() {
+        let svc = GameService::with_repos(Box::new(PanicGameRepo), Box::new(PanicUserRepo));
+        assert!(
+            svc.create(
+                crate::dto::game::UpsertGameRequest {
+                    name: "".into(),
+                    description: None,
+                    genre: None
+                },
+                "u1"
+            )
+            .await
+            .is_err()
+        );
+    }
+
+    #[tokio::test]
+    async fn create_whitespace_name_is_rejected() {
+        let svc = GameService::with_repos(Box::new(PanicGameRepo), Box::new(PanicUserRepo));
+        assert!(
+            svc.create(
+                crate::dto::game::UpsertGameRequest {
+                    name: "   ".into(),
+                    description: None,
+                    genre: None
+                },
+                "u1"
+            )
+            .await
+            .is_err()
+        );
+    }
+
+    // ── update ─────────────────────────────────────────────────────────────────
+
+    #[tokio::test]
+    async fn update_game_not_found_returns_validation_error() {
+        let svc = GameService::with_repos(Box::new(NotFoundGameRepo), Box::new(PanicUserRepo));
+        let err = svc
+            .update(
+                "Unknown",
+                crate::dto::game::UpdateGameRequest {
+                    description: None,
+                    genre: None,
+                },
+            )
+            .await
+            .unwrap_err();
+        assert!(matches!(err, AppError::Validation(_)));
+    }
+
+    // ── autofill guards ────────────────────────────────────────────────────────
+
+    #[tokio::test]
+    async fn get_autofill_candidates_empty_api_key_is_rejected() {
+        let err = svc().get_autofill_candidates("CS2", "").await.unwrap_err();
+        assert!(matches!(err, AppError::Validation(_)));
+    }
+
+    #[tokio::test]
+    async fn confirm_autofill_empty_api_key_is_rejected() {
+        let err = svc()
+            .confirm_autofill("CS2", 123, "", None, "user1")
+            .await
+            .unwrap_err();
+        assert!(matches!(err, AppError::Validation(_)));
+    }
+
+    // ── suggestions ────────────────────────────────────────────────────────────
+
+    struct SearchGameRepo {
+        results: Vec<String>,
+    }
+
+    #[async_trait]
+    impl GameRepo for SearchGameRepo {
+        async fn search(&self, _: String) -> Result<Vec<String>, surrealdb::Error> {
+            Ok(self.results.clone())
+        }
+        async fn ensure_exists(&self, _: String) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+        async fn list_all(&self) -> Result<Vec<crate::model::game::Game>, surrealdb::Error> {
+            panic!()
+        }
+        async fn find_by_name(
+            &self,
+            _: String,
+        ) -> Result<Option<crate::model::game::Game>, surrealdb::Error> {
+            panic!()
+        }
+        async fn upsert_with_details(
+            &self,
+            _: String,
+            _: Option<String>,
+            _: Option<String>,
+        ) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+        async fn store_thumbnail(
+            &self,
+            _: String,
+            _: Vec<u8>,
+            _: String,
+        ) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+        async fn get_thumbnail(
+            &self,
+            _: String,
+        ) -> Result<Option<(Vec<u8>, String)>, surrealdb::Error> {
+            panic!()
+        }
+        async fn is_in_any_wishlist(&self, _: String) -> Result<bool, surrealdb::Error> {
+            panic!()
+        }
+        async fn delete(&self, _: String) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+    }
+
+    #[tokio::test]
+    async fn suggestions_with_sufficient_query_returns_results() {
+        let svc = GameService::with_repos(
+            Box::new(SearchGameRepo {
+                results: vec!["CS2".to_owned()],
+            }),
+            Box::new(PanicUserRepo),
+        );
+        let result = svc.suggestions("cs").await.unwrap();
+        assert_eq!(result, vec!["CS2"]);
+    }
+
+    // ── add success path ───────────────────────────────────────────────────────
+
+    struct EnsureExistsGameRepo;
+
+    #[async_trait]
+    impl GameRepo for EnsureExistsGameRepo {
+        async fn search(&self, _: String) -> Result<Vec<String>, surrealdb::Error> {
+            panic!()
+        }
+        async fn ensure_exists(&self, _: String) -> Result<(), surrealdb::Error> {
+            Ok(())
+        }
+        async fn list_all(&self) -> Result<Vec<crate::model::game::Game>, surrealdb::Error> {
+            panic!()
+        }
+        async fn find_by_name(
+            &self,
+            _: String,
+        ) -> Result<Option<crate::model::game::Game>, surrealdb::Error> {
+            panic!()
+        }
+        async fn upsert_with_details(
+            &self,
+            _: String,
+            _: Option<String>,
+            _: Option<String>,
+        ) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+        async fn store_thumbnail(
+            &self,
+            _: String,
+            _: Vec<u8>,
+            _: String,
+        ) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+        async fn get_thumbnail(
+            &self,
+            _: String,
+        ) -> Result<Option<(Vec<u8>, String)>, surrealdb::Error> {
+            panic!()
+        }
+        async fn is_in_any_wishlist(&self, _: String) -> Result<bool, surrealdb::Error> {
+            panic!()
+        }
+        async fn delete(&self, _: String) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+    }
+
+    #[tokio::test]
+    async fn add_valid_name_calls_ensure_exists_and_add_game() {
+        let svc = GameService::with_repos(Box::new(EnsureExistsGameRepo), Box::new(OkUserRepo));
+        svc.add("user1", "CS2").await.unwrap();
+    }
+
+    // ── remove — auto-delete logic ─────────────────────────────────────────────
+
+    struct RemoveGameRepo {
+        in_wishlist: bool,
+    }
+
+    #[async_trait]
+    impl GameRepo for RemoveGameRepo {
+        async fn search(&self, _: String) -> Result<Vec<String>, surrealdb::Error> {
+            panic!()
+        }
+        async fn ensure_exists(&self, _: String) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+        async fn list_all(&self) -> Result<Vec<crate::model::game::Game>, surrealdb::Error> {
+            panic!()
+        }
+        async fn find_by_name(
+            &self,
+            _: String,
+        ) -> Result<Option<crate::model::game::Game>, surrealdb::Error> {
+            panic!()
+        }
+        async fn upsert_with_details(
+            &self,
+            _: String,
+            _: Option<String>,
+            _: Option<String>,
+        ) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+        async fn store_thumbnail(
+            &self,
+            _: String,
+            _: Vec<u8>,
+            _: String,
+        ) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+        async fn get_thumbnail(
+            &self,
+            _: String,
+        ) -> Result<Option<(Vec<u8>, String)>, surrealdb::Error> {
+            panic!()
+        }
+        async fn is_in_any_wishlist(&self, _: String) -> Result<bool, surrealdb::Error> {
+            Ok(self.in_wishlist)
+        }
+        async fn delete(&self, _: String) -> Result<(), surrealdb::Error> {
+            // If in_wishlist is true this must NOT be called
+            if self.in_wishlist {
+                panic!("delete called even though game still in wishlists")
+            }
+            Ok(())
+        }
+    }
+
+    #[tokio::test]
+    async fn remove_last_user_triggers_game_delete() {
+        let svc = GameService::with_repos(
+            Box::new(RemoveGameRepo { in_wishlist: false }),
+            Box::new(OkUserRepo),
+        );
+        svc.remove("user1", "CS2").await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn remove_other_wishlists_exist_skips_delete() {
+        let svc = GameService::with_repos(
+            Box::new(RemoveGameRepo { in_wishlist: true }),
+            Box::new(OkUserRepo),
+        );
+        svc.remove("user1", "CS2").await.unwrap();
+    }
+
+    // ── update success ─────────────────────────────────────────────────────────
+
+    #[tokio::test]
+    async fn update_success_path() {
+        let svc = GameService::with_repos(Box::new(NotInWishlistGameRepo), Box::new(PanicUserRepo));
+        svc.update(
+            "CS2",
+            crate::dto::game::UpdateGameRequest {
+                description: Some("desc".into()),
+                genre: None,
+            },
+        )
+        .await
+        .unwrap();
+    }
+
+    // ── trivial pass-throughs ──────────────────────────────────────────────────
+
+    struct TrivialGameRepo;
+
+    #[async_trait]
+    impl GameRepo for TrivialGameRepo {
+        async fn search(&self, _: String) -> Result<Vec<String>, surrealdb::Error> {
+            panic!()
+        }
+        async fn ensure_exists(&self, _: String) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+        async fn list_all(&self) -> Result<Vec<crate::model::game::Game>, surrealdb::Error> {
+            Ok(vec![crate::model::game::Game {
+                name: "CS2".into(),
+                description: None,
+                genre: None,
+                thumbnail_url: None,
+            }])
+        }
+        async fn find_by_name(
+            &self,
+            name: String,
+        ) -> Result<Option<crate::model::game::Game>, surrealdb::Error> {
+            Ok(Some(crate::model::game::Game {
+                name,
+                description: None,
+                genre: None,
+                thumbnail_url: None,
+            }))
+        }
+        async fn upsert_with_details(
+            &self,
+            _: String,
+            _: Option<String>,
+            _: Option<String>,
+        ) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+        async fn store_thumbnail(
+            &self,
+            _: String,
+            _: Vec<u8>,
+            _: String,
+        ) -> Result<(), surrealdb::Error> {
+            Ok(())
+        }
+        async fn get_thumbnail(
+            &self,
+            _: String,
+        ) -> Result<Option<(Vec<u8>, String)>, surrealdb::Error> {
+            Ok(Some((vec![1, 2, 3], "image/png".into())))
+        }
+        async fn is_in_any_wishlist(&self, _: String) -> Result<bool, surrealdb::Error> {
+            panic!()
+        }
+        async fn delete(&self, _: String) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+    }
+
+    #[tokio::test]
+    async fn list_all_returns_games() {
+        let svc = GameService::with_repos(Box::new(TrivialGameRepo), Box::new(PanicUserRepo));
+        let result = svc.list_all().await.unwrap();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].name, "CS2");
+    }
+
+    #[tokio::test]
+    async fn get_by_name_returns_game() {
+        let svc = GameService::with_repos(Box::new(TrivialGameRepo), Box::new(PanicUserRepo));
+        let result = svc.get_by_name("CS2").await.unwrap();
+        assert_eq!(result.unwrap().name, "CS2");
+    }
+
+    #[tokio::test]
+    async fn store_thumbnail_succeeds() {
+        let svc = GameService::with_repos(Box::new(TrivialGameRepo), Box::new(PanicUserRepo));
+        svc.store_thumbnail("CS2", vec![1, 2, 3], "image/png".into())
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn get_thumbnail_returns_bytes_and_content_type() {
+        let svc = GameService::with_repos(Box::new(TrivialGameRepo), Box::new(PanicUserRepo));
+        let result = svc.get_thumbnail("CS2").await.unwrap().unwrap();
+        assert_eq!(result.0, vec![1, 2, 3]);
+        assert_eq!(result.1, "image/png");
+    }
 }

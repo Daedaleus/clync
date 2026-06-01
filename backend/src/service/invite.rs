@@ -252,4 +252,77 @@ mod tests {
             .unwrap_err();
         assert!(matches!(err, AppError::Validation(ref msg) if msg.contains("invalid_or_expired")));
     }
+
+    // ── validate ──────────────────────────────────────────────────────────────
+
+    struct ValidCodeRepo;
+
+    #[async_trait]
+    impl InviteRepo for ValidCodeRepo {
+        async fn create(&self, _: String, _: String, _: String) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+        async fn find_valid(&self, code: String) -> Result<Option<InviteRecord>, surrealdb::Error> {
+            Ok(Some(InviteRecord {
+                id: "inv:1".to_owned(),
+                code,
+                created_by: "creator".to_owned(),
+                expires_at: "2099-01-01T00:00:00Z".to_owned(),
+                used: false,
+            }))
+        }
+        async fn mark_used(&self, _: String) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+    }
+
+    #[tokio::test]
+    async fn validate_returns_false_when_code_not_found() {
+        let result = InviteService::with_repo(Box::new(NoCodeRepo))
+            .validate("nonexistent")
+            .await
+            .unwrap();
+        assert!(!result);
+    }
+
+    #[tokio::test]
+    async fn validate_returns_true_when_code_exists() {
+        let result = InviteService::with_repo(Box::new(ValidCodeRepo))
+            .validate("some_code")
+            .await
+            .unwrap();
+        assert!(result);
+    }
+
+    // ── create_invite ─────────────────────────────────────────────────────────
+
+    struct CapturingInviteRepo {
+        captured: std::sync::Arc<std::sync::Mutex<Option<String>>>,
+    }
+
+    #[async_trait]
+    impl InviteRepo for CapturingInviteRepo {
+        async fn create(&self, code: String, _: String, _: String) -> Result<(), surrealdb::Error> {
+            *self.captured.lock().unwrap() = Some(code);
+            Ok(())
+        }
+        async fn find_valid(&self, _: String) -> Result<Option<InviteRecord>, surrealdb::Error> {
+            panic!()
+        }
+        async fn mark_used(&self, _: String) -> Result<(), surrealdb::Error> {
+            panic!()
+        }
+    }
+
+    #[tokio::test]
+    async fn create_invite_returns_32_char_hex_code() {
+        let captured = std::sync::Arc::new(std::sync::Mutex::new(None));
+        let svc = InviteService::with_repo(Box::new(CapturingInviteRepo {
+            captured: captured.clone(),
+        }));
+        let code = svc.create_invite("creator").await.unwrap();
+        assert_eq!(code.len(), 32, "UUID without dashes is 32 hex chars");
+        assert!(code.chars().all(|c| c.is_ascii_hexdigit()));
+        assert_eq!(captured.lock().unwrap().as_deref(), Some(code.as_str()));
+    }
 }
