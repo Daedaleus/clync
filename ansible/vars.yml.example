@@ -19,6 +19,10 @@ domain: pkeil.de
 frontend_host: "{{ domain }}"
 api_host: "{{ domain }}"          # subdomains: api.{{ domain }}
 keycloak_host: "{{ domain }}"     # subdomains: auth.{{ domain }}
+# paths mode:      Grafana läuft unter https://{{ domain }}/monitoring
+#                  monitoring_host wird nicht benötigt
+# subdomains mode: eigener Host für Grafana
+monitoring_host: "monitoring.{{ domain }}"  # nur für subdomains-Routing relevant
 
 # ── VAPID (Web Push) ───────────────────────────────────────────────────────────
 # Generate: npx web-push generate-vapid-keys
@@ -38,6 +42,13 @@ kc_admin_pass: ""
 
 postgres_user: keycloak
 postgres_pass: ""
+
+# ── Monitoring ─────────────────────────────────────────────────────────────────
+# Grafana admin password (fallback login, Keycloak OAuth is preferred)
+grafana_admin_pass: ""
+# Keycloak client secret for Grafana OAuth2.
+# Create via Keycloak Admin UI: Clients → grafana → Credentials → Regenerate
+grafana_oauth_secret: ""
 
 # ── Deploy options ─────────────────────────────────────────────────────────────
 # Image tag to pull from GHCR. Use 'latest' or a specific version e.g. '0.6.0'

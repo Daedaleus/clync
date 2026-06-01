@@ -17,7 +17,9 @@ use axum::{
         HeaderValue, Method, Request,
         header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
     },
+    routing::get,
 };
+use axum_prometheus::PrometheusMetricLayer;
 use tokio::sync::{RwLock, broadcast};
 use tokio::time::Duration;
 use tower_http::{
@@ -113,6 +115,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Expose x-request-id so the browser JS can read it for error correlation.
         .expose_headers([axum::http::HeaderName::from_static("x-request-id")]);
 
+    let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
+
     let protected = controller::protected_routes().layer(axum::middleware::from_fn_with_state(
         state.clone(),
         middleware::auth::auth_middleware,
@@ -188,6 +192,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_state(state)
         // Innermost: add security headers
         .layer(from_fn(middleware::security::security_headers))
+        // Prometheus metrics — records method, matched path, status code, and latency
+        .layer(prometheus_layer)
         // HTTP access logging — span carries request_id + method + path;
         // all log calls within a handler automatically inherit these fields.
         .layer(
@@ -220,9 +226,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .layer(DefaultBodyLimit::max(2 * 1024 * 1024));
 
     let addr: std::net::SocketAddr = format!("0.0.0.0:{}", settings.server.port).parse()?;
-    tracing::info!(addr = %addr, "Server listening");
+    tracing::info!(addr = %addr, "API server listening");
+
+    // Metrics endpoint on a separate internal-only port — not exposed via Traefik.
+    // Prometheus scrapes this directly over the monitoring Docker network.
+    let metrics_app = Router::new().route(
+        "/metrics",
+        get(move || async move { metric_handle.render() }),
+    );
+    let metrics_addr = std::net::SocketAddr::from(([0, 0, 0, 0], 9091));
+    tracing::info!(addr = %metrics_addr, "Metrics server listening");
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
-    axum::serve(listener, app).await?;
+    let metrics_listener = tokio::net::TcpListener::bind(metrics_addr).await?;
+
+    tokio::select! {
+        r = axum::serve(listener, app) => r?,
+        r = axum::serve(metrics_listener, metrics_app) => r?,
+    }
+
     Ok(())
 }

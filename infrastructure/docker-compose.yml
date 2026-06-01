@@ -1,13 +1,17 @@
 name: clync
 
-# proxy  — external; created and managed by Traefik.
-#           Services on this network are reachable via Traefik labels.
-# internal — private; no Traefik attachment.
-#           Used for container-to-container traffic (DB, auth backend).
+# proxy      — external; created and managed by Traefik.
+#              Services on this network are reachable via Traefik labels.
+# internal   — private; no Traefik attachment.
+#              Used for container-to-container traffic (DB, auth, backend).
+# monitoring — private; isolated metrics/log pipeline.
+#              Only backend (scrape target), prometheus, loki, promtail,
+#              and grafana are attached. Nothing else touches this network.
 networks:
   proxy:
     external: true
   internal:
+  monitoring:
 
 services:
 
@@ -53,6 +57,7 @@ services:
     networks:
       - proxy
       - internal
+      - monitoring
     environment:
       APP__DATABASE__URL: "surrealdb:8000"
       APP__DATABASE__NAMESPACE: clync
@@ -173,6 +178,109 @@ services:
       timeout: 5s
       retries: 5
 
+  # ── Prometheus ──────────────────────────────────────────────────────────────
+  prometheus:
+    image: docker.io/prom/prometheus:v3
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
+    networks:
+      - monitoring
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+
+  # ── Loki ────────────────────────────────────────────────────────────────────
+  loki:
+    image: docker.io/grafana/loki:3
+    restart: unless-stopped
+    command: -config.file=/etc/loki/loki-config.yaml
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
+    networks:
+      - monitoring
+    volumes:
+      - ./monitoring/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+      - loki_data:/loki
+
+  # ── Promtail ─────────────────────────────────────────────────────────────────
+  promtail:
+    image: docker.io/grafana/promtail:3
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/promtail-config.yaml
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
+    networks:
+      - monitoring
+    volumes:
+      - ./monitoring/promtail-config.yaml:/etc/promtail/promtail-config.yaml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - loki
+
+  # ── Grafana ──────────────────────────────────────────────────────────────────
+  grafana:
+    image: docker.io/grafana/grafana:13.0.1
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
+    networks:
+      - proxy
+      - monitoring
+    environment:
+      GF_SERVER_ROOT_URL: "https://${MONITORING_HOST}"
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_ADMIN_PASS}"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      # Keycloak OAuth2
+      GF_AUTH_GENERIC_OAUTH_ENABLED: "true"
+      GF_AUTH_GENERIC_OAUTH_NAME: Keycloak
+      # Only Keycloak users with the 'admin' realm role can log in.
+      # STRICT=true: empty role expression → access denied (non-admins blocked).
+      GF_AUTH_GENERIC_OAUTH_ALLOW_SIGN_UP: "true"
+      GF_AUTH_GENERIC_OAUTH_AUTO_LOGIN: "false"
+      GF_AUTH_GENERIC_OAUTH_CLIENT_ID: grafana
+      GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET: "${GRAFANA_OAUTH_SECRET}"
+      GF_AUTH_GENERIC_OAUTH_SCOPES: "openid email profile"
+      GF_AUTH_GENERIC_OAUTH_AUTH_URL: "https://${KEYCLOAK_HOST}/realms/${VITE_KEYCLOAK_REALM:-Clync}/protocol/openid-connect/auth"
+      GF_AUTH_GENERIC_OAUTH_TOKEN_URL: "https://${KEYCLOAK_HOST}/realms/${VITE_KEYCLOAK_REALM:-Clync}/protocol/openid-connect/token"
+      GF_AUTH_GENERIC_OAUTH_API_URL: "https://${KEYCLOAK_HOST}/realms/${VITE_KEYCLOAK_REALM:-Clync}/protocol/openid-connect/userinfo"
+      GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH: "contains(realm_access.roles[*], 'admin') && 'Admin' || ''"
+      GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_STRICT: "true"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+      - loki
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.clync-grafana.rule=Host(`${MONITORING_HOST}`)"
+      - "traefik.http.routers.clync-grafana.entrypoints=websecure"
+      - "traefik.http.routers.clync-grafana.tls=true"
+      - "traefik.http.services.clync-grafana.loadbalancer.server.port=3000"
+
 volumes:
   surrealdb_data:
   postgres_data:
+  prometheus_data:
+  loki_data:
+  grafana_data:
