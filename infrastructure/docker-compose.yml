@@ -234,7 +234,7 @@ services:
 
   # ── Grafana ──────────────────────────────────────────────────────────────────
   grafana:
-    image: docker.io/grafana/grafana:11
+    image: docker.io/grafana/grafana:13.0.1
     restart: unless-stopped
     logging:
       driver: json-file
