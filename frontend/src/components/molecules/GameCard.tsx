@@ -21,7 +21,7 @@ export default function GameCard({ game, inWishlist, onToggle, className = '' }:
   const { t } = useTranslation();
   const src = thumbnailSrc(game.name, game.thumbnail_url);
   return (
-    <div className={`bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden hover:border-zinc-700 transition-colors flex flex-col ${className}`}>
+    <div className={`bg-ui-surface border border-ui-border rounded-xl overflow-hidden hover:border-ui-border transition-colors flex flex-col ${className}`}>
       <Link to={`/library/${encodeURIComponent(game.name)}`} className="block shrink-0">
         {src ? (
           <img
@@ -36,7 +36,7 @@ export default function GameCard({ game, inWishlist, onToggle, className = '' }:
           />
         ) : null}
         <div
-          className="w-full h-32 bg-zinc-800 items-center justify-center text-3xl text-zinc-600"
+          className="w-full h-32 bg-ui-raised items-center justify-center text-3xl text-zinc-600"
           style={{ display: src ? 'none' : 'flex' }}
         >
           🎮

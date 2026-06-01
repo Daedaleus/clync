@@ -137,7 +137,7 @@ export default function GameDetailPage() {
       {game && (
         <>
           {src && (
-            <div className="rounded-xl overflow-hidden border border-zinc-800">
+            <div className="rounded-xl overflow-hidden border border-ui-border">
               <img src={src} alt={game.name} className="w-full max-h-64 object-cover"
                 onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }} />
             </div>
@@ -147,7 +147,7 @@ export default function GameDetailPage() {
             <div className="min-w-0">
               <h1 className="text-2xl font-bold text-zinc-100">{game.name}</h1>
               {game.genre && (
-                <span className="inline-block mt-1 text-xs px-2.5 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400">
+                <span className="inline-block mt-1 text-xs px-2.5 py-0.5 rounded-full bg-ui-raised border border-ui-border text-zinc-400">
                   {game.genre}
                 </span>
               )}
@@ -198,7 +198,7 @@ export default function GameDetailPage() {
           )}
 
           {editing && (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
+            <div className="bg-ui-surface border border-ui-border rounded-xl p-4 space-y-3">
               <SectionLabel>{t('game_detail.edit_section')}</SectionLabel>
               <div className="space-y-1.5">
                 <label className="text-xs text-zinc-500">{t('game_detail.genre_label')}</label>
@@ -211,7 +211,7 @@ export default function GameDetailPage() {
                   onChange={(e) => setEditDesc(e.target.value)}
                   placeholder={t('game_detail.description_placeholder')}
                   rows={3}
-                  className="w-full bg-zinc-800 border border-zinc-700 text-sm text-zinc-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-violet-500 resize-none placeholder-zinc-600"
+                  className="w-full bg-ui-raised border border-ui-border text-sm text-zinc-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-violet-500 resize-none placeholder-zinc-600"
                 />
               </div>
               <div className="space-y-1.5">
@@ -221,7 +221,7 @@ export default function GameDetailPage() {
                   type="file"
                   accept="image/*"
                   onChange={(e) => setEditFile(e.target.files?.[0] ?? null)}
-                  className="text-sm text-zinc-400 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:bg-zinc-700 file:text-zinc-200 hover:file:bg-zinc-600 cursor-pointer"
+                  className="text-sm text-zinc-400 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:bg-ui-raised file:text-zinc-200 hover:file:bg-zinc-600 cursor-pointer"
                 />
               </div>
               <div className="flex gap-2">

@@ -209,7 +209,7 @@ export default function GroupDetailPage() {
           </section>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
+            <section className="bg-ui-surface border border-ui-border rounded-xl p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <SectionLabel count={group.members.length}>{t('group_detail.members')}</SectionLabel>
                 {!group.is_public && myId && group.members.some((m) => m.keycloak_id === myId) && (
@@ -220,7 +220,7 @@ export default function GroupDetailPage() {
               </div>
 
               {showInvite && (
-                <div className="border border-zinc-700 rounded-lg overflow-hidden">
+                <div className="border border-ui-border rounded-lg overflow-hidden">
                   {invitable.length === 0 ? (
                     <p className="px-3 py-2 text-xs text-zinc-500">{t('group_detail.no_invitable_friends')}</p>
                   ) : (
@@ -277,7 +277,7 @@ export default function GroupDetailPage() {
                 })()}
             </section>
 
-            <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
+            <section className="bg-ui-surface border border-ui-border rounded-xl p-4 space-y-3">
               <SectionLabel count={group.possible_games.length}>{t('group_detail.possible_games')}</SectionLabel>
               {group.possible_games.length === 0 ? (
                 <p className="text-zinc-500 text-sm">
@@ -299,7 +299,7 @@ export default function GroupDetailPage() {
                             <span className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded-full border ${
                               all
                                 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                : 'bg-zinc-800 text-zinc-400 border-zinc-700'
+                                : 'bg-ui-raised text-zinc-400 border-ui-border'
                             }`}>
                               {count}/{total}
                             </span>

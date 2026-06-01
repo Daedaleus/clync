@@ -43,7 +43,7 @@ const navLink = ({ isActive }: { isActive: boolean }) =>
   `text-sm transition-colors ${isActive ? 'text-zinc-100 font-medium' : 'text-zinc-400 hover:text-zinc-200'}`;
 
 const dropdownItem =
-  'flex items-center gap-2.5 w-full text-left px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 transition-colors cursor-pointer';
+  'flex items-center gap-2.5 w-full text-left px-4 py-2 text-sm text-zinc-300 hover:bg-ui-raised hover:text-zinc-100 transition-colors cursor-pointer';
 
 // ── AppHeader ─────────────────────────────────────────────────────────────────
 
@@ -85,7 +85,7 @@ export default function AppHeader() {
 
   return (
     <>
-    <header className="sticky top-0 z-10 bg-zinc-950/90 backdrop-blur-sm border-b border-zinc-800">
+    <header className="sticky top-0 z-10 bg-app/90 backdrop-blur-sm border-b border-ui-border">
       <div className="mx-auto max-w-2xl px-4 h-14 flex items-center justify-between gap-4">
 
         {/* Left: logo + desktop nav */}
@@ -109,7 +109,7 @@ export default function AppHeader() {
             <button
               onClick={handleBellToggle}
               title={subscribed ? t('header.notifications_disable') : t('header.notifications_enable')}
-              className="hidden sm:flex items-center justify-center w-8 h-8 rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer"
+              className="hidden sm:flex items-center justify-center w-8 h-8 rounded-lg hover:bg-ui-raised transition-colors cursor-pointer"
             >
               <BellIcon active={subscribed} />
             </button>
@@ -126,7 +126,7 @@ export default function AppHeader() {
             </button>
 
             {menuOpen && (
-              <div className="absolute right-0 top-full mt-2 bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl min-w-44 py-1 z-20">
+              <div className="absolute right-0 top-full mt-2 bg-ui-surface border border-ui-border rounded-xl shadow-xl min-w-44 py-1 z-20">
 
                 {/* Mobile-only nav items */}
                 <div className="sm:hidden">
@@ -140,7 +140,7 @@ export default function AppHeader() {
                       <span>{subscribed ? t('header.notifications_on') : t('header.notifications_off')}</span>
                     </button>
                   )}
-                  <hr className="border-zinc-800 my-1" />
+                  <hr className="border-ui-border my-1" />
                 </div>
 
                 {/* Always: Profil + logout */}
@@ -149,14 +149,14 @@ export default function AppHeader() {
                   {t('header.invite_friend')}
                 </button>
                 <Link to="/about" className={dropdownItem} onClick={close}>{t('footer.about')}</Link>
-                <hr className="border-zinc-800 my-1" />
+                <hr className="border-ui-border my-1" />
                 <button
                   className={dropdownItem}
                   onClick={() => { i18n.changeLanguage((i18n.resolvedLanguage ?? i18n.language).startsWith('de') ? 'en' : 'de'); close(); }}
                 >
                   {(i18n.resolvedLanguage ?? i18n.language).startsWith('de') ? '🇬🇧 English' : '🇩🇪 Deutsch'}
                 </button>
-                <hr className="border-zinc-800 my-1" />
+                <hr className="border-ui-border my-1" />
                 <button
                   className={`${dropdownItem} text-zinc-400`}
                   onClick={() => keycloak.logout()}

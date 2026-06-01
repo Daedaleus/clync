@@ -171,7 +171,7 @@ export default function SessionDetailPage() {
       {error && <ErrorBanner message={error} />}
 
       {/* Hero */}
-      <div className="relative rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800">
+      <div className="relative rounded-2xl overflow-hidden bg-ui-surface border border-ui-border">
         {thumbSrc ? (
           <>
             <img
@@ -184,7 +184,7 @@ export default function SessionDetailPage() {
             <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-zinc-950/30 to-transparent" />
           </>
         ) : (
-          <div className="w-full h-32 bg-zinc-800 flex items-center justify-center text-5xl">🎮</div>
+          <div className="w-full h-32 bg-ui-raised flex items-center justify-center text-5xl">🎮</div>
         )}
 
         {/* Text over gradient */}
@@ -238,7 +238,7 @@ export default function SessionDetailPage() {
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors disabled:opacity-50 ${
                       session.my_rsvp === status
                         ? active
-                        : `border-zinc-700 text-zinc-400 ${hover}`
+                        : `border-ui-border text-zinc-400 ${hover}`
                     }`}
                   >
                     <span className="text-xs">{icon}</span>
@@ -274,7 +274,7 @@ export default function SessionDetailPage() {
       <section className="space-y-3">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-zinc-400">{t('session_detail.participants')}</span>
-          <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400">
+          <span className="text-xs px-2 py-0.5 rounded-full bg-ui-raised border border-ui-border text-zinc-400">
             {session.participant_count}
           </span>
         </div>
@@ -283,7 +283,7 @@ export default function SessionDetailPage() {
           {/* Creator first */}
           <Link
             to={`/users/${session.user_id}`}
-            className="flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2.5 hover:border-zinc-700 hover:bg-zinc-800/50 transition-colors group"
+            className="flex items-center gap-3 bg-ui-surface border border-ui-border rounded-xl px-3 py-2.5 hover:border-ui-border hover:bg-ui-raised/50 transition-colors group"
           >
             <Avatar name={session.username} size="sm" />
             <div className="min-w-0">
@@ -298,7 +298,7 @@ export default function SessionDetailPage() {
             <Link
               key={p.keycloak_id}
               to={`/users/${p.keycloak_id}`}
-              className="flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2.5 hover:border-zinc-700 hover:bg-zinc-800/50 transition-colors group"
+              className="flex items-center gap-3 bg-ui-surface border border-ui-border rounded-xl px-3 py-2.5 hover:border-ui-border hover:bg-ui-raised/50 transition-colors group"
             >
               <Avatar name={p.username} size="sm" />
               <p className="text-sm text-zinc-200 truncate group-hover:text-violet-300 transition-colors">
@@ -335,7 +335,7 @@ export default function SessionDetailPage() {
       {session.notes && (
         <section className="space-y-1.5">
           <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">{t('session_detail.notes_label')}</span>
-          <p className="text-sm text-zinc-300 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 whitespace-pre-wrap">
+          <p className="text-sm text-zinc-300 bg-ui-surface border border-ui-border rounded-xl px-4 py-3 whitespace-pre-wrap">
             {session.notes}
           </p>
         </section>
@@ -354,7 +354,7 @@ export default function SessionDetailPage() {
           {invitableUsers !== null && invitableUsers.length > 0 && (
             <ul className="space-y-2">
               {invitableUsers.map((u) => (
-                <li key={u.keycloak_id} className="flex items-center justify-between gap-3 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5">
+                <li key={u.keycloak_id} className="flex items-center justify-between gap-3 bg-ui-surface border border-ui-border rounded-xl px-4 py-2.5">
                   <span className="text-sm text-zinc-200">{u.username}</span>
                   <Button
                     size="sm"

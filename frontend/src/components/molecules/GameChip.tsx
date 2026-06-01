@@ -5,7 +5,7 @@ interface Props {
 
 export default function GameChip({ name, onRemove }: Props) {
   return (
-    <span className="flex items-center gap-1.5 bg-zinc-800 border border-zinc-700 rounded-full px-3 py-1 text-sm text-zinc-200">
+    <span className="flex items-center gap-1.5 bg-ui-raised border border-ui-border rounded-full px-3 py-1 text-sm text-zinc-200">
       {name}
       {onRemove && (
         <button

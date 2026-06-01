@@ -35,14 +35,14 @@ class ErrorBoundaryInner extends Component<Props, State> {
     const { t } = this.props;
     if (this.state.error) {
       return (
-        <div className="flex min-h-screen items-center justify-center bg-zinc-950 p-6">
-          <div className="max-w-md w-full rounded-2xl bg-zinc-900 border border-zinc-800 p-8 text-center space-y-4">
+        <div className="flex min-h-screen items-center justify-center bg-app p-6">
+          <div className="max-w-md w-full rounded-2xl bg-ui-surface border border-ui-border p-8 text-center space-y-4">
             <div className="text-4xl">⚠️</div>
             <h1 className="text-xl font-semibold text-white">{t('error_boundary.title')}</h1>
             <p className="text-sm text-zinc-400">
               {t('error_boundary.message')}
             </p>
-            <details className="text-left text-xs text-zinc-500 bg-zinc-800 rounded-lg p-3 max-h-32 overflow-auto">
+            <details className="text-left text-xs text-zinc-500 bg-ui-raised rounded-lg p-3 max-h-32 overflow-auto">
               <summary className="cursor-pointer mb-1">{t('error_boundary.details_summary')}</summary>
               {this.state.error.message}
             </details>

@@ -62,7 +62,7 @@ export default function JoinPage() {
 
   if (valid === null) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+      <div className="min-h-screen bg-app flex items-center justify-center">
         <p className="text-zinc-500 text-sm">{t('join.checking')}</p>
       </div>
     );
@@ -70,7 +70,7 @@ export default function JoinPage() {
 
   if (!valid) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-app flex items-center justify-center p-4">
         <div className="w-full max-w-sm text-center space-y-4">
           <p className="text-4xl">🔗</p>
           <h1 className="text-xl font-bold text-zinc-100">{t('join.invalid_title')}</h1>
@@ -82,7 +82,7 @@ export default function JoinPage() {
 
   if (done) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-app flex items-center justify-center p-4">
         <div className="w-full max-w-sm text-center space-y-4">
           <p className="text-4xl">🎉</p>
           <h1 className="text-xl font-bold text-zinc-100">{t('join.done_title')}</h1>
@@ -94,7 +94,7 @@ export default function JoinPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-app flex items-center justify-center p-4">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-2">
           <p className="text-4xl">👋</p>

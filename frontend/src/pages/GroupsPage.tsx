@@ -106,7 +106,7 @@ export default function GroupsPage() {
         </div>
 
         {showCreateForm && (
-          <form onSubmit={handleCreate} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex flex-wrap gap-3 items-end">
+          <form onSubmit={handleCreate} className="bg-ui-surface border border-ui-border rounded-xl p-4 flex flex-wrap gap-3 items-end">
             <div className="flex-1 min-w-40 space-y-1.5">
               <SectionLabel>{t('common.edit')}</SectionLabel>
               <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder={t('groups.group_name_placeholder')} required className="w-full" />
@@ -122,7 +122,7 @@ export default function GroupsPage() {
         {myGroups.length === 0 ? (
           <p className="text-zinc-500 text-sm">{t('groups.no_groups')}</p>
         ) : (
-          <ul className="divide-y divide-zinc-800 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+          <ul className="divide-y divide-zinc-800 bg-ui-surface border border-ui-border rounded-xl overflow-hidden">
             {myGroups.map((g) => (
               <li key={g.id} className="px-4 py-3">
                 <div className="flex items-center justify-between">
@@ -147,7 +147,7 @@ export default function GroupsPage() {
         )}
       </section>
 
-      <hr className="border-zinc-800" />
+      <hr className="border-ui-border" />
 
       {/* Suche */}
       <section className="space-y-3">
@@ -155,7 +155,7 @@ export default function GroupsPage() {
         <SearchBar value={searchQuery} onChange={setSearchQuery} onSubmit={handleSearch} placeholder={t('groups.search_placeholder')} />
 
         {searchResults.length > 0 && (
-          <ul className="divide-y divide-zinc-800 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+          <ul className="divide-y divide-zinc-800 bg-ui-surface border border-ui-border rounded-xl overflow-hidden">
             {searchResults.map((g) => {
               const isMember = myGroupIds.has(g.id) || joined.has(g.id);
               return (

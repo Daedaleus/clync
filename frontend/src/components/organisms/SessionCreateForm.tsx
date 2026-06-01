@@ -126,11 +126,11 @@ export default function SessionCreateForm({ groups, onCreate, onError, onCancel 
   };
 
   const fieldClass =
-    'w-full h-10 bg-zinc-800 border border-zinc-700 text-sm text-zinc-200 rounded-lg px-3 ' +
+    'w-full h-10 bg-ui-raised border border-ui-border text-sm text-zinc-200 rounded-lg px-3 ' +
     'focus:outline-none focus:ring-1 focus:ring-violet-500 [color-scheme:dark]';
 
   return (
-    <form data-testid="session-create-form" onSubmit={handleSubmit} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-4">
+    <form data-testid="session-create-form" onSubmit={handleSubmit} className="bg-ui-surface border border-ui-border rounded-xl p-4 space-y-4">
 
       {/* Game */}
       <div className="space-y-1.5">
@@ -204,7 +204,7 @@ export default function SessionCreateForm({ groups, onCreate, onError, onCancel 
               className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
                 selectedGroups.has(g.id)
                   ? 'bg-violet-600 text-white border-violet-600'
-                  : 'bg-zinc-800 text-zinc-300 border-zinc-700 hover:border-zinc-500'
+                  : 'bg-ui-raised text-zinc-300 border-ui-border hover:border-zinc-500'
               }`}
             >
               <input type="checkbox" className="sr-only" checked={selectedGroups.has(g.id)} onChange={() => toggleGroup(g.id)} />
@@ -226,7 +226,7 @@ export default function SessionCreateForm({ groups, onCreate, onError, onCancel 
           maxLength={500}
           rows={3}
           placeholder={t('session_form.notes_placeholder')}
-          className="w-full bg-zinc-800 border border-zinc-700 text-sm text-zinc-200 placeholder:text-zinc-600 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-violet-500"
+          className="w-full bg-ui-raised border border-ui-border text-sm text-zinc-200 placeholder:text-zinc-600 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-violet-500"
         />
         {notes.length > 400 && (
           <p className="text-xs text-zinc-500 text-right">{t('session_form.notes_counter', { count: notes.length })}</p>

@@ -95,7 +95,7 @@ export default function GroupEditPage() {
           <p className="text-sm text-green-400">{t('group_edit.saved')}</p>
         )}
 
-        <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-4">
+        <section className="bg-ui-surface border border-ui-border rounded-xl p-5 space-y-4">
           <SectionLabel>{t('group_edit.discord_section')}</SectionLabel>
 
           <div className="space-y-2">

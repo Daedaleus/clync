@@ -143,7 +143,15 @@
     "search_placeholder": "Spiele suchen…",
     "empty_library": "Noch keine Spiele in der Bibliothek.",
     "no_results": "Keine Spiele gefunden.",
-    "save_error": "Fehler beim Speichern"
+    "save_error": "Fehler beim Speichern",
+    "search_mode": "Suche",
+    "manual_mode": "Manuell",
+    "search_query_placeholder": "Spiele auf RAWG suchen…",
+    "search_button": "Suchen",
+    "add_game": "Hinzufügen",
+    "game_added": "Hinzugefügt ✓",
+    "search_empty": "Titel eingeben und suchen.",
+    "add_error": "Spiel konnte nicht hinzugefügt werden"
   },
   "game_detail": {
     "loading": "Lade Spiel…",

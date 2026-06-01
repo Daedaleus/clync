@@ -82,7 +82,7 @@ export default function FriendsPage() {
       {incoming.length > 0 && (
         <section className="space-y-3">
           <SectionLabel data-testid="section-friend-requests" count={incoming.length}>{t('friends.incoming_requests')}</SectionLabel>
-          <ul className="divide-y divide-zinc-800 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+          <ul className="divide-y divide-zinc-800 bg-ui-surface border border-ui-border rounded-xl overflow-hidden">
             {incoming.map((req) => (
               <li key={req.id}>
                 <UserRow
@@ -107,7 +107,7 @@ export default function FriendsPage() {
         {friends.length === 0 ? (
           <p className="text-zinc-500 text-sm">{t('friends.no_friends')}</p>
         ) : (
-          <ul className="divide-y divide-zinc-800 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+          <ul className="divide-y divide-zinc-800 bg-ui-surface border border-ui-border rounded-xl overflow-hidden">
             {friends.map((f) => (
               <li key={f.keycloak_id}>
                 <UserRow
@@ -125,7 +125,7 @@ export default function FriendsPage() {
         )}
       </section>
 
-      <hr className="border-zinc-800" />
+      <hr className="border-ui-border" />
 
       {/* User search */}
       <section className="space-y-3">
@@ -133,7 +133,7 @@ export default function FriendsPage() {
         <SearchBar value={searchQuery} onChange={setSearchQuery} onSubmit={handleSearch} placeholder={t('friends.search_placeholder')} />
 
         {searchResults.length > 0 && (
-          <ul className="divide-y divide-zinc-800 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+          <ul className="divide-y divide-zinc-800 bg-ui-surface border border-ui-border rounded-xl overflow-hidden">
             {searchResults.map((u) => {
               const isFriend = friendIds.has(u.keycloak_id);
               const isSent = sentIds.has(u.keycloak_id);

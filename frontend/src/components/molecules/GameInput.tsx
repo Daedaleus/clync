@@ -56,13 +56,13 @@ export default function GameInput({ onAdd }: Props) {
       </div>
 
       {open && (
-        <ul className="absolute z-10 top-full left-0 right-32 mt-1 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl overflow-hidden">
+        <ul className="absolute z-10 top-full left-0 right-32 mt-1 bg-ui-raised border border-ui-border rounded-lg shadow-xl overflow-hidden">
           {suggestions.map((s) => (
             <li key={s}>
               <button
                 type="button"
                 onMouseDown={(e) => { e.preventDefault(); submit(s); }}
-                className="w-full text-left px-4 py-2.5 text-sm text-zinc-200 hover:bg-zinc-700 transition-colors cursor-pointer"
+                className="w-full text-left px-4 py-2.5 text-sm text-zinc-200 hover:bg-ui-raised transition-colors cursor-pointer"
               >
                 {s}
               </button>

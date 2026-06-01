@@ -12,12 +12,12 @@ export default function PageLayout({ children, size = 'md' }: Props) {
   const { t } = useTranslation();
   const maxW = size === 'lg' ? 'max-w-3xl' : 'max-w-2xl';
   return (
-    <div className="min-h-dvh bg-zinc-950 flex flex-col">
+    <div className="min-h-dvh bg-app flex flex-col">
       <AppHeader />
       <main className={`mx-auto w-full ${maxW} px-4 py-8 space-y-8 flex-1`}>
         {children}
       </main>
-      <footer className={`mx-auto w-full ${maxW} px-4 py-4 flex items-center justify-between border-t border-zinc-800/60`}>
+      <footer className={`mx-auto w-full ${maxW} px-4 py-4 flex items-center justify-between border-t border-ui-border/60`}>
         <span className="text-xs text-zinc-600">
           {t('footer.version', { version: __APP_VERSION__ })}
         </span>

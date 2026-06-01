@@ -114,7 +114,7 @@ export default function UserPage() {
       {profile && (
         <>
           {/* Header card */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+          <div className="bg-ui-surface border border-ui-border rounded-xl p-5">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-4 min-w-0">
                 <Avatar name={profile.username} size="lg" />
@@ -148,13 +148,13 @@ export default function UserPage() {
           {hasSocial && (
             <section className="space-y-2">
               <SectionLabel>{t('user.social_section')}</SectionLabel>
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl divide-y divide-zinc-800">
+              <div className="bg-ui-surface border border-ui-border rounded-xl divide-y divide-zinc-800">
                 {profile.steam_handle && (
                   <a
                     href={steamUrl(profile.steam_handle)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-3 px-4 py-3 text-sm text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800/50 transition-colors rounded-t-xl group"
+                    className="flex items-center gap-3 px-4 py-3 text-sm text-zinc-300 hover:text-zinc-100 hover:bg-ui-raised/50 transition-colors rounded-t-xl group"
                   >
                     <span className="text-[#c6d4df] group-hover:text-[#c6d4df]"><SteamIcon /></span>
                     <span className="font-medium text-zinc-400 w-16 shrink-0">Steam</span>
@@ -204,7 +204,7 @@ export default function UserPage() {
                   <li key={g.id}>
                     <Link
                       to={`/groups/${g.id}`}
-                      className="flex items-center justify-between gap-3 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 hover:border-zinc-700 hover:bg-zinc-800/50 transition-colors"
+                      className="flex items-center justify-between gap-3 bg-ui-surface border border-ui-border rounded-xl px-4 py-3 hover:border-ui-border hover:bg-ui-raised/50 transition-colors"
                     >
                       <span className="text-sm font-medium text-zinc-100 truncate">{g.name}</span>
                       <Badge variant="public" />

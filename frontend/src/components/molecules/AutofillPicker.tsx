@@ -20,7 +20,7 @@ export default function AutofillPicker({ candidates, loading, onSelect, onCancel
 
   if (loading) {
     return (
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center text-sm text-zinc-500">
+      <div className="bg-ui-surface border border-ui-border rounded-xl p-4 text-center text-sm text-zinc-500">
         {t('autofill.searching')}
       </div>
     );
@@ -28,7 +28,7 @@ export default function AutofillPicker({ candidates, loading, onSelect, onCancel
 
   if (candidates.length === 0) {
     return (
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex items-center justify-between gap-3">
+      <div className="bg-ui-surface border border-ui-border rounded-xl p-4 flex items-center justify-between gap-3">
         <p className="text-sm text-zinc-500">{t('autofill.no_results')}</p>
         <Button size="sm" variant="secondary" onClick={onCancel}>{t('autofill.close')}</Button>
       </div>
@@ -36,7 +36,7 @@ export default function AutofillPicker({ candidates, loading, onSelect, onCancel
   }
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
+    <div className="bg-ui-surface border border-ui-border rounded-xl p-4 space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-zinc-300">{t('autofill.which_game')}</p>
         <button onClick={onCancel} className="text-zinc-600 hover:text-zinc-400 text-xs transition-colors">
@@ -49,7 +49,7 @@ export default function AutofillPicker({ candidates, loading, onSelect, onCancel
           <button
             key={c.rawg_id}
             onClick={() => onSelect(c)}
-            className="group text-left bg-zinc-800 border border-zinc-700 rounded-lg overflow-hidden hover:border-violet-500 transition-colors focus:outline-none focus:ring-1 focus:ring-violet-500"
+            className="group text-left bg-ui-raised border border-ui-border rounded-lg overflow-hidden hover:border-violet-500 transition-colors focus:outline-none focus:ring-1 focus:ring-violet-500"
           >
             {c.thumbnail_url ? (
               <img
@@ -59,7 +59,7 @@ export default function AutofillPicker({ candidates, loading, onSelect, onCancel
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
               />
             ) : (
-              <div className="w-full h-24 bg-zinc-700 flex items-center justify-center text-2xl text-zinc-500">
+              <div className="w-full h-24 bg-ui-raised flex items-center justify-center text-2xl text-zinc-500">
                 🎮
               </div>
             )}

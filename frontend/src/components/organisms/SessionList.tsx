@@ -13,7 +13,7 @@ export default function SessionList({ sessions, onRsvp, onDelete, emptyMessage =
     return <p className="text-zinc-500 text-sm">{emptyMessage}</p>;
   }
   return (
-    <ul className="divide-y divide-zinc-800 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+    <ul className="divide-y divide-zinc-800 bg-ui-surface border border-ui-border rounded-xl overflow-hidden">
       {sessions.map((s) => (
         <SessionRow key={s.id} session={s} onRsvp={onRsvp} onDelete={onDelete} />
       ))}

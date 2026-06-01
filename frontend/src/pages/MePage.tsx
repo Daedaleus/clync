@@ -254,7 +254,7 @@ export default function MePage() {
               </Link>
             </div>
             {upcomingSessions.length === 0 ? (
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-6 text-center space-y-2">
+              <div className="bg-ui-surface border border-ui-border rounded-xl px-4 py-6 text-center space-y-2">
                 <p className="text-sm text-zinc-500">{t('me.no_upcoming_sessions')}</p>
                 <Link to="/sessions" className="text-sm text-violet-400 hover:text-violet-300 transition-colors">
                   {t('me.create_session_cta')}
@@ -274,7 +274,7 @@ export default function MePage() {
               </Link>
             </div>
             {me.groups.length === 0 ? (
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-6 text-center space-y-2">
+              <div className="bg-ui-surface border border-ui-border rounded-xl px-4 py-6 text-center space-y-2">
                 <p className="text-sm text-zinc-500">{t('me.no_groups')}</p>
                 <Link to="/groups" className="text-sm text-violet-400 hover:text-violet-300 transition-colors">
                   {t('me.discover_groups_cta')}
@@ -286,7 +286,7 @@ export default function MePage() {
                   <li key={g.id}>
                     <Link
                       to={`/groups/${g.id}`}
-                      className="flex items-center justify-between gap-3 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 hover:border-zinc-700 hover:bg-zinc-800/50 transition-colors"
+                      className="flex items-center justify-between gap-3 bg-ui-surface border border-ui-border rounded-xl px-4 py-3 hover:border-ui-border hover:bg-ui-raised/50 transition-colors"
                     >
                       <span className="text-sm font-medium text-zinc-100 truncate">{g.name}</span>
                       <Badge variant={g.is_public ? 'public' : 'private'} />
@@ -306,7 +306,7 @@ export default function MePage() {
               </Link>
             </div>
             {me.games.length === 0 ? (
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-6 text-center space-y-2">
+              <div className="bg-ui-surface border border-ui-border rounded-xl px-4 py-6 text-center space-y-2">
                 <p className="text-sm text-zinc-500">{t('me.no_games')}</p>
                 <Link to="/profile" className="text-sm text-violet-400 hover:text-violet-300 transition-colors">
                   {t('me.add_games_cta')}
