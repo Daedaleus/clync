@@ -19,7 +19,10 @@ domain: pkeil.de
 frontend_host: "{{ domain }}"
 api_host: "{{ domain }}"          # subdomains: api.{{ domain }}
 keycloak_host: "{{ domain }}"     # subdomains: auth.{{ domain }}
-monitoring_host: "monitoring.{{ domain }}"
+# paths mode:      Grafana läuft unter https://{{ domain }}/monitoring
+#                  monitoring_host wird nicht benötigt
+# subdomains mode: eigener Host für Grafana
+monitoring_host: "monitoring.{{ domain }}"  # nur für subdomains-Routing relevant
 
 # ── VAPID (Web Push) ───────────────────────────────────────────────────────────
 # Generate: npx web-push generate-vapid-keys

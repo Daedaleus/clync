@@ -4,13 +4,15 @@ name: clync
 # frontend domain. Use with a matching .env file:
 #   docker compose -f docker-compose.paths.yml --env-file .env-paths.example up -d
 #
-# proxy  — external; created and managed by Traefik.
-# internal — private; no Traefik attachment.
+# proxy      — external; created and managed by Traefik.
+# internal   — private; no Traefik attachment.
+# monitoring — private; isolated metrics/log pipeline.
 networks:
   proxy:
     external: true
     name: traefik
   internal:
+  monitoring:
 
 services:
 
@@ -48,6 +50,7 @@ services:
     networks:
       - proxy
       - internal
+      - monitoring
     environment:
       APP__DATABASE__URL: "surrealdb:8000"
       APP__DATABASE__NAMESPACE: clync
@@ -157,6 +160,112 @@ services:
       timeout: 5s
       retries: 5
 
+  # ── Prometheus ──────────────────────────────────────────────────────────────
+  prometheus:
+    image: docker.io/prom/prometheus:v3
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
+    networks:
+      - monitoring
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+
+  # ── Loki ────────────────────────────────────────────────────────────────────
+  loki:
+    image: docker.io/grafana/loki:3
+    restart: unless-stopped
+    command: -config.file=/etc/loki/loki-config.yaml
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
+    networks:
+      - monitoring
+    volumes:
+      - ./monitoring/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+      - loki_data:/loki
+
+  # ── Promtail ─────────────────────────────────────────────────────────────────
+  promtail:
+    image: docker.io/grafana/promtail:3
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/promtail-config.yaml
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
+    networks:
+      - monitoring
+    volumes:
+      - ./monitoring/promtail-config.yaml:/etc/promtail/promtail-config.yaml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - loki
+
+  # ── Grafana (/monitoring) ────────────────────────────────────────────────────
+  # Served at https://<domain>/monitoring via path-based routing.
+  # GF_SERVER_SERVE_FROM_SUB_PATH lets Grafana handle the /monitoring prefix
+  # itself — Traefik routes the full path without stripping.
+  grafana:
+    image: docker.io/grafana/grafana:13.0.1
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
+    networks:
+      - proxy
+      - monitoring
+    environment:
+      GF_SERVER_ROOT_URL: "https://${FRONTEND_HOST}/monitoring"
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_ADMIN_PASS}"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_GENERIC_OAUTH_ENABLED: "true"
+      GF_AUTH_GENERIC_OAUTH_NAME: Keycloak
+      GF_AUTH_GENERIC_OAUTH_ALLOW_SIGN_UP: "true"
+      GF_AUTH_GENERIC_OAUTH_AUTO_LOGIN: "false"
+      GF_AUTH_GENERIC_OAUTH_CLIENT_ID: grafana
+      GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET: "${GRAFANA_OAUTH_SECRET}"
+      GF_AUTH_GENERIC_OAUTH_SCOPES: "openid email profile"
+      GF_AUTH_GENERIC_OAUTH_AUTH_URL: "https://${FRONTEND_HOST}/auth/realms/${VITE_KEYCLOAK_REALM:-Clync}/protocol/openid-connect/auth"
+      GF_AUTH_GENERIC_OAUTH_TOKEN_URL: "http://keycloak:8080/auth/realms/${VITE_KEYCLOAK_REALM:-Clync}/protocol/openid-connect/token"
+      GF_AUTH_GENERIC_OAUTH_API_URL: "http://keycloak:8080/auth/realms/${VITE_KEYCLOAK_REALM:-Clync}/protocol/openid-connect/userinfo"
+      GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH: "contains(realm_access.roles[*], 'admin') && 'Admin' || ''"
+      GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_STRICT: "true"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+      - loki
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.clync-grafana.rule=Host(`${FRONTEND_HOST}`) && PathPrefix(`/monitoring`)"
+      - "traefik.http.routers.clync-grafana.entrypoints=web-secure"
+      - "traefik.http.routers.clync-grafana.tls=true"
+      - "traefik.http.routers.clync-grafana.tls.certresolver=default"
+      - "traefik.http.services.clync-grafana.loadbalancer.server.port=3000"
+      - "traefik.docker.network=traefik"
+
 volumes:
   surrealdb_data:
   postgres_data:
+  prometheus_data:
+  loki_data:
+  grafana_data:
