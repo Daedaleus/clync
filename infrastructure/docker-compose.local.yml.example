@@ -54,6 +54,39 @@ services:
     volumes:
       - surrealdb_data:/data:U
 
+  # ── Prometheus (dev) ────────────────────────────────────────────────────────
+  # Backend runs on the host — host.docker.internal resolves to the host machine.
+  prometheus:
+    image: docker.io/prom/prometheus:v3
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./monitoring/prometheus.local.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+
+  # ── Grafana (dev) ────────────────────────────────────────────────────────────
+  grafana:
+    image: docker.io/grafana/grafana:11
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_DISABLE_LOGIN_FORM: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+
 # Backend environment — VAPID keys for Web Push notifications.
 # Generate a fresh key pair: npx web-push generate-vapid-keys
 # Copy this file to docker-compose.local.yml and fill in your keys.
@@ -65,3 +98,5 @@ x-backend-env: &backend-env
 volumes:
   postgres_data:
   surrealdb_data:
+  prometheus_data:
+  grafana_data:

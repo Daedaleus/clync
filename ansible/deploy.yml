@@ -78,6 +78,30 @@
         dest: "{{ remote_dir }}/keycloak/Clync-realm.json"
         mode: "0644"
 
+    - name: Create remote monitoring directories
+      ansible.builtin.file:
+        path: "{{ remote_dir }}/monitoring/{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - ""
+        - "grafana/provisioning/datasources"
+        - "grafana/provisioning/dashboards"
+        - "grafana/dashboards"
+
+    - name: Upload monitoring configs
+      ansible.builtin.copy:
+        src: "{{ infra_dir }}/monitoring/{{ item }}"
+        dest: "{{ remote_dir }}/monitoring/{{ item }}"
+        mode: "0644"
+      loop:
+        - prometheus.yml
+        - loki-config.yaml
+        - promtail-config.yaml
+        - grafana/provisioning/datasources/datasources.yaml
+        - grafana/provisioning/dashboards/dashboards.yaml
+        - grafana/dashboards/clync.json
+
     - name: Pull images from GHCR
       ansible.builtin.command: >-
         docker compose
