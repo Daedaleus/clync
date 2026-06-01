@@ -167,7 +167,7 @@
       "id": 42, "title": "Error Logs Only", "type": "logs",
       "gridPos": { "x": 0, "y": 47, "w": 24, "h": 8 },
       "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
-      "targets": [{ "refId": "A", "expr": "{service=\"backend\"} | json | level =~ \"error|warn\"" }],
+      "targets": [{ "refId": "A", "expr": "{service=\"backend\", level=~\"error|warn\"}" }],
       "options": { "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true, "dedupStrategy": "none" }
     }
   ]
