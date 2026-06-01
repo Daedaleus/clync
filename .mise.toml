@@ -44,6 +44,21 @@ description = "Deploy to production via Ansible (requires ansible/vars.yml)"
 run = "ansible-playbook deploy.yml -e @vars.yml"
 dir = "{{config_root}}/ansible"
 
+[tasks."coverage:frontend"]
+description = "Run frontend unit tests with coverage (HTML report in frontend/coverage/)"
+run = "npm run test:coverage"
+dir = "{{config_root}}/frontend"
+
+[tasks."coverage:backend"]
+description = "Run backend tests with llvm-cov (HTML report in backend/target/llvm-cov/html/)"
+run = "cargo llvm-cov --html"
+dir = "{{config_root}}/backend"
+
+[tasks."coverage:backend:summary"]
+description = "Print backend coverage summary to terminal (no HTML)"
+run = "cargo llvm-cov"
+dir = "{{config_root}}/backend"
+
 [tasks.check]
 description = "Run all quality checks (fmt, clippy, tests, lint, ansible)"
 dir = "{{config_root}}"

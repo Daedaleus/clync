@@ -1109,4 +1109,210 @@ mod tests {
         let group_ids = svc.delete("s1", "u1", false).await.unwrap();
         assert_eq!(group_ids, vec!["g1"]);
     }
+
+    // ── validate_create_request — missing edge cases ───────────────────────────
+
+    #[test]
+    fn invalid_date_format_is_rejected() {
+        assert!(
+            validate_create_request(&req("CS2", "not-a-date", SessionScope::Global, vec![]))
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn date_in_past_is_rejected() {
+        assert!(
+            validate_create_request(&req(
+                "CS2",
+                "2000-01-01T00:00:00Z",
+                SessionScope::Global,
+                vec![]
+            ))
+            .is_err()
+        );
+    }
+
+    #[test]
+    fn notes_too_long_is_rejected() {
+        let long_notes = "x".repeat(501);
+        let mut r = req("CS2", "2099-12-31T18:00:00Z", SessionScope::Global, vec![]);
+        r.notes = Some(long_notes);
+        assert!(validate_create_request(&r).is_err());
+    }
+
+    #[test]
+    fn notes_exactly_500_chars_is_valid() {
+        let notes = "x".repeat(500);
+        let mut r = req("CS2", "2099-12-31T18:00:00Z", SessionScope::Global, vec![]);
+        r.notes = Some(notes);
+        assert!(validate_create_request(&r).is_ok());
+    }
+
+    // ── leave ──────────────────────────────────────────────────────────────────
+
+    struct LeaveRepo;
+
+    #[async_trait]
+    impl SessionRepo for LeaveRepo {
+        async fn leave(&self, _: String, _: String) -> Result<(), surrealdb::Error> {
+            Ok(())
+        }
+        async fn create(
+            &self,
+            _: String,
+            _: String,
+            _: String,
+            _: String,
+            _: String,
+            _: Vec<String>,
+            _: Option<String>,
+        ) -> Result<Option<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_feed(&self, _: Vec<String>) -> Result<Vec<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_mine(&self, _: String) -> Result<Vec<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_for_group(&self, _: String) -> Result<Vec<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_by_id(&self, _: String) -> Result<Option<SessionDetail>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn join(&self, _: String, _: String) -> Result<Option<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn set_rsvp(
+            &self,
+            _: String,
+            _: String,
+            _: String,
+            _: String,
+        ) -> Result<Option<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn remove_rsvp(
+            &self,
+            _: String,
+            _: String,
+        ) -> Result<Option<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn delete(&self, _: String, _: String) -> Result<Vec<String>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn delete_as_admin(&self, _: String) -> Result<Vec<String>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_sessions_to_notify(
+            &self,
+        ) -> Result<Vec<crate::model::session::SessionStartReminder>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn mark_start_notified(&self, _: String) -> Result<(), surrealdb::Error> {
+            unimplemented!()
+        }
+    }
+
+    #[tokio::test]
+    async fn leave_delegates_to_repo() {
+        let svc =
+            SessionService::with_repos(Box::new(LeaveRepo), Box::new(FakeGroupRepo::no_groups()));
+        svc.leave("s1", "u1").await.unwrap();
+    }
+
+    // ── remove_rsvp ────────────────────────────────────────────────────────────
+
+    struct RemoveRsvpRepo {
+        result: Option<Session>,
+    }
+
+    #[async_trait]
+    impl SessionRepo for RemoveRsvpRepo {
+        async fn remove_rsvp(
+            &self,
+            _: String,
+            _: String,
+        ) -> Result<Option<Session>, surrealdb::Error> {
+            Ok(self.result.clone())
+        }
+        async fn create(
+            &self,
+            _: String,
+            _: String,
+            _: String,
+            _: String,
+            _: String,
+            _: Vec<String>,
+            _: Option<String>,
+        ) -> Result<Option<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_feed(&self, _: Vec<String>) -> Result<Vec<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_mine(&self, _: String) -> Result<Vec<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_for_group(&self, _: String) -> Result<Vec<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_by_id(&self, _: String) -> Result<Option<SessionDetail>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn join(&self, _: String, _: String) -> Result<Option<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn leave(&self, _: String, _: String) -> Result<(), surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn set_rsvp(
+            &self,
+            _: String,
+            _: String,
+            _: String,
+            _: String,
+        ) -> Result<Option<Session>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn delete(&self, _: String, _: String) -> Result<Vec<String>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn delete_as_admin(&self, _: String) -> Result<Vec<String>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn find_sessions_to_notify(
+            &self,
+        ) -> Result<Vec<crate::model::session::SessionStartReminder>, surrealdb::Error> {
+            unimplemented!()
+        }
+        async fn mark_start_notified(&self, _: String) -> Result<(), surrealdb::Error> {
+            unimplemented!()
+        }
+    }
+
+    #[tokio::test]
+    async fn remove_rsvp_returns_none_when_creator() {
+        let svc = SessionService::with_repos(
+            Box::new(RemoveRsvpRepo { result: None }),
+            Box::new(FakeGroupRepo::no_groups()),
+        );
+        let result = svc.remove_rsvp("s1", &alice()).await.unwrap();
+        assert!(result.is_none());
+    }
+
+    #[tokio::test]
+    async fn remove_rsvp_returns_response_when_non_creator() {
+        let svc = SessionService::with_repos(
+            Box::new(RemoveRsvpRepo {
+                result: Some(session_at("2099-01-01T18:00:00Z", "global")),
+            }),
+            Box::new(FakeGroupRepo::no_groups()),
+        );
+        let result = svc.remove_rsvp("s1", &bob()).await.unwrap();
+        assert!(result.is_some());
+    }
 }

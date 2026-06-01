@@ -45,7 +45,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          components: rustfmt, clippy
+          components: rustfmt, clippy, llvm-tools-preview
 
       - name: Cache Cargo registry and build artefacts
         uses: actions/cache@v5
@@ -68,9 +68,22 @@ jobs:
         working-directory: backend
         run: cargo clippy -- -D warnings
 
-      - name: Tests
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+
+      - name: Tests + Coverage
         working-directory: backend
-        run: cargo test
+        run: |
+          cargo llvm-cov --summary-only 2>/dev/null | tee /tmp/backend-cov.txt
+          echo "## Backend Coverage" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Metric | Covered | Total | % |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| --- | --- | --- | --- |" >> "$GITHUB_STEP_SUMMARY"
+          awk '/^TOTAL/ {
+            printf "| Regions | %s | %s | %s |\n", $2-$3, $2, $4
+            printf "| Functions | %s | %s | %s |\n", $5-$6, $5, $7
+            printf "| Lines | %s | %s | %s |\n", $8-$9, $8, $10
+          }' /tmp/backend-cov.txt >> "$GITHUB_STEP_SUMMARY"
 
       - name: Release build
         working-directory: backend
@@ -100,9 +113,25 @@ jobs:
         working-directory: frontend
         run: npm run lint
 
-      - name: Tests
+      - name: Tests + Coverage
         working-directory: frontend
-        run: npm run test:run
+        run: npm run test:coverage
+
+      - name: Write coverage summary
+        working-directory: frontend
+        run: |
+          echo "## Frontend Coverage" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Metric | Covered | Total | % |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| --- | --- | --- | --- |" >> "$GITHUB_STEP_SUMMARY"
+          node -e "
+            const s = require('./coverage/coverage-summary.json').total;
+            const row = (k, v) => \`| \${k} | \${v.covered} | \${v.total} | \${v.pct}% |\`;
+            console.log(row('Statements', s.statements));
+            console.log(row('Branches',   s.branches));
+            console.log(row('Functions',  s.functions));
+            console.log(row('Lines',      s.lines));
+          " >> "$GITHUB_STEP_SUMMARY"
 
       - name: Build
         working-directory: frontend
