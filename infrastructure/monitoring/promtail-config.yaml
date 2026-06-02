@@ -29,6 +29,15 @@ scrape_configs:
           expressions:
             level: level
             message: message
-            timestamp: timestamp
+            ts: timestamp
+            target: target
+      - timestamp:
+          source: ts
+          format: RFC3339Nano
+          fallback_formats:
+            - RFC3339
       - labels:
           level:
+          target:
+      - output:
+          source: message
