@@ -17,9 +17,17 @@ const SessionDetailPage = lazy(() => import('./pages/SessionDetailPage'));
 const UserPage = lazy(() => import('./pages/UserPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 
-/** Layout route guard — redirects to Keycloak login when no session is present. */
+/**
+ * Layout route guard — redirects to Keycloak login when no session is present.
+ *
+ * Passes the current full URL as `redirect_uri` so the OIDC round-trip lands
+ * back on the originally requested deep link (e.g. `/groups/123`) instead of
+ * always returning to the configured default (site root).
+ */
 function RequireAuth() {
-  const { isAuthenticated } = useAutoSignin();
+  const { isAuthenticated } = useAutoSignin({
+    signinArgs: { redirect_uri: window.location.href },
+  });
   return isAuthenticated ? <Outlet /> : <PageLoader />;
 }
 
