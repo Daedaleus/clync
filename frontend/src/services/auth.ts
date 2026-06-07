@@ -1,10 +1,10 @@
-import Keycloak from 'keycloak-js';
+import { UserManager } from 'oidc-client-ts';
 import { config } from '../config';
 
-const keycloak = new Keycloak({
-  url: config.keycloakUrl,
-  realm: config.keycloakRealm,
-  clientId: config.keycloakClientId,
+export const userManager = new UserManager({
+  authority: `${config.keycloakUrl}/realms/${config.keycloakRealm}`,
+  client_id: config.keycloakClientId,
+  redirect_uri: window.location.origin,
+  post_logout_redirect_uri: window.location.origin,
+  scope: 'openid profile',
 });
-
-export default keycloak;

@@ -8,7 +8,7 @@ import GameCard from '../components/molecules/GameCard';
 import SectionLabel from '../components/atoms/SectionLabel';
 import ErrorBanner from '../components/molecules/ErrorBanner';
 import PageLayout from '../components/templates/PageLayout';
-import keycloak from '../services/auth';
+import { useAuth } from 'react-oidc-context';
 import { api } from '../services/api';
 import { isAbortError } from '../utils/abort';
 import type { Game, GroupSummary } from '../types';
@@ -58,7 +58,8 @@ export default function UserPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const isOwnProfile = id === keycloak.tokenParsed?.sub;
+  const auth = useAuth();
+  const isOwnProfile = id === auth.user?.profile.sub;
 
   useEffect(() => {
     if (!id) return;

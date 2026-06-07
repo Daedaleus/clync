@@ -1,4 +1,4 @@
-import keycloak from './auth';
+import { userManager } from './auth';
 import { config } from '../config';
 import i18n from '../i18n';
 
@@ -16,20 +16,35 @@ async function extractError(response: Response): Promise<string> {
   return i18n.t('error.http', { status: response.status });
 }
 
+/**
+ * Returns a valid access token, refreshing it if needed.
+ * `automaticSilentRenew` keeps the cached token fresh in the background, so
+ * this is mostly a safety net — falls back to a silent refresh and finally to
+ * a full login redirect if the refresh token itself has expired.
+ */
+async function getAccessToken(): Promise<string> {
+  const user = await userManager.getUser();
+  if (user && !user.expired) return user.access_token;
+
+  const renewed = await userManager.signinSilent().catch(() => null);
+  if (renewed) return renewed.access_token;
+
+  await userManager.signinRedirect();
+  throw new Error('session expired — redirecting to login');
+}
+
 async function request<T>(
   method: string,
   path: string,
   body?: unknown,
   signal?: AbortSignal,
 ): Promise<T> {
-  // Refresh the token if it expires within the next 30 seconds.
-  // Throws if the refresh token itself has expired — Keycloak will redirect to login.
-  await keycloak.updateToken(30).catch(() => keycloak.login());
+  const token = await getAccessToken();
 
   const response = await fetch(`${API_BASE}${path}`, {
     method,
     headers: {
-      Authorization: `Bearer ${keycloak.token}`,
+      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -52,12 +67,12 @@ export const api = {
   delete: <T>(path: string) => request<T>('DELETE', path),
 
   upload: async <T>(path: string, file: File): Promise<T> => {
-    await keycloak.updateToken(30).catch(() => keycloak.login());
+    const token = await getAccessToken();
     const form = new FormData();
     form.append('file', file);
     const response = await fetch(`${API_BASE}${path}`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${keycloak.token}` },
+      headers: { Authorization: `Bearer ${token}` },
       body: form,
     });
     if (!response.ok) throw new Error(await extractError(response));

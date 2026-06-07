@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import logo from '../../assets/logo.png';
 import { Link, NavLink } from 'react-router-dom';
-import keycloak from '../../services/auth';
+import { useAuth } from 'react-oidc-context';
 import { api } from '../../services/api';
 import { useNotifications } from '../../hooks/useNotifications';
 import InviteModal from '../molecules/InviteModal';
@@ -49,7 +49,8 @@ const dropdownItem =
 
 export default function AppHeader() {
   const { t, i18n } = useTranslation();
-  const username = keycloak.tokenParsed?.preferred_username as string | undefined;
+  const auth = useAuth();
+  const username = auth.user?.profile.preferred_username;
   const { permission, subscribed, enable, disable } = useNotifications();
   const [menuOpen, setMenuOpen] = useState(false);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
@@ -159,7 +160,7 @@ export default function AppHeader() {
                 <hr className="border-ui-border my-1" />
                 <button
                   className={`${dropdownItem} text-zinc-400`}
-                  onClick={() => keycloak.logout()}
+                  onClick={() => void auth.signoutRedirect({ post_logout_redirect_uri: window.location.origin })}
                 >
                   {t('header.logout')}
                 </button>

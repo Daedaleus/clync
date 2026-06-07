@@ -1,7 +1,7 @@
 {
   "name": "frontend",
   "private": true,
-  "version": "0.6.7",
+  "version": "0.6.8",
   "type": "module",
   "scripts": {
     "dev": "NODE_OPTIONS=--no-deprecation vite",
@@ -18,10 +18,10 @@
   "dependencies": {
     "i18next": "^26.3.0",
     "i18next-browser-languagedetector": "^8.2.1",
-    "keycloak-js": "^26.2.4",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-i18next": "^17.0.8",
+    "react-oidc-context": "^3.3.1",
     "react-router-dom": "^7.15.1"
   },
   "devDependencies": {
