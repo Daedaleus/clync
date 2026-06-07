@@ -10,6 +10,7 @@ import SearchBar from '../components/molecules/SearchBar';
 import PageLayout from '../components/templates/PageLayout';
 import type { GroupSummary, Session } from '../types';
 import { api } from '../services/api';
+import { useAuth } from 'react-oidc-context';
 import { isAdmin } from '../utils/auth';
 import { isAbortError } from '../utils/abort';
 
@@ -17,6 +18,7 @@ interface GroupResult extends GroupSummary { member_count: number }
 
 export default function GroupsPage() {
   const { t } = useTranslation();
+  const auth = useAuth();
   const [myGroups, setMyGroups] = useState<GroupSummary[]>([]);
   const [sessionsByGroup, setSessionsByGroup] = useState<Map<string, Session[]>>(new Map());
   const [searchQuery, setSearchQuery] = useState('');
@@ -41,7 +43,7 @@ export default function GroupsPage() {
       .catch((err: unknown) => { if (!isAbortError(err)) setError(err instanceof Error ? err.message : t('common.error')); });
 
     // Admin: auto-load all groups (incl. private) without requiring a search
-    if (isAdmin()) {
+    if (isAdmin(auth.user)) {
       api.get<GroupResult[]>('/api/v1/groups', controller.signal)
         .then(setSearchResults)
         .catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
@@ -60,7 +62,7 @@ export default function GroupsPage() {
       setSessionsByGroup(map);
     }).catch((err: unknown) => { if (!isAbortError(err)) console.error(err); });
     return () => controller.abort();
-  }, [t]);
+  }, [t, auth.user]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,7 +153,7 @@ export default function GroupsPage() {
 
       {/* Suche */}
       <section className="space-y-3">
-        <SectionLabel>{isAdmin() ? t('groups.search_title_admin') : t('groups.search_title')}</SectionLabel>
+        <SectionLabel>{isAdmin(auth.user) ? t('groups.search_title_admin') : t('groups.search_title')}</SectionLabel>
         <SearchBar value={searchQuery} onChange={setSearchQuery} onSubmit={handleSearch} placeholder={t('groups.search_placeholder')} />
 
         {searchResults.length > 0 && (

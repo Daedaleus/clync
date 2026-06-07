@@ -19,7 +19,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: id => {
-          if (id.includes('node_modules/keycloak-js')) return 'keycloak';
+          if (id.includes('node_modules/oidc-client-ts') || id.includes('node_modules/react-oidc-context')) return 'oidc';
           if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router-dom') || id.includes('node_modules/scheduler')) return 'vendor';
         }
       }

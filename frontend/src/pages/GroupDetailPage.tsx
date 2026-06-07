@@ -12,7 +12,7 @@ import PageLayout from '../components/templates/PageLayout';
 import type { Game, RsvpStatus, Session } from '../types';
 import { api } from '../services/api';
 import { isAbortError } from '../utils/abort';
-import keycloak from '../services/auth';
+import { useAuth } from 'react-oidc-context';
 import { isAdmin } from '../utils/auth';
 import ErrorBanner from '../components/molecules/ErrorBanner';
 import { useNotifications } from '../hooks/useNotifications';
@@ -46,18 +46,8 @@ export default function GroupDetailPage() {
   const MEMBER_LIMIT = 10;
   const GAME_LIMIT = 10;
   const { notify } = useNotifications();
-  const myId = keycloak.tokenParsed?.sub as string | undefined;
-
-  // Track token changes so the EventSource reconnects with a fresh token after refresh.
-  const [tokenVersion, setTokenVersion] = useState(0);
-  useEffect(() => {
-    const prev = keycloak.onAuthRefreshSuccess;
-    keycloak.onAuthRefreshSuccess = () => {
-      if (typeof prev === 'function') prev.call(keycloak);
-      setTokenVersion((v) => v + 1);
-    };
-    return () => { keycloak.onAuthRefreshSuccess = prev; };
-  }, []);
+  const auth = useAuth();
+  const myId = auth.user?.profile.sub;
 
   useEffect(() => {
     if (!id) return;
@@ -74,9 +64,10 @@ export default function GroupDetailPage() {
 
   // SSE subscription for real-time session updates.
   useEffect(() => {
-    if (!id || !keycloak.token) return;
+    const token = auth.user?.access_token;
+    if (!id || !token) return;
 
-    const url = `${API_BASE}/api/v1/groups/${id}/events?token=${encodeURIComponent(keycloak.token)}`;
+    const url = `${API_BASE}/api/v1/groups/${id}/events?token=${encodeURIComponent(token)}`;
     const es = new EventSource(url);
 
     es.addEventListener('session_created', (e) => {
@@ -85,7 +76,7 @@ export default function GroupDetailPage() {
         if (prev.some((s) => s.id === session.id)) return prev;
         return [...prev, session].sort((a, b) => a.scheduled_at.localeCompare(b.scheduled_at));
       });
-      if (session.user_id !== keycloak.tokenParsed?.sub) {
+      if (session.user_id !== myId) {
         notify(
           `Clync – ${session.game}`,
           `${session.username} möchte ${session.game} spielen`,
@@ -107,7 +98,9 @@ export default function GroupDetailPage() {
     });
 
     return () => es.close();
-  }, [id, notify, tokenVersion]);
+    // Reconnects whenever the access token changes — react-oidc-context hands
+    // out a new `user` object every time the token is renewed.
+  }, [id, notify, myId, auth.user?.access_token]);
 
   const handleShowInvite = async () => {
     if (!id) return;
@@ -174,12 +167,12 @@ export default function GroupDetailPage() {
               <Badge variant={group.is_public ? 'public' : 'private'} />
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              {(myId && (myId === group.creator_id || isAdmin())) && (
+              {(myId && (myId === group.creator_id || isAdmin(auth.user))) && (
                 <Button variant="secondary" size="sm" onClick={() => navigate(`/groups/${id}/edit`)}>
                   {t('group_detail.edit')}
                 </Button>
               )}
-              {isAdmin() && (
+              {isAdmin(auth.user) && (
                 <Button variant="danger" size="sm" onClick={handleDeleteGroup}>
                   {t('group_detail.delete')}
                 </Button>

@@ -1,44 +1,39 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import keycloak from '../services/auth';
-
-vi.mock('../services/auth', () => ({
-  default: { tokenParsed: undefined as unknown },
-}));
-
+import { describe, it, expect } from 'vitest';
+import type { User } from 'oidc-client-ts';
 import { isAdmin } from './auth';
 
-describe('isAdmin', () => {
-  beforeEach(() => {
-    (keycloak as { tokenParsed: unknown }).tokenParsed = undefined;
-  });
+function userWithClaims(claims: Record<string, unknown>): User {
+  const payload = btoa(JSON.stringify(claims)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return { access_token: `header.${payload}.signature` } as User;
+}
 
-  it('returns false when tokenParsed is undefined', () => {
-    expect(isAdmin()).toBe(false);
+describe('isAdmin', () => {
+  it('returns false when user is missing', () => {
+    expect(isAdmin(undefined)).toBe(false);
+    expect(isAdmin(null)).toBe(false);
   });
 
   it('returns true when admin role is present', () => {
-    (keycloak as { tokenParsed: unknown }).tokenParsed = {
-      realm_access: { roles: ['user', 'admin'] },
-    };
-    expect(isAdmin()).toBe(true);
+    const user = userWithClaims({ realm_access: { roles: ['user', 'admin'] } });
+    expect(isAdmin(user)).toBe(true);
   });
 
   it('returns false when roles do not include admin', () => {
-    (keycloak as { tokenParsed: unknown }).tokenParsed = {
-      realm_access: { roles: ['user'] },
-    };
-    expect(isAdmin()).toBe(false);
+    const user = userWithClaims({ realm_access: { roles: ['user'] } });
+    expect(isAdmin(user)).toBe(false);
   });
 
   it('returns false when realm_access is missing', () => {
-    (keycloak as { tokenParsed: unknown }).tokenParsed = {};
-    expect(isAdmin()).toBe(false);
+    const user = userWithClaims({});
+    expect(isAdmin(user)).toBe(false);
   });
 
   it('returns false when roles array is empty', () => {
-    (keycloak as { tokenParsed: unknown }).tokenParsed = {
-      realm_access: { roles: [] },
-    };
-    expect(isAdmin()).toBe(false);
+    const user = userWithClaims({ realm_access: { roles: [] } });
+    expect(isAdmin(user)).toBe(false);
+  });
+
+  it('returns false when the access token is malformed', () => {
+    expect(isAdmin({ access_token: 'not-a-jwt' } as User)).toBe(false);
   });
 });

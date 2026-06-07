@@ -11,6 +11,7 @@ import type { Game } from '../types';
 import { api } from '../services/api';
 import { isAbortError } from '../utils/abort';
 import { config } from '../config';
+import { useAuth } from 'react-oidc-context';
 import { isAdmin } from '../utils/auth';
 
 interface MeGames { games: string[] }
@@ -23,6 +24,7 @@ function thumbnailSrc(name: string, url: string | null | undefined): string | un
 
 export default function GameDetailPage() {
   const { t } = useTranslation();
+  const auth = useAuth();
   const { name } = useParams<{ name: string }>();
   const navigate = useNavigate();
   const [game, setGame] = useState<Game | null>(null);
@@ -160,7 +162,7 @@ export default function GameDetailPage() {
               >
                 {inWishlist ? t('game_detail.remove_from_list') : t('game_detail.add_to_list')}
               </Button>
-              {isAdmin() && (
+              {isAdmin(auth.user) && (
                 <>
                   <Button variant="secondary" disabled={autofilling} onClick={handleAutofill}>
                     {autofilling ? t('game_detail.autofill_loading') : t('game_detail.autofill_button')}

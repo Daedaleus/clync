@@ -8,6 +8,7 @@ import ErrorBanner from '../components/molecules/ErrorBanner';
 import PageLayout from '../components/templates/PageLayout';
 import { api } from '../services/api';
 import { isAbortError } from '../utils/abort';
+import { useAuth } from 'react-oidc-context';
 import { isAdmin } from '../utils/auth';
 import { config } from '../config';
 import { fmtDateTime, isPast, isLateJoinable } from '../utils/date';
@@ -50,6 +51,7 @@ interface SessionDetail {
 
 export default function SessionDetailPage() {
   const { t } = useTranslation();
+  const auth = useAuth();
   const { id } = useParams<{ id: string }>();
   const [session, setSession] = useState<SessionDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -223,7 +225,7 @@ export default function SessionDetailPage() {
         {/* Actions */}
         {!past && (
           <div className="flex gap-2 flex-wrap">
-            {(session.is_mine || isAdmin()) && (
+            {(session.is_mine || isAdmin(auth.user)) && (
               <Button variant="danger" size="sm" disabled={loading} onClick={handleDelete}>
                 {t('session_detail.delete')}
               </Button>

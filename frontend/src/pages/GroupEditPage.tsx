@@ -8,7 +8,7 @@ import PageLayout from '../components/templates/PageLayout';
 import SectionLabel from '../components/atoms/SectionLabel';
 import { api } from '../services/api';
 import { isAbortError } from '../utils/abort';
-import keycloak from '../services/auth';
+import { useAuth } from 'react-oidc-context';
 import { isAdmin } from '../utils/auth';
 
 interface GroupDetail {
@@ -30,7 +30,8 @@ export default function GroupEditPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const myId = keycloak.tokenParsed?.sub as string | undefined;
+  const auth = useAuth();
+  const myId = auth.user?.profile.sub;
 
   useEffect(() => {
     if (!id) return;
@@ -38,7 +39,7 @@ export default function GroupEditPage() {
     api.get<GroupDetail>(`/api/v1/groups/${id}`, controller.signal)
       .then((g) => {
         // Redirect away if not creator or admin
-        if (g.creator_id !== myId && !isAdmin()) {
+        if (g.creator_id !== myId && !isAdmin(auth.user)) {
           navigate(`/groups/${id}`);
           return;
         }
@@ -47,7 +48,7 @@ export default function GroupEditPage() {
       })
       .catch((err: unknown) => { if (!isAbortError(err)) setError(t('group_edit.not_found')); });
     return () => controller.abort();
-  }, [id, myId, navigate, t]);
+  }, [id, myId, navigate, t, auth.user]);
 
   const handleSave = async () => {
     if (!id) return;
