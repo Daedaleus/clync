@@ -29,6 +29,13 @@ async function getAccessToken(): Promise<string> {
   const renewed = await userManager.signinSilent().catch(() => null);
   if (renewed) return renewed.access_token;
 
+  // Another tab sharing this (localStorage) session may have renewed concurrently —
+  // Keycloak rejects a second renewal attempt with the same (now-rotated) refresh
+  // token, which would otherwise force a needless redirect to the login page even
+  // though the session is still perfectly valid. Re-check before giving up.
+  const fresh = await userManager.getUser();
+  if (fresh && !fresh.expired) return fresh.access_token;
+
   await userManager.signinRedirect();
   throw new Error('session expired — redirecting to login');
 }
