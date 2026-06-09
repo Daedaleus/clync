@@ -1,6 +1,6 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
-import { useAutoSignin } from 'react-oidc-context';
+import { useAuth } from 'react-oidc-context';
 import PageLoader from './components/PageLoader';
 
 const FriendsPage = lazy(() => import('./pages/FriendsPage'));
@@ -18,17 +18,33 @@ const UserPage = lazy(() => import('./pages/UserPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 
 /**
- * Layout route guard — redirects to Keycloak login when no session is present.
+ * Layout route guard — tries a silent token refresh when the access token is
+ * expired before falling back to a full login redirect.
  *
- * Passes the current full URL as `redirect_uri` so the OIDC round-trip lands
- * back on the originally requested deep link (e.g. `/groups/123`) instead of
- * always returning to the configured default (site root).
+ * `useAutoSignin` would redirect immediately whenever `isAuthenticated` is
+ * false — which includes the case where the access token has simply expired
+ * while the app was backgrounded (common on mobile and inactive tabs).
+ * Instead we attempt `signinSilent()` first; only if that also fails (no
+ * refresh token, or the offline session itself has expired) do we send the
+ * user to the login page.
  */
 function RequireAuth() {
-  const { isAuthenticated } = useAutoSignin({
-    signinArgs: { redirect_uri: window.location.href },
-  });
-  return isAuthenticated ? <Outlet /> : <PageLoader />;
+  const auth = useAuth();
+
+  useEffect(() => {
+    if (auth.isLoading || auth.isAuthenticated) return;
+
+    if (auth.user) {
+      // Token expired but session may still be recoverable via refresh token.
+      void auth.signinSilent().catch(() => {
+        void auth.signinRedirect({ redirect_uri: window.location.href });
+      });
+    } else {
+      void auth.signinRedirect({ redirect_uri: window.location.href });
+    }
+  }, [auth]);
+
+  return auth.isAuthenticated ? <Outlet /> : <PageLoader />;
 }
 
 export default function App() {
